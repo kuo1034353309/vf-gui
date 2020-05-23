@@ -12,8 +12,10 @@ export default class TestCircle {
 
         /** 绘制矩形 */
         const circle = new vf.gui.Circle();
-        circle.style.left = 150;
-        circle.style.top = 120;
+        // circle.style.left = 150;
+        // circle.style.top = 120;
+        circle.anchorX = 0.1;
+        circle.anchorY = 0.1;
         circle.color = 0xffffff;
         circle.lineColor = 0xff00cc;
         circle.lineWidth = 1;

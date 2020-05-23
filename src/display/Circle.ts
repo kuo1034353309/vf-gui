@@ -101,8 +101,9 @@ export class Circle extends DisplayObject implements MaskSprite{
         if(this._color !== undefined)
             graphics.beginFill(this._color);   
         
-        
-        graphics.drawCircle(this._anchorX || 0,this._anchorY || 0,this._radius);
+            
+        const diam = this._radius * 2;
+        graphics.drawCircle(this._anchorX?this._anchorX*diam:0,this._anchorY?diam*this._anchorY:0,this._radius);
         graphics.endFill();
     }
     
