@@ -28,10 +28,10 @@ export class Audio extends DisplayObject {
 
     private _src: any;
   
-    private _autoplay: boolean = false;
-    private _loop: boolean = false;
-    private _playbackRate: number = 1;
-    private _volume: number = 1;
+    private _autoplay = false;
+    private _loop = false;
+    private _playbackRate = 1;
+    private _volume = 1;
 
 
     private stoping: any;
@@ -53,6 +53,9 @@ export class Audio extends DisplayObject {
         /**
         * 需要上报的事件
         */
+        this.audio.on("canplay", (e: any) => {
+            this.emit("canplay", e)
+        },this);
         this.audio.on("canplaythrough", (e: any) => {
             this.emit("canplaythrough", e)
         },this);

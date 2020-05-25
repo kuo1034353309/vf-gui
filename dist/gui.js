@@ -3635,6 +3635,9 @@ var Audio = /** @class */ (function (_super) {
         /**
         * 需要上报的事件
         */
+        this.audio.on("canplay", function (e) {
+            _this.emit("canplay", e);
+        }, this);
         this.audio.on("canplaythrough", function (e) {
             _this.emit("canplaythrough", e);
         }, this);
@@ -13877,13 +13880,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.3.18.1.3.18.1.3.18) ==1.3.18.1.3.18.1.3.18;
+//     return this.lastIndexOf(word, pos1.3.19.1.3.19.1.3.19) ==1.3.19.1.3.19.1.3.19;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.3.18";
+window.vf.gui.version = "1.3.19";
 
 
 /***/ })
