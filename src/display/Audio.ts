@@ -1,6 +1,6 @@
 import { DisplayObject } from "../core/DisplayObject";
 import { IAudioOption } from "vf.js";
-import { getSound } from "../utils/Utils";
+import { getSound , now } from "../utils/Utils";
 
 /**
  * 音频组件
@@ -22,10 +22,13 @@ import { getSound } from "../utils/Utils";
  * 
  * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestLabel
  */
-export class Audio extends DisplayObject {
+
+var audioLib:Array<any> = new Array();
+
+ export class Audio extends DisplayObject {
 
     private audio?: vf.IAudio;
-
+    private _id: String;
     private _src: any;
   
     private _autoplay = false;
@@ -36,11 +39,12 @@ export class Audio extends DisplayObject {
     private stoping: any;
     public constructor() {
         super();
-        if (this._src) this.initAudio();
+        
+        this._id = now().toString();
     }
 
     private initAudio() {
-
+       
         const o: IAudioOption = {
             autoplay: this._autoplay,
             loop: this._loop,
@@ -49,6 +53,7 @@ export class Audio extends DisplayObject {
         }
         
         this.audio = vf.AudioEngine.Ins().createAudio(this.uuid.toString(), this._src, o);
+              
         /**
         * 需要上报的事件
         */
@@ -59,7 +64,8 @@ export class Audio extends DisplayObject {
             this.emit("canplaythrough", e)
         },this);
         this.audio.on("play", (e: any) => {
-            this.emit("play", e)
+            console.log("i'm",e);
+            this.emit("play", e);
         },this);
         this.audio.on("pause", (e: any) => {
             this.emit("pause", e)
@@ -72,6 +78,7 @@ export class Audio extends DisplayObject {
         });
         this.audio.on("ended", (e: any) => {
             this.emit("ended", e)
+            this.dispose();
         },this);
     }
 
@@ -170,9 +177,14 @@ export class Audio extends DisplayObject {
      */
 
     public play(time?: number, offset?: number, length?: number) {
-        //自动找到自己本体;
-
-        this.audio && this.audio.play(time, offset, length);
+       
+        if(this.audio){
+            this.audio.play(time, offset, length);
+        }else{
+            this.initAudio();
+            this.audio!.play(time, offset, length);
+        }
+      
     }
 
     /**
@@ -206,6 +218,7 @@ export class Audio extends DisplayObject {
         if (this.audio) {
             this.audio.removeAllListeners();
             this.audio.dispose();
+            this.audio = undefined;
         }
     }
 
@@ -216,6 +229,6 @@ export class Audio extends DisplayObject {
         return (this.audio as any)._isPlaying;
     }
     protected commitProperties() {
-        this.initAudio();
+       
     }
 }
