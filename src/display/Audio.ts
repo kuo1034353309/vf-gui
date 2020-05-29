@@ -33,7 +33,6 @@ export class Audio extends DisplayObject {
     private _playbackRate: number = 1;
     private _volume: number = 1;
 
-
     private stoping: any;
     public constructor() {
         super();
@@ -168,6 +167,8 @@ export class Audio extends DisplayObject {
      */
 
     public play(time?: number, offset?: number, length?: number) {
+        //自动找到自己本体;
+
         this.audio && this.audio.play(time, offset, length);
     }
 
