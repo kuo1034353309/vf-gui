@@ -28,10 +28,10 @@ export class Audio extends DisplayObject {
 
     private _src: any;
   
-    private _autoplay: boolean = false;
-    private _loop: boolean = false;
-    private _playbackRate: number = 1;
-    private _volume: number = 1;
+    private _autoplay = false;
+    private _loop = false;
+    private _playbackRate = 1;
+    private _volume = 1;
 
     private stoping: any;
     public constructor() {
@@ -52,6 +52,9 @@ export class Audio extends DisplayObject {
         /**
         * 需要上报的事件
         */
+        this.audio.on("canplay", (e: any) => {
+            this.emit("canplay", e)
+        },this);
         this.audio.on("canplaythrough", (e: any) => {
             this.emit("canplaythrough", e)
         },this);
@@ -177,7 +180,8 @@ export class Audio extends DisplayObject {
     * @param time (optional) X秒后停止声音。默认情况下立即停止
     */
     public stop(time?: number) {
-        let that = this;
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const that = this;
         this.audio && this.audio.stop(time);
         if(this.stoping)clearTimeout(this.stoping)
         if (time) {
@@ -209,7 +213,7 @@ export class Audio extends DisplayObject {
     * 各种可取参数.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
     public get isPlaying() {
-        return this.audio._isPlaying;
+        return (this.audio as any)._isPlaying;
     }
     protected commitProperties() {
         this.initAudio();

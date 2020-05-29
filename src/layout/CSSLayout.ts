@@ -2,7 +2,8 @@ import { DisplayObject } from "../core/DisplayObject";
 import { updateGridLayout } from "./CSSGridLayout";
 import { updateBasicDisplayList } from "./CSSBasicLayout";
 
-export const $TempRectangle = new vf.Rectangle();
+export const $TempyAlignRectangle = new vf.Rectangle();
+export const $TempLayoutRectangle = new vf.Rectangle();
 
 function updateDisplayAlign(target: DisplayObject, parentWidth: number, parentHeight: number, marginTop = 0, marginLeft = 0) {
 
@@ -17,7 +18,7 @@ function updateDisplayAlign(target: DisplayObject, parentWidth: number, parentHe
     const oldY = target.y;
     let startX = 0;
     let startY = 0;
-    const bounds = target.getPreferredBounds($TempRectangle);
+    const bounds = target.getPreferredBounds($TempyAlignRectangle);
 
     switch (target.style.justifyContent) {
         case "center":
@@ -78,7 +79,7 @@ export function updateDisplayLayout(target: DisplayObject, unscaledWidth: number
 
     if (target.isContainer) {
 
-        const bounds = target.getPreferredBounds($TempRectangle);
+        const bounds = target.getPreferredBounds($TempLayoutRectangle);
         let child: DisplayObject;
         for (let i = 0; i < target.uiChildren.length; i++) {
             child = target.uiChildren[i] as DisplayObject;

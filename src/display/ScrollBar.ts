@@ -18,20 +18,22 @@ export class ScrollBar extends Slider {
     /**
      * 是的自动隐藏滚动条
      */
-    public autohide = false;
+    public autohide = true;
     private _scrollingContainer: ScrollingContainer | undefined;
     private _hidden = false;
 
     protected toggleHidden(hidden: boolean) {
         if (this.autohide) {
-            // if (hidden && !this._hidden) {
-            //     Tween.to(this, { alpha: 0 }, 200).start();
-            //     this._hidden = true;
-            // }
-            // else if (!hidden && this._hidden) {
-            //     Tween.to(this, { alpha: 1 }, 200).start();
-            //     this._hidden = false;
-            // }
+            if (hidden && !this._hidden) {
+                //Tween.to(this, { alpha: 0 }, 200).start();
+                this.alpha = 0;
+                this._hidden = true;
+            }
+            else if (!hidden && this._hidden) {
+                //Tween.to(this, { alpha: 1 }, 200).start();
+                this.alpha = 1;
+                this._hidden = false;
+            }
         }
     }
 
@@ -64,6 +66,20 @@ export class ScrollBar extends Slider {
         
     }
 
+    private _dragScrolling = true;
+    public get dragScrolling(): boolean {
+        return this._source;
+    }
+    public set dragScrolling(value: boolean) {
+
+        if(this._dragScrolling === value ){
+            return;
+        }
+        this._dragScrolling = value;
+        
+        this.invalidateProperties();
+        
+    }
 
     protected commitProperties() {
 
@@ -73,7 +89,6 @@ export class ScrollBar extends Slider {
                 this._scrollingContainer.off(ComponentEvent.RESIZE,this.alignToContainer,this);
             }
             const scrollingContainer = this._scrollingContainer = Utils.getDisplayObject(this._source,this) as ScrollingContainer;
-            scrollingContainer.dragScrolling = true;
             scrollingContainer.expandMask = 2;
             scrollingContainer.softness = 0.2;
             scrollingContainer.on(ComponentEvent.CHANGE, this.alignToContainer, this);
@@ -82,6 +97,7 @@ export class ScrollBar extends Slider {
 
         const scrollingContainer = this._scrollingContainer;
         if (scrollingContainer) {
+            scrollingContainer.dragScrolling = this._dragScrolling;
             if(this.vertical) {
                 scrollingContainer.scrollY = true;
             }else{

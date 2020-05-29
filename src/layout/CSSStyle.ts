@@ -592,6 +592,7 @@ export class CSSStyle {
     public set fontSize(value) {
         this._fontSize = value;
         CSSFunction.updateFontStyle(this.parent, "fontSize", value);
+        this.parent.allInvalidate();
     }
     /** 字体样式 */
     private _fontStyle: "normal" | "italic" | "oblique" = "normal";

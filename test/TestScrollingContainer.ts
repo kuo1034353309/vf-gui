@@ -16,10 +16,12 @@ export default class TestScrollingContainer {
 
         /** 滚动容器 垂直拖动 */
         const scY = this.addSc(uiStage, 50, 260, "垂直拖动");
+        scY.dragScrolling = true;//是否启用拖动滚动
         scY.scrollY = true;
 
         /** 滚动容器 垂直水平拖动 */
         const scXY = this.addSc(uiStage, 50, 480, "任意拖动");
+        scXY.dragScrolling = true;//是否启用拖动滚动
         scXY.scrollX = true;
         scXY.scrollY = true;
     }

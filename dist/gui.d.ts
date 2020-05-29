@@ -1842,6 +1842,7 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	    * @param value
 	    */
 	    width: number;
+	    allInvalidate(): void;
 	    /**
 	     * @private
 	     * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
@@ -1889,8 +1890,10 @@ declare module 'src/core/DisplayLayoutAbstract' {
 
 }
 declare module 'src/layout/CSSSSystem' {
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/** ===================== background  ===================== */
+	export function drawBackgroundColor(background: vf.Graphics, color: number, w: number, h: number): void;
 	export function backgroundColor(target: DisplayObject): void;
 	export function backgroundPositionSize(target: DisplayObject): void;
 	export function backgroundRepeat(target: DisplayObject): void;
@@ -2253,7 +2256,8 @@ declare module 'src/layout/CSSGridLayout' {
 declare module 'src/layout/CSSLayout' {
 	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
-	export const $TempRectangle: vf.Rectangle;
+	export const $TempyAlignRectangle: vf.Rectangle;
+	export const $TempLayoutRectangle: vf.Rectangle;
 	/**
 	 * 调整目标的元素的大小并定位这些元素。
 	 */
@@ -2854,6 +2858,8 @@ declare module 'src/display/ScrollBar' {
 	    protected triggerValueChanging(): void;
 	    private _source;
 	    source: ScrollingContainer | string | undefined;
+	    private _dragScrolling;
+	    dragScrolling: boolean;
 	    protected commitProperties(): void;
 	    protected alignToContainer(): void;
 	    protected onDragMove(event: InteractionEvent, offset: vf.Point): void;
@@ -2950,8 +2956,9 @@ declare module 'src/display/ScrollingContainer' {
 	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
 	    protected setScrollPosition(speed?: vf.Point): void;
 	    readonly innerContainer: ContainerBase;
+	    addChild<T extends DisplayObjectAbstract>(item: T): T;
 	    addChildAt<T extends DisplayObjectAbstract>(item: T, index: number): T;
-	    protected getInnerBounds(force?: boolean): vf.Rectangle;
+	    getInnerBounds(force?: boolean): vf.Rectangle;
 	    $onInit(): void;
 	    protected initScrolling(): void;
 	    protected updateScrollBars(): void;
@@ -3872,6 +3879,7 @@ declare module 'src/display/Audio' {
 	    private _loop;
 	    private _playbackRate;
 	    private _volume;
+	    private stoping;
 	    constructor();
 	    private initAudio;
 	    /**
@@ -3891,7 +3899,7 @@ declare module 'src/display/Audio' {
 	     * 声音播放接口
 	     *
 	     *  await sound.play()
-	     *
+	     * @param {number} [time] - 声音延迟开始
 	     * @param {number} [offset] - 声音的开始偏移值
 	     * @param {number} [length] - 声音持续时间（以秒为单位）
 	     */
@@ -3909,6 +3917,10 @@ declare module 'src/display/Audio' {
 	    * 释放
 	    */
 	    dispose(): void;
+	    /**
+	    * 各种可取参数.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	    */
+	    readonly isPlaying: any;
 	    protected commitProperties(): void;
 	}
 

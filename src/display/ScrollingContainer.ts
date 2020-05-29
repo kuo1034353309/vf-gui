@@ -23,11 +23,12 @@ export class ScrollingContainer extends Container {
     public constructor() {
         super();
         
-        this.container.addChild(this._innerContainer);
+        const innerContainer = this._innerContainer
+        this.container.addChild(innerContainer);
         this.container.name = "ScrollingContainer";
-        this._innerContainer.name = "innerContainer";
-    
-
+        innerContainer.name = "innerContainer";
+        innerContainer.on("added", this.$onAddStage, this);
+        innerContainer.on("removed", this.$onRemoveStage, this);
     }
     /**
      * 是否启动拖拽滚动
@@ -167,7 +168,7 @@ export class ScrollingContainer extends Container {
             
             this._lastWidth = this._innerContainer.width;
             this._lastHeight = this._innerContainer.height;
-            if(this.style.maskImage){
+            if(this.style.maskImage && this._dragScrolling){
                 const _of = this.expandMask;
                 this.style.maskPosition = [_of,_of];
                 this.style.maskSize = [unscaledWidth,unscaledHeight];
@@ -196,6 +197,14 @@ export class ScrollingContainer extends Container {
         return this._innerContainer;
     }
 
+    public addChild<T extends DisplayObjectAbstract>(item: T): T {
+        if (this._innerContainer.children.length !== this.uiChildren.length) {
+            return this.addChildAt(item, this._innerContainer.children.length);
+        } else {
+            return this.addChildAt(item, this.uiChildren.length);
+        }
+
+    }
     public addChildAt<T extends DisplayObjectAbstract>(item: T, index: number): T {
 
         if (item.parent) {
@@ -208,19 +217,21 @@ export class ScrollingContainer extends Container {
             item.initialized = true;
             item.$onInit();
         }
-        index = Math.min(this._innerContainer.children.length,index);
-        this.uiChildren.splice(index, 0, item);
         this.emit(ComponentEvent.ADD, this);
         if(item instanceof ScrollBar){
-            this.container.addChildAt(item.container, index);
+            //index = this.uiChildren.push(item);
+            //index = Math.min(this.container.children.length,index);
+            this.container.addChild(item.container);
         }else{
+            index = Math.min(this._innerContainer.children.length,index);
+            this.uiChildren.splice(index, 0, item);
             this._innerContainer.addChildAt(item.container, index);
         }
         this.getInnerBounds(true);
         return item as any;
     }
 
-    protected getInnerBounds(force?: boolean) {
+    public getInnerBounds(force?: boolean) {
 
         //this is a temporary fix, because we cant rely on innercontainer height if the children is positioned > 0 y.
         if (force || now() - this._boundCached > 1000) {

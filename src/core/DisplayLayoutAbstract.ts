@@ -642,6 +642,14 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         this.invalidateParentLayout();
     }
 
+    public allInvalidate(){
+        this.invalidateSize();
+        this.measureSizes();
+        this.invalidateProperties();
+        this.invalidateDisplayList();
+        this.invalidateParentLayout();
+    }
+
 
     /**
      * @private

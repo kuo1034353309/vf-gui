@@ -94,10 +94,9 @@ export class DragEvent {
             this.bound = true;
         }
 
-        if(e.data.originalEvent.preventDefault){
+        if(this.obj.stage && this.obj.stage.originalEventPreventDefault && e.data.originalEvent.preventDefault){
             e.data.originalEvent.preventDefault();
-        }
-        
+        }   
     }
 
     private _onDragMove(e: InteractionEvent) {

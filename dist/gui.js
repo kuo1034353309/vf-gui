@@ -1067,6 +1067,13 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    DisplayLayoutAbstract.prototype.allInvalidate = function () {
+        this.invalidateSize();
+        this.measureSizes();
+        this.invalidateProperties();
+        this.invalidateDisplayList();
+        this.invalidateParentLayout();
+    };
     Object.defineProperty(DisplayLayoutAbstract.prototype, "height", {
         /**
          * @private
@@ -3612,6 +3619,8 @@ var Audio = /** @class */ (function (_super) {
         _this._loop = false;
         _this._playbackRate = 1;
         _this._volume = 1;
+        if (_this._src)
+            _this.initAudio();
         return _this;
     }
     Audio.prototype.initAudio = function () {
@@ -3626,6 +3635,9 @@ var Audio = /** @class */ (function (_super) {
         /**
         * 需要上报的事件
         */
+        this.audio.on("canplay", function (e) {
+            _this.emit("canplay", e);
+        }, this);
         this.audio.on("canplaythrough", function (e) {
             _this.emit("canplaythrough", e);
         }, this);
@@ -3753,19 +3765,31 @@ var Audio = /** @class */ (function (_super) {
      * 声音播放接口
      *
      *  await sound.play()
-     *
+     * @param {number} [time] - 声音延迟开始
      * @param {number} [offset] - 声音的开始偏移值
      * @param {number} [length] - 声音持续时间（以秒为单位）
      */
     Audio.prototype.play = function (time, offset, length) {
-        this.audio && this.audio.play(offset, length);
+        this.audio && this.audio.play(time, offset, length);
     };
     /**
     * 停止声音
     * @param time (optional) X秒后停止声音。默认情况下立即停止
     */
     Audio.prototype.stop = function (time) {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        var that = this;
         this.audio && this.audio.stop(time);
+        if (this.stoping)
+            clearTimeout(this.stoping);
+        if (time) {
+            this.stoping = setTimeout(function () {
+                that.emit("stop", that);
+            }, time);
+        }
+        else {
+            this.emit("stop", this);
+        }
     };
     /**
     * 暂停声音
@@ -3782,6 +3806,16 @@ var Audio = /** @class */ (function (_super) {
             this.audio.dispose();
         }
     };
+    Object.defineProperty(Audio.prototype, "isPlaying", {
+        /**
+        * 各种可取参数.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        */
+        get: function () {
+            return this.audio._isPlaying;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Audio.prototype.commitProperties = function () {
         this.initAudio();
     };
@@ -4169,7 +4203,8 @@ var Circle = /** @class */ (function (_super) {
         graphics.lineStyle(this._lineWidth, this._lineColor);
         if (this._color !== undefined)
             graphics.beginFill(this._color);
-        graphics.drawCircle(this._anchorX || 0, this._anchorY || 0, this._radius);
+        var diam = this._radius * 2;
+        graphics.drawCircle(this._anchorX ? this._anchorX * diam : 0, this._anchorY ? diam * this._anchorY : 0, this._radius);
         graphics.endFill();
     };
     Circle.prototype.release = function () {
@@ -5693,21 +5728,24 @@ var ScrollBar = /** @class */ (function (_super) {
         /**
          * 是的自动隐藏滚动条
          */
-        _this.autohide = false;
+        _this.autohide = true;
         _this._hidden = false;
+        _this._dragScrolling = true;
         _this.thumbImg.on(Index_1.ComponentEvent.COMPLETE, _this.onThumbLoadComplete, _this);
         return _this;
     }
     ScrollBar.prototype.toggleHidden = function (hidden) {
         if (this.autohide) {
-            // if (hidden && !this._hidden) {
-            //     Tween.to(this, { alpha: 0 }, 200).start();
-            //     this._hidden = true;
-            // }
-            // else if (!hidden && this._hidden) {
-            //     Tween.to(this, { alpha: 1 }, 200).start();
-            //     this._hidden = false;
-            // }
+            if (hidden && !this._hidden) {
+                //Tween.to(this, { alpha: 0 }, 200).start();
+                this.alpha = 0;
+                this._hidden = true;
+            }
+            else if (!hidden && this._hidden) {
+                //Tween.to(this, { alpha: 1 }, 200).start();
+                this.alpha = 1;
+                this._hidden = false;
+            }
         }
     };
     ScrollBar.prototype.onThumbLoadComplete = function (rectangle, source) {
@@ -5736,6 +5774,20 @@ var ScrollBar = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(ScrollBar.prototype, "dragScrolling", {
+        get: function () {
+            return this._source;
+        },
+        set: function (value) {
+            if (this._dragScrolling === value) {
+                return;
+            }
+            this._dragScrolling = value;
+            this.invalidateProperties();
+        },
+        enumerable: true,
+        configurable: true
+    });
     ScrollBar.prototype.commitProperties = function () {
         if (this._scrollingContainer !== Utils.getDisplayObject(this._source, this)) {
             if (this._scrollingContainer) {
@@ -5743,7 +5795,6 @@ var ScrollBar = /** @class */ (function (_super) {
                 this._scrollingContainer.off(Index_1.ComponentEvent.RESIZE, this.alignToContainer, this);
             }
             var scrollingContainer_1 = this._scrollingContainer = Utils.getDisplayObject(this._source, this);
-            scrollingContainer_1.dragScrolling = true;
             scrollingContainer_1.expandMask = 2;
             scrollingContainer_1.softness = 0.2;
             scrollingContainer_1.on(Index_1.ComponentEvent.CHANGE, this.alignToContainer, this);
@@ -5751,6 +5802,7 @@ var ScrollBar = /** @class */ (function (_super) {
         }
         var scrollingContainer = this._scrollingContainer;
         if (scrollingContainer) {
+            scrollingContainer.dragScrolling = this._dragScrolling;
             if (this.vertical) {
                 scrollingContainer.scrollY = true;
             }
@@ -5975,9 +6027,12 @@ var ScrollingContainer = /** @class */ (function (_super) {
         _this._Speed = new vf.Point();
         _this._stop = false;
         _this.isInitDrag = false;
-        _this.container.addChild(_this._innerContainer);
+        var innerContainer = _this._innerContainer;
+        _this.container.addChild(innerContainer);
         _this.container.name = "ScrollingContainer";
-        _this._innerContainer.name = "innerContainer";
+        innerContainer.name = "innerContainer";
+        innerContainer.on("added", _this.$onAddStage, _this);
+        innerContainer.on("removed", _this.$onRemoveStage, _this);
         return _this;
     }
     Object.defineProperty(ScrollingContainer.prototype, "dragScrolling", {
@@ -6046,7 +6101,7 @@ var ScrollingContainer = /** @class */ (function (_super) {
             _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
             this._lastWidth = this._innerContainer.width;
             this._lastHeight = this._innerContainer.height;
-            if (this.style.maskImage) {
+            if (this.style.maskImage && this._dragScrolling) {
                 var _of = this.expandMask;
                 this.style.maskPosition = [_of, _of];
                 this.style.maskSize = [unscaledWidth, unscaledHeight];
@@ -6073,6 +6128,14 @@ var ScrollingContainer = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    ScrollingContainer.prototype.addChild = function (item) {
+        if (this._innerContainer.children.length !== this.uiChildren.length) {
+            return this.addChildAt(item, this._innerContainer.children.length);
+        }
+        else {
+            return this.addChildAt(item, this.uiChildren.length);
+        }
+    };
     ScrollingContainer.prototype.addChildAt = function (item, index) {
         if (item.parent) {
             item.parent.removeChild(item);
@@ -6083,13 +6146,15 @@ var ScrollingContainer = /** @class */ (function (_super) {
             item.initialized = true;
             item.$onInit();
         }
-        index = Math.min(this._innerContainer.children.length, index);
-        this.uiChildren.splice(index, 0, item);
         this.emit(Index_1.ComponentEvent.ADD, this);
         if (item instanceof ScrollBar_1.ScrollBar) {
-            this.container.addChildAt(item.container, index);
+            //index = this.uiChildren.push(item);
+            //index = Math.min(this.container.children.length,index);
+            this.container.addChild(item.container);
         }
         else {
+            index = Math.min(this._innerContainer.children.length, index);
+            this.uiChildren.splice(index, 0, item);
             this._innerContainer.addChildAt(item.container, index);
         }
         this.getInnerBounds(true);
@@ -9459,7 +9524,7 @@ var DragEvent = /** @class */ (function () {
             stage.on("touchcancel" /* touchcancel */, this._onDragEnd, this);
             this.bound = true;
         }
-        if (e.data.originalEvent.preventDefault) {
+        if (this.obj.stage && this.obj.stage.originalEventPreventDefault && e.data.originalEvent.preventDefault) {
             e.data.originalEvent.preventDefault();
         }
     };
@@ -10158,7 +10223,8 @@ exports.updateGridLayout = updateGridLayout;
 Object.defineProperty(exports, "__esModule", { value: true });
 var CSSGridLayout_1 = __webpack_require__(/*! ./CSSGridLayout */ "./src/layout/CSSGridLayout.ts");
 var CSSBasicLayout_1 = __webpack_require__(/*! ./CSSBasicLayout */ "./src/layout/CSSBasicLayout.ts");
-exports.$TempRectangle = new vf.Rectangle();
+exports.$TempyAlignRectangle = new vf.Rectangle();
+exports.$TempLayoutRectangle = new vf.Rectangle();
 function updateDisplayAlign(target, parentWidth, parentHeight, marginTop, marginLeft) {
     if (marginTop === void 0) { marginTop = 0; }
     if (marginLeft === void 0) { marginLeft = 0; }
@@ -10172,7 +10238,7 @@ function updateDisplayAlign(target, parentWidth, parentHeight, marginTop, margin
     var oldY = target.y;
     var startX = 0;
     var startY = 0;
-    var bounds = target.getPreferredBounds(exports.$TempRectangle);
+    var bounds = target.getPreferredBounds(exports.$TempyAlignRectangle);
     switch (target.style.justifyContent) {
         case "center":
             startX = parentWidth - bounds.width >> 1;
@@ -10224,7 +10290,7 @@ function updateDisplayLayout(target, unscaledWidth, unscaledHeight) {
         isUpdateTransform = updateDisplayAlign(target, target.parent.width, target.parent.height, target.style.gridRowGap, target.style.gridColumnGap);
     }
     if (target.isContainer) {
-        var bounds = target.getPreferredBounds(exports.$TempRectangle);
+        var bounds = target.getPreferredBounds(exports.$TempLayoutRectangle);
         var child = void 0;
         for (var i = 0; i < target.uiChildren.length; i++) {
             child = target.uiChildren[i];
@@ -10253,6 +10319,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
 var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/core/DisplayObject.ts");
 /** ===================== background  ===================== */
+function drawBackgroundColor(background, color, w, h) {
+    background.clear();
+    background.beginFill(color);
+    background.drawRoundedRect(0, 0, w, h, 0);
+    background.endFill();
+}
+exports.drawBackgroundColor = drawBackgroundColor;
 function backgroundColor(target) {
     if (target.style == undefined) {
         return;
@@ -10265,6 +10338,7 @@ function backgroundColor(target) {
         target.$background.name = "background";
         target.container.addChildAt(target.$background, 0);
     }
+    drawBackgroundColor(target.$background, target.style.backgroundColor, target.width, target.height);
 }
 exports.backgroundColor = backgroundColor;
 function backgroundPositionSize(target) {
@@ -11133,6 +11207,7 @@ var CSSStyle = /** @class */ (function () {
         set: function (value) {
             this._fontSize = value;
             CSSFunction.updateFontStyle(this.parent, "fontSize", value);
+            this.parent.allInvalidate();
         },
         enumerable: true,
         configurable: true
@@ -13805,13 +13880,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.3.12.1.3.12.1.3.12) ==1.3.12.1.3.12.1.3.12;
+//     return this.lastIndexOf(word, pos1.3.19.1.3.19.1.3.19) ==1.3.19.1.3.19.1.3.19;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.3.12";
+window.vf.gui.version = "1.3.19";
 
 
 /***/ })
