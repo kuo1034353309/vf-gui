@@ -1,6 +1,6 @@
 import { DisplayObject } from "../core/DisplayObject";
 import { IAudioOption } from "vf.js";
-import { getSound , now } from "../utils/Utils";
+import { getSound } from "../utils/Utils";
 
 /**
  * 音频组件
@@ -23,7 +23,7 @@ import { getSound , now } from "../utils/Utils";
  * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestLabel
  */
 
-var audioLib:Array<any> = new Array();
+
 
  export class Audio extends DisplayObject {
 
@@ -64,7 +64,6 @@ var audioLib:Array<any> = new Array();
             this.emit("canplaythrough", e)
         },this);
         this.audio.on("play", (e: any) => {
-            console.log("i'm",e);
             this.emit("play", e);
         },this);
         this.audio.on("pause", (e: any) => {
