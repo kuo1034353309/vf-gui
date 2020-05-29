@@ -1382,13 +1382,13 @@ declare module 'src/core/Ticker' {
 	     * @param fn 被调用的函数
 	     * @param context 当前域
 	     */
-	    addUpdateEvent<T>(fn: (deltaTime: number, lastTime?: number, elapsedMS?: number) => void, context: T): this;
+	    add<T>(fn: (deltaTime: number, lastTime?: number, elapsedMS?: number) => void, context: T): this;
 	    /**
 	     * 移除更新监听器
 	     * @param fn 被调用的函数
 	     * @param context 当前域
 	     */
-	    removeUpdateEvent<T>(fn: (deltaTime: number, lastTime?: number, elapsedMS?: number) => void, context: T): this;
+	    remove<T>(fn: (deltaTime: number, lastTime?: number, elapsedMS?: number) => void, context: T): this;
 	}
 	/**
 	 * Ticker 的实例

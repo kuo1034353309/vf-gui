@@ -56,7 +56,7 @@ export default class TestImage {
         uiStage.addChild(img4);
 
         let count = 0;
-        vf.gui.TickerShared.addUpdateEvent(() => {
+        vf.gui.TickerShared.add(() => {
 
             if (count == 700) {
                 count = 0;
