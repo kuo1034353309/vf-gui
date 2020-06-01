@@ -16,8 +16,6 @@ export class Scheduler extends vf.utils.EventEmitter {
 
     public static clock: () => number = Date.now;
 
-    public static ticker: any = TickerShared;
-
     public static setInterval(time: number, listener: () => void): Scheduler {
         const scheduler: Scheduler = new Scheduler(Infinity, time);
         scheduler.addListener(EventType.TICK, listener);
@@ -30,31 +28,31 @@ export class Scheduler extends vf.utils.EventEmitter {
         return scheduler;
     }
 
-    public interval: number = 0;
+    public interval = 0;
 
-    public timeout: number = Infinity;
+    public timeout = Infinity;
 
-    protected start: number = 0;
+    protected start = 0;
 
-    protected lastTick: number = -1;
+    protected lastTick = -1;
 
     protected endHandler: () => void;
 
-    protected elapsedTimeAtPause: number = 0;
+    protected elapsedTimeAtPause = 0;
 
-    protected lastVisited: number = -1;
+    protected lastVisited = -1;
 
     protected tickHandler: () => void;
 
-    private _running: boolean = false;
+    private _running = false;
 
-    private _lastExecuted: number = 0;
+    private _lastExecuted = 0;
 
-    private _id: number = Math.random();
+    private _id = Math.random();
 
-    private TIMEOUT: number = 1000;
+    private TIMEOUT = 1000;
 
-    constructor(_timeout: number = Infinity, _interval: number = 0) {
+    constructor(_timeout = Infinity, _interval = 0) {
         super();
         this.endHandler = this.noop;
         this.tickHandler = this.noop;
@@ -68,13 +66,13 @@ export class Scheduler extends vf.utils.EventEmitter {
         this.start = Scheduler.clock();
         this._lastExecuted = this.start;
         this._running = true;
-        Scheduler.ticker.addUpdateEvent(this.run, this);
+        TickerShared.add(this.run, this);
     }
 
     public stop(): void {
         this.elapsedTimeAtPause = 0;
         this._running = false;
-        Scheduler.ticker.removeUpdateEvent(this.run, this);
+        TickerShared.remove(this.run, this);
     }
 
     public pause(): void {

@@ -238,12 +238,10 @@ export class Tween extends vf.utils.EventEmitter {
 
     /**
      * 开始执行缓动
-     * @param {number|string} time 要开始的时间，延迟值
      * @example tween.start()
      * @memberof vf.gui.Tween
      */
-    public start(time?: number) {
-        this._startTime = time !== undefined ? time : 0;
+    public start() {
         this._startTime += this._delayTime;
         this._prevTime = 0;
         this._onStartCallbackFired = false;
@@ -394,13 +392,13 @@ export class Tween extends vf.utils.EventEmitter {
 
     /**
      * 更新函数，通过给定的 `time` 设置目标属性变化
-    * @param {number=} elapsedMS 帧间隔
+    * @param {number=} deltaTime 帧间隔
     * @param {Boolean=} preserve 完成后，防止删除动画对象
      * @param {boolean=} forceTime 强制进行更新渲染，不关心时间是否匹配
      * @example tween.update(100)
      * @memberof vf.gui.Tween
      */
-    public update(elapsedMS: number, preserve?: boolean, forceTime?: boolean) {
+    public update(deltaTime: number, preserve?: boolean, forceTime?: boolean) {
 
         const {
             _onStartCallbackFired,
@@ -420,7 +418,7 @@ export class Tween extends vf.utils.EventEmitter {
         } = this;
 
         if (!_isPlaying || (_startTime > 0 && !forceTime)) {
-            this._startTime -= elapsedMS;
+            this._startTime -= deltaTime;
             this._startTime = Math.max(0, this._startTime);
             return true;
         }
@@ -433,11 +431,10 @@ export class Tween extends vf.utils.EventEmitter {
             _repeat = 0;
         } else {
 
-            this._prevTime += elapsedMS;
-            if (elapsedMS > TOO_LONG_FRAME_MS && isRunning() && isLagSmoothing()) {
+            this._prevTime += deltaTime;
+            if (deltaTime > TOO_LONG_FRAME_MS && isRunning() && isLagSmoothing()) {
                 this._prevTime -= FRAME_MS;
             }
-
             elapsed = (this._prevTime) / _duration;
             elapsed = elapsed > 1 ? 1 : elapsed;
             elapsed = _reversed ? 1 - elapsed : elapsed;
@@ -476,7 +473,7 @@ export class Tween extends vf.utils.EventEmitter {
             // } 
         }
 
-        this.emit(TweenEvent.update, object, elapsed, elapsedMS);
+        this.emit(TweenEvent.update, object, elapsed);
 
         if (elapsed === 1 || (_reversed && elapsed === 0)) {
             this._prevTime = 0;

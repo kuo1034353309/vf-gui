@@ -1,5 +1,5 @@
 import { DisplayLayoutAbstract } from "./DisplayLayoutAbstract";
-import tickerShared  from "./Ticker";
+import { TickerShared }  from "./Ticker";
 
 /**
  * @private
@@ -433,7 +433,7 @@ class UIValidator extends vf.utils.EventEmitter {
      * 添加事件监听
      */
     private attachListeners(): void {
-        tickerShared.addUpdateEvent(this.doPhasedInstantiationCallBack,this);
+        TickerShared.addOnce(this.doPhasedInstantiationCallBack,this);
         this.listenersAttached = true;
     }
 
@@ -442,7 +442,6 @@ class UIValidator extends vf.utils.EventEmitter {
      * 执行属性应用
      */
     private doPhasedInstantiationCallBack(): void {
-        tickerShared.removeUpdateEvent(this.doPhasedInstantiationCallBack,this);
         this.doPhasedInstantiation();
     }
 

@@ -784,6 +784,125 @@ declare module 'src/interaction/Index' {
 	export { ClickEvent, DragDropController, DragEvent, InputController, MouseScrollEvent, InteractionEvent, TouchMouseEvent, ComponentEvent, GroupController };
 
 }
+declare module 'src/core/Ticker' {
+	///   types="@vf.js/vf" />
+	export const TickerShared: vf.Ticker;
+
+}
+declare module 'src/core/DisplayLayoutValidator' {
+	///   types="@vf.js/vf" />
+	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract'; class UIValidator extends vf.utils.EventEmitter {
+	    /**
+	     * @private
+	     * 创建一个Validator对象
+	     */
+	    constructor();
+	    /**
+	     * @private
+	     */
+	    private targetLevel;
+	    /**
+	     * @private
+	     */
+	    private invalidatePropertiesFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidateClientPropertiesFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidatePropertiesQueue;
+	    /**
+	     * @private
+	     * 标记组件属性失效
+	     */
+	    invalidateProperties(target: DisplayLayoutAbstract): void;
+	    /**
+	     * @private
+	     * 验证失效的属性
+	     */
+	    private validateProperties;
+	    /**
+	     * @private
+	     */
+	    private invalidateSizeFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidateClientSizeFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidateSizeQueue;
+	    /**
+	     * @private
+	     * 标记需要重新测量尺寸
+	     */
+	    invalidateSize(target: DisplayLayoutAbstract): void;
+	    /**
+	     * @private
+	     * 测量尺寸
+	     */
+	    private validateSize;
+	    /**
+	     * @private
+	     */
+	    private invalidateDisplayListFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidateDisplayListQueue;
+	    /**
+	     * @private
+	     * 标记需要重新布局
+	     */
+	    invalidateDisplayList(client: DisplayLayoutAbstract): void;
+	    /**
+	     * @private
+	     * 重新布局
+	     */
+	    private validateDisplayList;
+	    /**
+	     * @private
+	     * 是否已经添加了事件监听
+	     */
+	    private listenersAttached;
+	    /**
+	     * @private
+	     * 添加事件监听
+	     */
+	    private attachListeners;
+	    /**
+	     * @private
+	     * 执行属性应用
+	     */
+	    private doPhasedInstantiationCallBack;
+	    /**
+	     * @private
+	     */
+	    private doPhasedInstantiation;
+	    /**
+	     * @private
+	     * 使大于等于指定组件层级的元素立即应用属性
+	     * @param target 要立即应用属性的组件
+	     */
+	    validateClient(target: DisplayLayoutAbstract): void;
+	    removeDepthQueueAll(): void;
+	} const validatorShared: UIValidator;
+	export default validatorShared;
+
+}
+declare module 'src/core/ContainerBase' {
+	///   types="@vf.js/vf" />
+	/** 容器扩展类，后续便于做延时渲染 */
+	export class ContainerBase extends vf.Container {
+	    constructor();
+	    isEmitRender: boolean;
+	    render(renderer: vf.Renderer): void;
+	}
+
+}
 declare module 'src/tween/Easing' {
 	/**
 	 * 完整的缓动曲线列表
@@ -1104,11 +1223,10 @@ declare module 'src/tween/Tween' {
 	    private render;
 	    /**
 	     * 开始执行缓动
-	     * @param {number|string} time 要开始的时间，延迟值
 	     * @example tween.start()
 	     * @memberof vf.gui.Tween
 	     */
-	    start(time?: number): this;
+	    start(): this;
 	    /**
 	     * 停止缓动
 	     * @example tween.stop()
@@ -1175,13 +1293,13 @@ declare module 'src/tween/Tween' {
 	    gotoAndEnd(): void;
 	    /**
 	     * 更新函数，通过给定的 `time` 设置目标属性变化
-	    * @param {number=} elapsedMS 帧间隔
+	    * @param {number=} deltaTime 帧间隔
 	    * @param {Boolean=} preserve 完成后，防止删除动画对象
 	     * @param {boolean=} forceTime 强制进行更新渲染，不关心时间是否匹配
 	     * @example tween.update(100)
 	     * @memberof vf.gui.Tween
 	     */
-	    update(elapsedMS: number, preserve?: boolean, forceTime?: boolean): boolean;
+	    update(deltaTime: number, preserve?: boolean, forceTime?: boolean): boolean;
 	    release(): void;
 	}
 
@@ -1263,7 +1381,7 @@ declare module 'src/tween/private/core' {
 	 * @example
 	 * vf.gui.tween.update(500)
 	 */
-	export function update(time: number, preserve?: boolean): boolean;
+	export function update(deltaTime: number): boolean;
 	/**
 	 * 是否正在运行中
 	 * @return {Boolean} 只要还有缓动在运行，返回true
@@ -1366,152 +1484,6 @@ declare module 'src/tween/private/index' {
 	export { Plugins, get, getAll, removeAll, remove, removeDisplay, add, update, isRunning, FrameThrottle, ToggleLagSmoothing, Interpolation, TweenEvent, Timeline, utils };
 
 }
-declare module 'src/core/Ticker' {
-	 class Ticker extends vf.utils.EventEmitter {
-	    /**
-	     * 心跳构造函数
-	     * @param autoStart 是否自动开启心跳，默认false
-	     */
-	    constructor(autoStart: boolean);
-	    private _disabled;
-	    /** 是否关闭心跳.默认false不关闭,关闭后，缓动等组件也将关闭 */
-	    disabled: boolean;
-	    update(deltaTime: number, lastTime: number, elapsedMS: number): void;
-	    /**
-	     * 增加更新监听器
-	     * @param fn 被调用的函数
-	     * @param context 当前域
-	     */
-	    addUpdateEvent<T>(fn: (deltaTime: number, lastTime?: number, elapsedMS?: number) => void, context: T): this;
-	    /**
-	     * 移除更新监听器
-	     * @param fn 被调用的函数
-	     * @param context 当前域
-	     */
-	    removeUpdateEvent<T>(fn: (deltaTime: number, lastTime?: number, elapsedMS?: number) => void, context: T): this;
-	}
-	/**
-	 * Ticker 的实例
-	 */
-	export const shared: Ticker;
-	export const tickerShared: Ticker;
-	export default tickerShared;
-
-}
-declare module 'src/core/DisplayLayoutValidator' {
-	///   types="@vf.js/vf" />
-	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract'; class UIValidator extends vf.utils.EventEmitter {
-	    /**
-	     * @private
-	     * 创建一个Validator对象
-	     */
-	    constructor();
-	    /**
-	     * @private
-	     */
-	    private targetLevel;
-	    /**
-	     * @private
-	     */
-	    private invalidatePropertiesFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidateClientPropertiesFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidatePropertiesQueue;
-	    /**
-	     * @private
-	     * 标记组件属性失效
-	     */
-	    invalidateProperties(target: DisplayLayoutAbstract): void;
-	    /**
-	     * @private
-	     * 验证失效的属性
-	     */
-	    private validateProperties;
-	    /**
-	     * @private
-	     */
-	    private invalidateSizeFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidateClientSizeFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidateSizeQueue;
-	    /**
-	     * @private
-	     * 标记需要重新测量尺寸
-	     */
-	    invalidateSize(target: DisplayLayoutAbstract): void;
-	    /**
-	     * @private
-	     * 测量尺寸
-	     */
-	    private validateSize;
-	    /**
-	     * @private
-	     */
-	    private invalidateDisplayListFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidateDisplayListQueue;
-	    /**
-	     * @private
-	     * 标记需要重新布局
-	     */
-	    invalidateDisplayList(client: DisplayLayoutAbstract): void;
-	    /**
-	     * @private
-	     * 重新布局
-	     */
-	    private validateDisplayList;
-	    /**
-	     * @private
-	     * 是否已经添加了事件监听
-	     */
-	    private listenersAttached;
-	    /**
-	     * @private
-	     * 添加事件监听
-	     */
-	    private attachListeners;
-	    /**
-	     * @private
-	     * 执行属性应用
-	     */
-	    private doPhasedInstantiationCallBack;
-	    /**
-	     * @private
-	     */
-	    private doPhasedInstantiation;
-	    /**
-	     * @private
-	     * 使大于等于指定组件层级的元素立即应用属性
-	     * @param target 要立即应用属性的组件
-	     */
-	    validateClient(target: DisplayLayoutAbstract): void;
-	    removeDepthQueueAll(): void;
-	} const validatorShared: UIValidator;
-	export default validatorShared;
-
-}
-declare module 'src/core/ContainerBase' {
-	///   types="@vf.js/vf" />
-	/** 容器扩展类，后续便于做延时渲染 */
-	export class ContainerBase extends vf.Container {
-	    constructor();
-	    isEmitRender: boolean;
-	    render(renderer: vf.Renderer): void;
-	}
-
-}
 declare module 'src/core/Stage' {
 	///   types="@vf.js/vf" />
 	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract';
@@ -1523,10 +1495,8 @@ declare module 'src/core/Stage' {
 	 * @param height {Number} 舞台高度
 	 */
 	export class Stage extends DisplayLayoutAbstract {
-	    constructor(width: number, height: number, app?: vf.Application);
-	    app?: vf.Application;
-	    _stageWidth: number;
-	    _stageHeight: number;
+	    constructor(width: number, height: number, app: vf.Application);
+	    app: vf.Application | any;
 	    /**
 	     * 是否组织原始数据继续传递
 	     */
@@ -4048,7 +4018,6 @@ declare module 'src/core/Scheduler' {
 	export class Scheduler extends vf.utils.EventEmitter {
 	    readonly id: number;
 	    static clock: () => number;
-	    static ticker: any;
 	    static setInterval(time: number, listener: () => void): Scheduler;
 	    static setTimeout(time: number, listener: () => void): Scheduler;
 	    interval: number;
@@ -4084,7 +4053,7 @@ declare module 'src/UI' {
 	/** UI基础显示对象，一般不会直接使用，只作为类型推断 */
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/** 心跳，需要在初始化完成后，启动心跳更新 */
-	import { shared as TickerShared } from 'src/core/Ticker';
+	import { TickerShared } from 'src/core/Ticker';
 	/** 滤镜的基础类 */
 	import { Filter } from 'src/core/Filter';
 	/**
@@ -4543,28 +4512,11 @@ declare module 'test/TestAlign' {
 	}
 
 }
-declare module 'test/WebPlayerSize' {
-	 type ScaleMode = "noScale" | "showAll" | "noBorder" | "exactFit" | "fixedWidth" | "fixedHeight" | "fixedNarrow" | "fixedWide";
-	/**
-	 * @private
-	 * 更新播放器视口尺寸
-	 */
-	export default function updateViewSize(app: vf.Application, canvasScaleFactor: number | undefined, isWebGl: boolean | undefined, scaleMode: ScaleMode): void;
-	export {};
-
-}
 declare module 'test/TestApplication' {
 	///   path="../gui.d.ts" />
 	///   types="@vf.js/vf" />
 	export default class TestApplication {
 	    constructor(thisObj: any, callback: (app: vf.Application, uiStage: vf.gui.Stage) => void);
-	    private uiStage;
-	    private app;
-	    private thisObj;
-	    private callback;
-	    private initTest;
-	    private resize;
-	    private updata;
 	}
 
 }

@@ -1,4 +1,4 @@
-import { shared as tickerShared } from '../core/Ticker'
+import { TickerShared } from '../core/Ticker'
 import { objectPoolShared } from '../utils/ObjectPool';
 import { ComponentEvent } from '../interaction/Index';
 import { Easing } from './Easing';
@@ -241,13 +241,13 @@ export class Timeline extends vf.utils.EventEmitter implements Lifecycle {
         if (!this._isSetDefault) {
             throw "Error Timeline.load undefined default";
         }
-        tickerShared.removeUpdateEvent(this.update, this)
-        tickerShared.addUpdateEvent(this.update, this);
+        TickerShared.remove(this.update, this)
+        TickerShared.add(this.update, this);
     }
 
 
     release() {
-        tickerShared.removeUpdateEvent(this.update, this);
+        TickerShared.remove(this.update, this);
         this._frames.forEach(map => {
             map.forEach((value: Node, ) => {
                 objectPoolShared.push(Node, value);

@@ -1,4 +1,5 @@
 import { Tween } from "../Tween";
+import { TickerShared } from "../../core/Ticker";
 
 /**
  * 缓动列表
@@ -153,7 +154,7 @@ export function removeDisplay(uuid: string) {
  * vf.gui.tween.update(500)
  */
 
-export function update(time: number, preserve = false) {
+export function update(deltaTime: number) {
     if (!isStarted) {
         return false;
     }
@@ -171,7 +172,7 @@ export function update(time: number, preserve = false) {
     let i = 0;
     let length = _tweens.length;
     while (i < length) {
-        _tweens[i++].update(time, preserve);
+        _tweens[i++].update(TickerShared.deltaMS, false);
 
         if (length > _tweens.length) {
             // The tween has been removed, keep same index
@@ -180,7 +181,6 @@ export function update(time: number, preserve = false) {
 
         length = _tweens.length;
     }
-
     return true;
 }
 
