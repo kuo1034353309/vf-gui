@@ -13802,13 +13802,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.4.0.1.4.0.1.4.0) ==1.4.0.1.4.0.1.4.0;
+//     return this.lastIndexOf(word, pos1.4.3.1.4.3.1.4.3) ==1.4.3.1.4.3.1.4.3;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.4.0";
+window.vf.gui.version = "1.4.3";
 
 
 /***/ })
