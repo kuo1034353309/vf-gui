@@ -25,7 +25,7 @@ export default class TestTween {
             .repeat(Infinity)
             .easing(vf.gui.Easing.Linear.None)
             .yoyo(true)
-            .start(0);
+            .start();
 
 
         const rootNode = new Node(undefined, root);
