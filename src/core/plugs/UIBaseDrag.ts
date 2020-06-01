@@ -4,7 +4,7 @@ import { TouchMouseEventEnum } from "../../interaction/TouchMouseEventEnum";
 import { DisplayObjectAbstract } from "../DisplayObjectAbstract";
 import { Stage } from "../Stage";
 import { getDisplayObject, debug, getDisplayPathById } from "../../utils/Utils";
-
+import { SyncManager } from "../../Interaction/syncManager";
 
 /**
  *  组件的拖拽操作
@@ -438,6 +438,7 @@ export class UIBaseDrag implements Lifecycle {
         if (this.target == undefined) {
             return;
         }
+        (SyncManager.getInstance(this.target.stage) as SyncManager).collectEvent(e, this.target);
         const target = this.target;
         const item = DragDropController.getEventItem(e, this.dropGroup);
         if (item && item.dragOption.dragging) {

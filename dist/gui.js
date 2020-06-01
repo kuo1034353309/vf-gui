@@ -168,6 +168,7 @@ var SyncManager = /** @class */ (function () {
      */
     SyncManager.prototype.createEventData = function (e, obj) {
         var event = {};
+        event.code = 'evt_' + Date.now();
         event.type = e.type;
         event.path = Utils_1.getDisplayPathById(obj);
         var data = {};
@@ -187,6 +188,9 @@ var SyncManager = /** @class */ (function () {
             window.parent.postMessage(eventData, '*');
         }
     };
+    /**
+     * 更新节流状态
+     */
     SyncManager.prototype.throttleUpdate = function () {
         this._throttleFlag = false;
         if (this._lostEvent.length > 0) {
@@ -194,8 +198,14 @@ var SyncManager = /** @class */ (function () {
             this._lostEvent = [];
         }
     };
+    /**
+     * 节流，每100ms发送一次
+     * @param eventData
+     */
     SyncManager.prototype.throttle = function (eventData) {
         var _this = this;
+        this.sendEvent(eventData);
+        return;
         if (!this._throttleFlag) {
             this._throttleFlag = true;
             this.sendEvent(eventData);
@@ -3097,7 +3107,6 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var tween = __webpack_require__(/*! ../tween/private/index */ "./src/tween/private/index.ts");
 /**
  * 心跳，需要UI库初始化后，进行实例调用注册
  */
@@ -3130,11 +3139,11 @@ var Ticker = /** @class */ (function (_super) {
         configurable: true
     });
     Ticker.prototype.update = function (deltaTime, lastTime, elapsedMS) {
-        if (this._disabled) {
-            return;
-        }
-        tween.update(elapsedMS);
-        this.emit("update", deltaTime, lastTime, elapsedMS);
+        // if (this._disabled){
+        //     return;
+        // }
+        // tween.update(elapsedMS);
+        // this.emit("update", deltaTime,lastTime,elapsedMS);
     };
     /**
      * 增加更新监听器
@@ -3177,6 +3186,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Index_1 = __webpack_require__(/*! ../../interaction/Index */ "./src/interaction/Index.ts");
 var DisplayObjectAbstract_1 = __webpack_require__(/*! ../DisplayObjectAbstract */ "./src/core/DisplayObjectAbstract.ts");
 var Utils_1 = __webpack_require__(/*! ../../utils/Utils */ "./src/utils/Utils.ts");
+var syncManager_1 = __webpack_require__(/*! ../../Interaction/syncManager */ "./src/Interaction/syncManager.ts");
 /**
  *  组件的拖拽操作
  *
@@ -3579,6 +3589,7 @@ var UIBaseDrag = /** @class */ (function () {
         if (this.target == undefined) {
             return;
         }
+        syncManager_1.SyncManager.getInstance(this.target.stage).collectEvent(e, this.target);
         var target = this.target;
         var item = Index_1.DragDropController.getEventItem(e, this.dropGroup);
         if (item && item.dragOption.dragging) {
@@ -9614,6 +9625,7 @@ exports.getEventItem = getEventItem;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var Index_1 = __webpack_require__(/*! ./Index */ "./src/interaction/Index.ts");
+var syncManager_1 = __webpack_require__(/*! ./syncManager */ "./src/interaction/syncManager.ts");
 /**
  * 多拽相关的事件处理类
  *
@@ -9673,11 +9685,16 @@ var DragEvent = /** @class */ (function () {
         }
     };
     DragEvent.prototype._onDragStart = function (e) {
-        if (this.obj.dragStopPropagation && e.data.originalEvent.stopPropagation) {
+        if (e.type == "mousedown" /* mousedown */ || e.type == "touchstart" /* touchstart */) {
+            syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
+        }
+        if (this.obj.dragStopPropagation && e.data.originalEvent && e.data.originalEvent.stopPropagation) {
             e.data.originalEvent.stopPropagation();
         }
         this.id = e.data.identifier;
-        this.onDragPress && this.onDragPress.call(this.obj, e, true, this);
+        if (e.type == "mousedown" /* mousedown */ || e.type == "touchstart" /* touchstart */) {
+            this.onDragPress && this.onDragPress.call(this.obj, e, true, this);
+        }
         if (!this.bound && this.obj.parent && this.obj.stage) {
             var stage = this.obj.stage.container;
             this.start.copyFrom(e.data.global);
@@ -9690,22 +9707,29 @@ var DragEvent = /** @class */ (function () {
             stage.on("touchcancel" /* touchcancel */, this._onDragEnd, this);
             this.bound = true;
         }
-        if (this.obj.stage && this.obj.stage.originalEventPreventDefault && e.data.originalEvent.preventDefault) {
+        if (this.obj.stage &&
+            this.obj.stage.originalEventPreventDefault &&
+            e.data.originalEvent &&
+            e.data.originalEvent.preventDefault) {
             e.data.originalEvent.preventDefault();
         }
     };
     DragEvent.prototype._onDragMove = function (e) {
-        if (this.obj.dragStopPropagation && e.data.originalEvent.stopPropagation) {
+        if (this.obj.dragStopPropagation && e.data.originalEvent && e.data.originalEvent.stopPropagation) {
             e.data.originalEvent.stopPropagation();
         }
         if (e.data.identifier !== this.id)
             return;
+        if (e.type == "mousemove" /* mousemove */ || e.type == "touchmove" /* touchmove */) {
+            syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj.stage);
+        }
         this.mouse.copyFrom(e.data.global);
         this.offset.set(this.mouse.x - this.start.x, this.mouse.y - this.start.y);
         if (!this.dragging) {
             this.movementX = Math.abs(this.offset.x);
             this.movementY = Math.abs(this.offset.y);
-            if (this.movementX === 0 && this.movementY === 0 || Math.max(this.movementX, this.movementY) < this.obj.dragThreshold)
+            if ((this.movementX === 0 && this.movementY === 0) ||
+                Math.max(this.movementX, this.movementY) < this.obj.dragThreshold)
                 return; //thresshold
             if (this.dragRestrictAxis !== undefined) {
                 this.cancel = false;
@@ -9728,6 +9752,13 @@ var DragEvent = /** @class */ (function () {
             e.stopPropagation();
         if (e.data.identifier !== this.id)
             return;
+        if (e.type == "mouseup" /* mouseup */ ||
+            e.type == "mouseupoutside" /* mouseupoutside */ ||
+            e.type == "touchend" /* touchend */ ||
+            e.type == "touchendoutside" /* touchendoutside */ ||
+            e.type == "touchcancel" /* touchcancel */) {
+            syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj.stage);
+        }
         if (this.bound && this.obj.stage) {
             var stage = this.obj.stage.container;
             stage.off("mousemove" /* mousemove */, this._onDragMove, this);
@@ -10229,6 +10260,7 @@ var SyncManager = /** @class */ (function () {
      */
     SyncManager.prototype.createEventData = function (e, obj) {
         var event = {};
+        event.code = 'evt_' + Date.now();
         event.type = e.type;
         event.path = Utils_1.getDisplayPathById(obj);
         var data = {};
@@ -10248,6 +10280,9 @@ var SyncManager = /** @class */ (function () {
             window.parent.postMessage(eventData, '*');
         }
     };
+    /**
+     * 更新节流状态
+     */
     SyncManager.prototype.throttleUpdate = function () {
         this._throttleFlag = false;
         if (this._lostEvent.length > 0) {
@@ -10255,8 +10290,14 @@ var SyncManager = /** @class */ (function () {
             this._lostEvent = [];
         }
     };
+    /**
+     * 节流，每100ms发送一次
+     * @param eventData
+     */
     SyncManager.prototype.throttle = function (eventData) {
         var _this = this;
+        this.sendEvent(eventData);
+        return;
         if (!this._throttleFlag) {
             this._throttleFlag = true;
             this.sendEvent(eventData);
@@ -13680,40 +13721,6 @@ function isLagSmoothing() {
     return handleLag;
 }
 exports.isLagSmoothing = isLagSmoothing;
-
-
-/***/ }),
-
-/***/ "./src/tween/private/index.ts":
-/*!************************************!*\
-  !*** ./src/tween/private/index.ts ***!
-  \************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var core_1 = __webpack_require__(/*! ./core */ "./src/tween/private/core.ts");
-exports.add = core_1.add;
-exports.get = core_1.get;
-exports.getAll = core_1.getAll;
-exports.isRunning = core_1.isRunning;
-exports.FrameThrottle = core_1.FrameThrottle;
-exports.ToggleLagSmoothing = core_1.ToggleLagSmoothing;
-exports.Plugins = core_1.Plugins;
-exports.remove = core_1.remove;
-exports.removeAll = core_1.removeAll;
-exports.removeDisplay = core_1.removeDisplay;
-exports.update = core_1.update;
-var Interpolation_1 = __webpack_require__(/*! ./Interpolation */ "./src/tween/private/Interpolation.ts");
-exports.Interpolation = Interpolation_1.Interpolation;
-var utils = __webpack_require__(/*! ./constants */ "./src/tween/private/constants.ts");
-exports.utils = utils;
-var TweenEvent_1 = __webpack_require__(/*! ../../event/TweenEvent */ "./src/event/TweenEvent.ts");
-exports.TweenEvent = TweenEvent_1.TweenEvent;
-var Timeline_1 = __webpack_require__(/*! ../Timeline */ "./src/tween/Timeline.ts");
-exports.Timeline = Timeline_1.Timeline;
 
 
 /***/ }),

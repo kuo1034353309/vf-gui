@@ -42,7 +42,7 @@ export class SyncManager {
     /**
      * 收集交互事件
      */
-    public collectEvent(e: InteractionEvent, obj: DisplayObject) {
+    public collectEvent(e: InteractionEvent, obj: DisplayObjectAbstract) {
         if (!this._stage.syncInteractiveFlag || e.signalling) return; //不需要同步，或者已经是信令同步过来的，不再做处理
         let eventData: string = this.createEventData(e, obj);
         
@@ -71,8 +71,9 @@ export class SyncManager {
     /**
      * 构造一个新的e，用于同步，数据要尽量精简
      */
-    private createEventData(e: InteractionEvent, obj: DisplayObject) {
+    private createEventData(e: InteractionEvent, obj: DisplayObjectAbstract) {
         let event: any = {};
+        event.code = 'evt_' + Date.now();
         event.type = e.type;
         event.path = getDisplayPathById(obj);
         let data: any = {};
@@ -94,6 +95,9 @@ export class SyncManager {
         }
     }
 
+    /**
+     * 更新节流状态
+     */
     private throttleUpdate(){
         this._throttleFlag = false;
         if(this._lostEvent.length > 0){
@@ -102,7 +106,13 @@ export class SyncManager {
         }
     }
 
+    /**
+     * 节流，每100ms发送一次
+     * @param eventData 
+     */
     private throttle(eventData: string){
+        this.sendEvent(eventData);
+        return;
         if(!this._throttleFlag){
             this._throttleFlag = true;
             this.sendEvent(eventData);

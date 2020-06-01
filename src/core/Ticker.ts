@@ -29,11 +29,11 @@ class Ticker extends vf.utils.EventEmitter{
     }
     
     public update(deltaTime: number,lastTime: number,elapsedMS: number) {
-        if (this._disabled){
-            return;
-        }
-        tween.update(elapsedMS);
-        this.emit("update", deltaTime,lastTime,elapsedMS);
+        // if (this._disabled){
+        //     return;
+        // }
+        // tween.update(elapsedMS);
+        // this.emit("update", deltaTime,lastTime,elapsedMS);
         
     }
     /**
