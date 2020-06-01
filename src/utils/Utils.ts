@@ -143,7 +143,7 @@ export function now() {
  * @param source 对象元
  */
 export function deepCopy(source: any, target?: any) {
-    if (source === undefined || typeof source !== 'object') {
+    if (source === null || source === undefined || typeof source !== 'object') {
         return source;
     } else if (Array.isArray(source)) {
         return [].concat(source as []);

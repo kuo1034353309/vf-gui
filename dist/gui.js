@@ -96,6 +96,138 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ({
 
+/***/ "./src/Interaction/syncManager.ts":
+/*!****************************************!*\
+  !*** ./src/Interaction/syncManager.ts ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/**
+ * 用于同步输入事件
+ * by ziye
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+var InteractionEvent_1 = __webpack_require__(/*! ../event/InteractionEvent */ "./src/event/InteractionEvent.ts");
+var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
+var SyncManager = /** @class */ (function () {
+    function SyncManager(stage) {
+        var _this = this;
+        this._lostEvent = [];
+        this._throttleFlag = false;
+        this._throttleTimer = null;
+        this._interactionEvent = new InteractionEvent_1.InteractionEvent();
+        if (!this._interactionEvent.data) {
+            this._interactionEvent.data = new vf.interaction.InteractionData();
+        }
+        this._stage = stage;
+        //测试
+        window.addEventListener('message', function (event) {
+            _this.receiveEvent(event.data);
+        }, false);
+    }
+    /**
+     * 对应一个stage有一个syncManager的实例
+     */
+    SyncManager.getInstance = function (stage) {
+        if (stage) {
+            return stage.syncManager;
+        }
+    };
+    /**
+     * 收集交互事件
+     */
+    SyncManager.prototype.collectEvent = function (e, obj) {
+        if (!this._stage.syncInteractiveFlag || e.signalling)
+            return; //不需要同步，或者已经是信令同步过来的，不再做处理
+        var eventData = this.createEventData(e, obj);
+        if (e.type === "mousemove" /* mousemove */ || e.type === "touchmove" /* touchmove */) {
+            this.throttle(eventData);
+        }
+        else {
+            //首先把之前未发送的move补发出去
+            if (this._lostEvent.length > 0) {
+                clearTimeout(this._throttleTimer);
+                this.sendEvent(this._lostEvent[0]);
+                this._lostEvent = [];
+                this._throttleFlag = false;
+            }
+            this.sendEvent(eventData);
+        }
+    };
+    /**
+     * 接收操作
+     */
+    SyncManager.prototype.receiveEvent = function (eventData) {
+        this.parseEventData(eventData);
+    };
+    /**
+     * 构造一个新的e，用于同步，数据要尽量精简
+     */
+    SyncManager.prototype.createEventData = function (e, obj) {
+        var event = {};
+        event.type = e.type;
+        event.path = Utils_1.getDisplayPathById(obj);
+        var data = {};
+        event.data = data;
+        data.identifier = e.data.identifier;
+        data.global = { x: e.data.global.x, y: e.data.global.y };
+        //!!!important: e.data.originalEvent  不支持事件继续传递
+        return JSON.stringify(event);
+    };
+    /**
+     * 发送操作
+     */
+    SyncManager.prototype.sendEvent = function (eventData) {
+        console.log('send sync event: ', eventData);
+        //测试，iframe
+        if (window.parent !== window) {
+            window.parent.postMessage(eventData, '*');
+        }
+    };
+    SyncManager.prototype.throttleUpdate = function () {
+        this._throttleFlag = false;
+        if (this._lostEvent.length > 0) {
+            this.throttle(this._lostEvent[0]);
+            this._lostEvent = [];
+        }
+    };
+    SyncManager.prototype.throttle = function (eventData) {
+        var _this = this;
+        if (!this._throttleFlag) {
+            this._throttleFlag = true;
+            this.sendEvent(eventData);
+            this._throttleTimer = setTimeout(function () {
+                _this.throttleUpdate();
+            }, 100);
+        }
+        else {
+            this._lostEvent = [];
+            this._lostEvent.push(eventData);
+        }
+    };
+    /**
+     * 解析收到的event
+     */
+    SyncManager.prototype.parseEventData = function (eventData) {
+        var event = JSON.parse(eventData);
+        this._interactionEvent.signalling = true;
+        this._interactionEvent.type = event.type;
+        var data = event.data;
+        this._interactionEvent.data.identifier = data.identifier;
+        this._interactionEvent.data.global.set(data.global.x, data.global.y);
+        this._obj = this._stage.getChildByPath(event.path);
+        this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
+    };
+    return SyncManager;
+}());
+exports.SyncManager = SyncManager;
+
+
+/***/ }),
+
 /***/ "./src/UI.ts":
 /*!*******************!*\
   !*** ./src/UI.ts ***!
@@ -2827,6 +2959,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Ticker_1 = __webpack_require__(/*! ./Ticker */ "./src/core/Ticker.ts");
 var DisplayLayoutAbstract_1 = __webpack_require__(/*! ./DisplayLayoutAbstract */ "./src/core/DisplayLayoutAbstract.ts");
 var DisplayLayoutValidator_1 = __webpack_require__(/*! ./DisplayLayoutValidator */ "./src/core/DisplayLayoutValidator.ts");
+var syncManager_1 = __webpack_require__(/*! ../Interaction/syncManager */ "./src/Interaction/syncManager.ts");
 /**
  * UI的舞台对象，展示所有UI组件
  *
@@ -2844,6 +2977,10 @@ var Stage = /** @class */ (function (_super) {
          * 是否组织原始数据继续传递
          */
         _this.originalEventPreventDefault = false;
+        /**
+         * 是否同步交互事件
+         */
+        _this.syncInteractiveFlag = true; //TODO:默认false
         _this.width = width;
         _this.height = height;
         _this._stageWidth = width;
@@ -2856,6 +2993,7 @@ var Stage = /** @class */ (function (_super) {
         _this.initialized = true;
         _this.$nestLevel = 1;
         _this.app = app;
+        _this.syncManager = new syncManager_1.SyncManager(_this);
         return _this;
     }
     Object.defineProperty(Stage.prototype, "stageWidth", {
@@ -9109,6 +9247,7 @@ exports.TweenEvent = {
 Object.defineProperty(exports, "__esModule", { value: true });
 var TouchMouseEvent_1 = __webpack_require__(/*! ../event/TouchMouseEvent */ "./src/event/TouchMouseEvent.ts");
 var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
+var syncManager_1 = __webpack_require__(/*! ./syncManager */ "./src/interaction/syncManager.ts");
 /**
  * 点击触摸相关的事件处理订阅类,UI组件内部可以创建此类实现点击相关操作
  *
@@ -9220,14 +9359,19 @@ var ClickEvent = /** @class */ (function () {
         this.isStop = true;
     };
     ClickEvent.prototype._onMouseDown = function (e) {
+        if ((this.double && this.onClick) ||
+            this.onPress ||
+            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0 ||
+            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onDown) > 0 ||
+            (this.double && this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onClick) > 0)) {
+            syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
+        }
         this.setLocalPoint(e);
         this.mouse.copyFrom(e.data.global);
         this.id = e.data.identifier;
         this.onPress && this.onPress.call(this.obj, e, this.obj, true), this.obj;
         this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onPress, e, true);
-        if (this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onDown) > 0) {
-            this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onDown, e, true);
-        }
+        this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onDown, e, true);
         if (!this.bound) {
             this.obj.container.on(this.eventnameMouseup, this._onMouseUp, this);
             this.obj.container.on(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
@@ -9247,20 +9391,23 @@ var ClickEvent = /** @class */ (function () {
                 this.time = now;
             }
         }
-        if (this.obj.stage && this.obj.stage.originalEventPreventDefault) {
+        if (this.obj.stage && this.obj.stage.originalEventPreventDefault && e.data.originalEvent) {
             e.data.originalEvent.preventDefault();
         }
     };
     ClickEvent.prototype.emitTouchEvent = function (event, e, args) {
+        if (this.obj.listenerCount(event) <= 0) {
+            return;
+        }
         if (Utils_1.debug) {
             var stage = this.obj.stage;
             if (stage && event !== TouchMouseEvent_1.TouchMouseEvent.onMove) {
                 stage.inputLog({
                     code: event,
-                    level: 'info',
+                    level: "info",
                     target: this.obj,
                     data: [args],
-                    action: e.type
+                    action: e.type,
                 });
             }
         }
@@ -9283,14 +9430,19 @@ var ClickEvent = /** @class */ (function () {
             this.bound = false;
         }
         this.onPress && this.onPress.call(this.obj, e, this.obj, false);
-        if (this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onUp) > 0) {
-            this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onUp, e, false);
-        }
+        this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onUp, e, false);
         this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onPress, e, false);
     };
     ClickEvent.prototype._onMouseUp = function (e) {
         if (e.data.identifier !== this.id)
             return;
+        if (this.onPress ||
+            (!this.double && this.onClick) ||
+            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onUp) > 0 ||
+            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0 ||
+            (!this.double && this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onClick) > 0)) {
+            syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
+        }
         this._mouseUpAll(e);
         //prevent clicks with scrolling/dragging objects
         if (this.obj.dragThreshold) {
@@ -9307,10 +9459,18 @@ var ClickEvent = /** @class */ (function () {
     ClickEvent.prototype._onMouseUpOutside = function (e) {
         if (e.data.identifier !== this.id)
             return;
+        if (this.onPress ||
+            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onUp) > 0 ||
+            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0) {
+            syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
+        }
         this._mouseUpAll(e);
     };
     ClickEvent.prototype._onMouseOver = function (e) {
         if (!this.ishover) {
+            if (this.onHover || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onHover) > 0) {
+                syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
+            }
             this.ishover = true;
             this.obj.container.on("mousemove" /* mousemove */, this._onMouseMove, this);
             this.obj.container.on("touchmove" /* touchmove */, this._onMouseMove, this);
@@ -9320,6 +9480,9 @@ var ClickEvent = /** @class */ (function () {
     };
     ClickEvent.prototype._onMouseOut = function (e) {
         if (this.ishover) {
+            if (this.onHover || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onHover) > 0) {
+                syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
+            }
             this.ishover = false;
             this.obj.container.off("mousemove" /* mousemove */, this._onMouseMove, this);
             this.obj.container.off("touchmove" /* touchmove */, this._onMouseMove, this);
@@ -9328,6 +9491,9 @@ var ClickEvent = /** @class */ (function () {
         }
     };
     ClickEvent.prototype._onMouseMove = function (e) {
+        if (this.onMove || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onMove) > 0) {
+            syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
+        }
         this.setLocalPoint(e);
         this.onMove && this.onMove.call(this.obj, e, this.obj);
         this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onMove, e);
@@ -9987,6 +10153,138 @@ var MouseScrollEvent = /** @class */ (function () {
     return MouseScrollEvent;
 }());
 exports.MouseScrollEvent = MouseScrollEvent;
+
+
+/***/ }),
+
+/***/ "./src/interaction/syncManager.ts":
+/*!****************************************!*\
+  !*** ./src/interaction/syncManager.ts ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/**
+ * 用于同步输入事件
+ * by ziye
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+var InteractionEvent_1 = __webpack_require__(/*! ../event/InteractionEvent */ "./src/event/InteractionEvent.ts");
+var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
+var SyncManager = /** @class */ (function () {
+    function SyncManager(stage) {
+        var _this = this;
+        this._lostEvent = [];
+        this._throttleFlag = false;
+        this._throttleTimer = null;
+        this._interactionEvent = new InteractionEvent_1.InteractionEvent();
+        if (!this._interactionEvent.data) {
+            this._interactionEvent.data = new vf.interaction.InteractionData();
+        }
+        this._stage = stage;
+        //测试
+        window.addEventListener('message', function (event) {
+            _this.receiveEvent(event.data);
+        }, false);
+    }
+    /**
+     * 对应一个stage有一个syncManager的实例
+     */
+    SyncManager.getInstance = function (stage) {
+        if (stage) {
+            return stage.syncManager;
+        }
+    };
+    /**
+     * 收集交互事件
+     */
+    SyncManager.prototype.collectEvent = function (e, obj) {
+        if (!this._stage.syncInteractiveFlag || e.signalling)
+            return; //不需要同步，或者已经是信令同步过来的，不再做处理
+        var eventData = this.createEventData(e, obj);
+        if (e.type === "mousemove" /* mousemove */ || e.type === "touchmove" /* touchmove */) {
+            this.throttle(eventData);
+        }
+        else {
+            //首先把之前未发送的move补发出去
+            if (this._lostEvent.length > 0) {
+                clearTimeout(this._throttleTimer);
+                this.sendEvent(this._lostEvent[0]);
+                this._lostEvent = [];
+                this._throttleFlag = false;
+            }
+            this.sendEvent(eventData);
+        }
+    };
+    /**
+     * 接收操作
+     */
+    SyncManager.prototype.receiveEvent = function (eventData) {
+        this.parseEventData(eventData);
+    };
+    /**
+     * 构造一个新的e，用于同步，数据要尽量精简
+     */
+    SyncManager.prototype.createEventData = function (e, obj) {
+        var event = {};
+        event.type = e.type;
+        event.path = Utils_1.getDisplayPathById(obj);
+        var data = {};
+        event.data = data;
+        data.identifier = e.data.identifier;
+        data.global = { x: e.data.global.x, y: e.data.global.y };
+        //!!!important: e.data.originalEvent  不支持事件继续传递
+        return JSON.stringify(event);
+    };
+    /**
+     * 发送操作
+     */
+    SyncManager.prototype.sendEvent = function (eventData) {
+        console.log('send sync event: ', eventData);
+        //测试，iframe
+        if (window.parent !== window) {
+            window.parent.postMessage(eventData, '*');
+        }
+    };
+    SyncManager.prototype.throttleUpdate = function () {
+        this._throttleFlag = false;
+        if (this._lostEvent.length > 0) {
+            this.throttle(this._lostEvent[0]);
+            this._lostEvent = [];
+        }
+    };
+    SyncManager.prototype.throttle = function (eventData) {
+        var _this = this;
+        if (!this._throttleFlag) {
+            this._throttleFlag = true;
+            this.sendEvent(eventData);
+            this._throttleTimer = setTimeout(function () {
+                _this.throttleUpdate();
+            }, 100);
+        }
+        else {
+            this._lostEvent = [];
+            this._lostEvent.push(eventData);
+        }
+    };
+    /**
+     * 解析收到的event
+     */
+    SyncManager.prototype.parseEventData = function (eventData) {
+        var event = JSON.parse(eventData);
+        this._interactionEvent.signalling = true;
+        this._interactionEvent.type = event.type;
+        var data = event.data;
+        this._interactionEvent.data.identifier = data.identifier;
+        this._interactionEvent.data.global.set(data.global.x, data.global.y);
+        this._obj = this._stage.getChildByPath(event.path);
+        this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
+    };
+    return SyncManager;
+}());
+exports.SyncManager = SyncManager;
 
 
 /***/ }),
@@ -13619,7 +13917,7 @@ exports.now = now;
  * @param source 对象元
  */
 function deepCopy(source, target) {
-    if (source === undefined || typeof source !== 'object') {
+    if (source === null || source === undefined || typeof source !== 'object') {
         return source;
     }
     else if (Array.isArray(source)) {

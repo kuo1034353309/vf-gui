@@ -2,7 +2,7 @@ import {shared as TickerShared} from "./Ticker";
 import { DisplayLayoutAbstract } from "./DisplayLayoutAbstract";
 import { DisplayObject } from "./DisplayObject";
 import validatorShared from "./DisplayLayoutValidator";
-import { DisplayObjectAbstract } from "./DisplayObjectAbstract";
+import { SyncManager } from "../Interaction/syncManager";
 
 /**
  * UI的舞台对象，展示所有UI组件
@@ -28,15 +28,21 @@ export class Stage extends DisplayLayoutAbstract{
         this.initialized = true;
         this.$nestLevel = 1;
         this.app = app;
+        this.syncManager = new SyncManager(this);
     }
 
     public app?: vf.Application;
     public _stageWidth = 0;//调整缩放后的值
     public _stageHeight = 0;//调整缩放后的值
+    public syncManager: SyncManager;
     /**
      * 是否组织原始数据继续传递
      */
     public originalEventPreventDefault = false;
+    /**
+     * 是否同步交互事件
+     */
+    public syncInteractiveFlag = true; //TODO:默认false
 
     public get stageWidth(){
         return this._stageWidth;

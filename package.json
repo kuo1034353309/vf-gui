@@ -5,9 +5,9 @@
   "main": "dist/gui.js",
   "types": "dist/gui.d.ts",
   "scripts": {
-    "test": "webpack --config ./webpack_config/test-webpack.config.js --watch && npm run watch",
+    "test": "webpack --config ./webpack_config/test-webpack.config.js --watch",
     "build": "webpack --config ./webpack_config/webpack.config.js",
-    "watch": "webpack --watch --config ./webpack_config/webpack.config.js",
+    "watch": "webpack --config ./webpack_config/webpack.config.js --watch",
     "start": "webpack-dev-server --open --config ./webpack_config/webpack.config.js",
     "prod": "webpack --config ./webpack_config/publish-webpack.config",
     "npmPublish": "npm publish --access public -registry=https://registry.npmjs.org",

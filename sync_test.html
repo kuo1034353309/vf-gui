@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .firame1{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+        }
+        .firame2{
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <iframe id="iframe1" class="firame1" src="http://127.0.0.1:5501/test.html?type=TestButton"></iframe>
+    <iframe id="iframe2" class="firame2" src="http://127.0.0.1:5501/test.html?type=TestButton"></iframe>
+    <script>
+        window.addEventListener('message', event => {
+            var iframe1 = document.getElementById('iframe1').contentWindow;
+            var iframe2 = document.getElementById('iframe2').contentWindow;
+            
+            if(event.source == iframe1){
+                iframe2.postMessage(event.data, '*');
+            }
+            else{
+                iframe1.postMessage(event.data, '*');
+            }
+        }, false)
+    </script>
+</body>
+</html>
