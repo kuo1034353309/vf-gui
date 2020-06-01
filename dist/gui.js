@@ -117,7 +117,7 @@ var DisplayObject_1 = __webpack_require__(/*! ./core/DisplayObject */ "./src/cor
 exports.DisplayObject = DisplayObject_1.DisplayObject;
 /** 心跳，需要在初始化完成后，启动心跳更新 */
 var Ticker_1 = __webpack_require__(/*! ./core/Ticker */ "./src/core/Ticker.ts");
-exports.TickerShared = Ticker_1.shared;
+exports.TickerShared = Ticker_1.TickerShared;
 /** 滤镜的基础类 */
 var Filter_1 = __webpack_require__(/*! ./core/Filter */ "./src/core/Filter.ts");
 exports.Filter = Filter_1.Filter;
@@ -1243,6 +1243,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
             values[UIKeys.x] = value;
             if (this.container.x !== value) {
                 this.container.x = value;
+                this.invalidateDisplayList();
                 this.invalidateParentLayout();
             }
         },
@@ -1262,6 +1263,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
             values[UIKeys.y] = value;
             if (value !== this.container.y) {
                 this.container.y = value;
+                this.invalidateDisplayList();
                 this.invalidateParentLayout();
             }
         },
@@ -1846,7 +1848,7 @@ var UIValidator = /** @class */ (function (_super) {
      * 添加事件监听
      */
     UIValidator.prototype.attachListeners = function () {
-        Ticker_1.default.addUpdateEvent(this.doPhasedInstantiationCallBack, this);
+        Ticker_1.TickerShared.addOnce(this.doPhasedInstantiationCallBack, this);
         this.listenersAttached = true;
     };
     /**
@@ -1854,7 +1856,6 @@ var UIValidator = /** @class */ (function (_super) {
      * 执行属性应用
      */
     UIValidator.prototype.doPhasedInstantiationCallBack = function () {
-        Ticker_1.default.removeUpdateEvent(this.doPhasedInstantiationCallBack, this);
         this.doPhasedInstantiation();
     };
     /**
@@ -2724,12 +2725,12 @@ var Scheduler = /** @class */ (function (_super) {
         this.start = Scheduler.clock();
         this._lastExecuted = this.start;
         this._running = true;
-        Scheduler.ticker.addUpdateEvent(this.run, this);
+        UI_1.TickerShared.add(this.run, this);
     };
     Scheduler.prototype.stop = function () {
         this.elapsedTimeAtPause = 0;
         this._running = false;
-        Scheduler.ticker.removeUpdateEvent(this.run, this);
+        UI_1.TickerShared.remove(this.run, this);
     };
     Scheduler.prototype.pause = function () {
         if (this._running) {
@@ -2793,7 +2794,6 @@ var Scheduler = /** @class */ (function (_super) {
         return false;
     };
     Scheduler.clock = Date.now;
-    Scheduler.ticker = UI_1.TickerShared;
     return Scheduler;
 }(vf.utils.EventEmitter));
 exports.Scheduler = Scheduler;
@@ -2824,6 +2824,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tween = __webpack_require__(/*! ../tween/private/index */ "./src/tween/private/index.ts");
 var Ticker_1 = __webpack_require__(/*! ./Ticker */ "./src/core/Ticker.ts");
 var DisplayLayoutAbstract_1 = __webpack_require__(/*! ./DisplayLayoutAbstract */ "./src/core/DisplayLayoutAbstract.ts");
 var DisplayLayoutValidator_1 = __webpack_require__(/*! ./DisplayLayoutValidator */ "./src/core/DisplayLayoutValidator.ts");
@@ -2838,36 +2839,38 @@ var Stage = /** @class */ (function (_super) {
     __extends(Stage, _super);
     function Stage(width, height, app) {
         var _this = _super.call(this) || this;
-        _this._stageWidth = 0; //调整缩放后的值
-        _this._stageHeight = 0; //调整缩放后的值
         /**
          * 是否组织原始数据继续传递
          */
         _this.originalEventPreventDefault = false;
         _this.width = width;
         _this.height = height;
-        _this._stageWidth = width;
-        _this._stageWidth = height;
-        _this.setActualSize(width, height);
         _this.container.name = "Stage";
         _this.container.hitArea = new vf.Rectangle(0, 0, width, height);
         _this.container.interactive = true;
         _this.container.interactiveChildren = true;
-        _this.initialized = true;
         _this.$nestLevel = 1;
         _this.app = app;
+        _this.initialized = true;
+        if (!Ticker_1.TickerShared.started) {
+            Ticker_1.TickerShared.start();
+        }
+        Ticker_1.TickerShared.add(tween.update, _this);
+        if (!_this.container.parent) {
+            _this.app.stage.addChild(_this.container);
+        }
         return _this;
     }
     Object.defineProperty(Stage.prototype, "stageWidth", {
         get: function () {
-            return this._stageWidth;
+            return this.container.width;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Stage.prototype, "stageHeight", {
         get: function () {
-            return this._stageHeight;
+            return this.container.height;
         },
         enumerable: true,
         configurable: true
@@ -2878,7 +2881,6 @@ var Stage = /** @class */ (function (_super) {
         },
         set: function (value) {
             this.container.scale.x = value;
-            this._stageWidth = value * this.width;
         },
         enumerable: true,
         configurable: true
@@ -2889,7 +2891,6 @@ var Stage = /** @class */ (function (_super) {
         },
         set: function (value) {
             this.container.scale.y = value;
-            this._stageHeight = value * this.height;
         },
         enumerable: true,
         configurable: true
@@ -2897,16 +2898,16 @@ var Stage = /** @class */ (function (_super) {
     Object.defineProperty(Stage.prototype, "Scale", {
         set: function (value) {
             this.container.scale.copyFrom(value);
-            this._stageWidth = value.x * this.width;
-            this._stageHeight = value.y * this.height;
         },
         enumerable: true,
         configurable: true
     });
     Stage.prototype.release = function () {
         _super.prototype.release.call(this);
+        Ticker_1.TickerShared.remove(tween.update, this);
     };
     Stage.prototype.releaseAll = function () {
+        Ticker_1.TickerShared.remove(tween.update, this);
         for (var i = 0; i < this.uiChildren.length; i++) {
             var ui = this.uiChildren[i];
             ui.releaseAll();
@@ -2914,9 +2915,9 @@ var Stage = /** @class */ (function (_super) {
         this.uiChildren = [];
         this.container.removeAllListeners();
         this.container.removeChildren();
-        Ticker_1.shared.removeAllListeners();
         DisplayLayoutValidator_1.default.removeAllListeners();
         DisplayLayoutValidator_1.default.removeDepthQueueAll();
+        this.app = null;
     };
     Stage.prototype.resize = function () {
         this.container.hitArea = new vf.Rectangle(0, 0, this.width, this.height);
@@ -2945,83 +2946,10 @@ exports.Stage = Stage;
 
 "use strict";
 
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-var tween = __webpack_require__(/*! ../tween/private/index */ "./src/tween/private/index.ts");
-/**
- * 心跳，需要UI库初始化后，进行实例调用注册
- */
-var Ticker = /** @class */ (function (_super) {
-    __extends(Ticker, _super);
-    /**
-     * 心跳构造函数
-     * @param autoStart 是否自动开启心跳，默认false
-     */
-    function Ticker(autoStart) {
-        var _this = _super.call(this) || this;
-        _this._disabled = true;
-        if (autoStart) {
-            _this.disabled = false;
-        }
-        return _this;
-    }
-    Object.defineProperty(Ticker.prototype, "disabled", {
-        /** 是否关闭心跳.默认false不关闭,关闭后，缓动等组件也将关闭 */
-        get: function () {
-            return this._disabled;
-        },
-        set: function (value) {
-            if (value == this._disabled) {
-                return;
-            }
-            this._disabled = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Ticker.prototype.update = function (deltaTime, lastTime, elapsedMS) {
-        if (this._disabled) {
-            return;
-        }
-        tween.update(elapsedMS);
-        this.emit("update", deltaTime, lastTime, elapsedMS);
-    };
-    /**
-     * 增加更新监听器
-     * @param fn 被调用的函数
-     * @param context 当前域
-     */
-    Ticker.prototype.addUpdateEvent = function (fn, context) {
-        return this.on("update", fn, context);
-    };
-    /**
-     * 移除更新监听器
-     * @param fn 被调用的函数
-     * @param context 当前域
-     */
-    Ticker.prototype.removeUpdateEvent = function (fn, context) {
-        return this.removeListener("update", fn, context);
-    };
-    return Ticker;
-}(vf.utils.EventEmitter));
-/**
- * Ticker 的实例
- */
-exports.shared = new Ticker(true);
-exports.tickerShared = exports.shared;
-exports.default = exports.tickerShared;
+exports.TickerShared = new vf.Ticker();
+exports.TickerShared.autoStart = false;
+exports.TickerShared.maxFPS = 30;
 
 
 /***/ }),
@@ -5664,15 +5592,10 @@ var Rect = /** @class */ (function (_super) {
     Rect.prototype.drawRoundedRect = function () {
         var graphics = this.graphics;
         graphics.clear();
-        if (this._radius >= (this.width / 2)) {
-            graphics.lineStyle(this._lineWidth, this._lineColor, 1, 1, true);
-        }
-        else {
-            graphics.lineStyle(this._lineWidth, this._lineColor);
-        }
+        graphics.lineStyle(this._lineWidth, this._lineColor);
         if (this._color !== undefined)
             graphics.beginFill(this._color);
-        graphics.drawRoundedRect(this._anchorX ? -this._anchorX * this.width : 0, this._anchorY ? -this._anchorY * this.height : 0, this.width, this.height, this._radius);
+        graphics.drawRoundedRect(this._anchorX ? -this._anchorX * this.width : 0, this._anchorY ? -this._anchorY * this.height : 0, this.width, this.height, Math.min(15, this._radius));
         graphics.endFill();
     };
     Rect.prototype.release = function () {
@@ -5947,7 +5870,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var Container_1 = __webpack_require__(/*! ./Container */ "./src/display/Container.ts");
-var Ticker = __webpack_require__(/*! ../core/Ticker */ "./src/core/Ticker.ts");
+var Ticker_1 = __webpack_require__(/*! ../core/Ticker */ "./src/core/Ticker.ts");
 var Utils = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
 var DragEvent_1 = __webpack_require__(/*! ../interaction/DragEvent */ "./src/interaction/DragEvent.ts");
 var MouseScrollEvent_1 = __webpack_require__(/*! ../interaction/MouseScrollEvent */ "./src/interaction/MouseScrollEvent.ts");
@@ -6075,7 +5998,7 @@ var ScrollingContainer = /** @class */ (function (_super) {
                 _this._Position.copyFrom(_this._innerContainer.position);
                 _this.scrolling = true;
                 _this.setScrollPosition();
-                Ticker.shared.addUpdateEvent(_this.updateScrollPosition, _this);
+                Ticker_1.TickerShared.add(_this.updateScrollPosition, _this);
             }
         };
         this.dragEvent.onDragMove = function (e, offset) {
@@ -6087,7 +6010,7 @@ var ScrollingContainer = /** @class */ (function (_super) {
         this.dragEvent.onDragEnd = function () {
             if (_this.scrolling) {
                 _this.scrolling = false;
-                Ticker.shared.removeUpdateEvent(_this.updateScrollPosition, _this);
+                Ticker_1.TickerShared.remove(_this.updateScrollPosition, _this);
             }
         };
         var scrollSpeed = new vf.Point();
@@ -6284,6 +6207,7 @@ var ScrollingContainer = /** @class */ (function (_super) {
     ScrollingContainer.prototype.release = function () {
         _super.prototype.release.call(this);
         //this.offAll();
+        Ticker_1.TickerShared.remove(this.updateScrollPosition, this);
         this.dragEvent && this.dragEvent.remove();
         this.mouseScrollEvent && this.mouseScrollEvent.remove();
     };
@@ -12150,11 +12074,11 @@ var Timeline = /** @class */ (function (_super) {
         if (!this._isSetDefault) {
             throw "Error Timeline.load undefined default";
         }
-        Ticker_1.shared.removeUpdateEvent(this.update, this);
-        Ticker_1.shared.addUpdateEvent(this.update, this);
+        Ticker_1.TickerShared.remove(this.update, this);
+        Ticker_1.TickerShared.add(this.update, this);
     };
     Timeline.prototype.release = function () {
-        Ticker_1.shared.removeUpdateEvent(this.update, this);
+        Ticker_1.TickerShared.remove(this.update, this);
         this._frames.forEach(function (map) {
             map.forEach(function (value) {
                 ObjectPool_1.objectPoolShared.push(Node, value);
@@ -12423,12 +12347,10 @@ var Tween = /** @class */ (function (_super) {
     };
     /**
      * 开始执行缓动
-     * @param {number|string} time 要开始的时间，延迟值
      * @example tween.start()
      * @memberof vf.gui.Tween
      */
-    Tween.prototype.start = function (time) {
-        this._startTime = time !== undefined ? time : 0;
+    Tween.prototype.start = function () {
         this._startTime += this._delayTime;
         this._prevTime = 0;
         this._onStartCallbackFired = false;
@@ -12561,16 +12483,16 @@ var Tween = /** @class */ (function (_super) {
     };
     /**
      * 更新函数，通过给定的 `time` 设置目标属性变化
-    * @param {number=} elapsedMS 帧间隔
+    * @param {number=} deltaTime 帧间隔
     * @param {Boolean=} preserve 完成后，防止删除动画对象
      * @param {boolean=} forceTime 强制进行更新渲染，不关心时间是否匹配
      * @example tween.update(100)
      * @memberof vf.gui.Tween
      */
-    Tween.prototype.update = function (elapsedMS, preserve, forceTime) {
+    Tween.prototype.update = function (deltaTime, preserve, forceTime) {
         var _a = this, _onStartCallbackFired = _a._onStartCallbackFired, _easingFunction = _a._easingFunction, _easingReverse = _a._easingReverse, _delayTime = _a._delayTime, _reverseDelayTime = _a._reverseDelayTime, _yoyo = _a._yoyo, _reversed = _a._reversed, _startTime = _a._startTime, _duration = _a._duration, _valuesStart = _a._valuesStart, _valuesEnd = _a._valuesEnd, object = _a.object, _isFinite = _a._isFinite, _isPlaying = _a._isPlaying;
         if (!_isPlaying || (_startTime > 0 && !forceTime)) {
-            this._startTime -= elapsedMS;
+            this._startTime -= deltaTime;
             this._startTime = Math.max(0, this._startTime);
             return true;
         }
@@ -12582,8 +12504,8 @@ var Tween = /** @class */ (function (_super) {
             _repeat = 0;
         }
         else {
-            this._prevTime += elapsedMS;
-            if (elapsedMS > constants_1.TOO_LONG_FRAME_MS && core_1.isRunning() && core_1.isLagSmoothing()) {
+            this._prevTime += deltaTime;
+            if (deltaTime > constants_1.TOO_LONG_FRAME_MS && core_1.isRunning() && core_1.isLagSmoothing()) {
                 this._prevTime -= constants_1.FRAME_MS;
             }
             elapsed = (this._prevTime) / _duration;
@@ -12619,7 +12541,7 @@ var Tween = /** @class */ (function (_super) {
             //     object[property] = _interpolationFunctionCall(end, value, object[property]);
             // } 
         }
-        this.emit(TweenEvent_1.TweenEvent.update, object, elapsed, elapsedMS);
+        this.emit(TweenEvent_1.TweenEvent.update, object, elapsed);
         if (elapsed === 1 || (_reversed && elapsed === 0)) {
             this._prevTime = 0;
             if (_repeat > 0 && _duration > 0) {
@@ -13188,6 +13110,7 @@ exports.SET_NESTED = function (nested) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var Ticker_1 = __webpack_require__(/*! ../../core/Ticker */ "./src/core/Ticker.ts");
 /**
  * 缓动列表
  * @private
@@ -13335,8 +13258,7 @@ exports.removeDisplay = removeDisplay;
  * @example
  * vf.gui.tween.update(500)
  */
-function update(time, preserve) {
-    if (preserve === void 0) { preserve = false; }
+function update(deltaTime) {
     if (!isStarted) {
         return false;
     }
@@ -13352,7 +13274,7 @@ function update(time, preserve) {
     var i = 0;
     var length = _tweens.length;
     while (i < length) {
-        _tweens[i++].update(time, preserve);
+        _tweens[i++].update(Ticker_1.TickerShared.deltaMS, false);
         if (length > _tweens.length) {
             // The tween has been removed, keep same index
             i--;
@@ -13880,13 +13802,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.3.19.1.3.19.1.3.19) ==1.3.19.1.3.19.1.3.19;
+//     return this.lastIndexOf(word, pos1.4.3.1.4.3.1.4.3) ==1.4.3.1.4.3.1.4.3;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.3.19";
+window.vf.gui.version = "1.4.3";
 
 
 /***/ })

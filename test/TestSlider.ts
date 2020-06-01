@@ -71,7 +71,7 @@ export default class TestSlider {
         uiStage.addChild(progressText);
 
         let count = 0;
-        vf.gui.TickerShared.addUpdateEvent(() => {
+        vf.gui.TickerShared.add(() => {
             if (count > 100) {
                 count = 0;
             }

@@ -5,7 +5,7 @@ import { Stage } from "./core/Stage";
 /** UI基础显示对象，一般不会直接使用，只作为类型推断 */
 import { DisplayObject } from "./core/DisplayObject";
 /** 心跳，需要在初始化完成后，启动心跳更新 */
-import { shared as TickerShared } from "./core/Ticker";
+import { TickerShared } from "./core/Ticker";
 /** 滤镜的基础类 */
 import { Filter } from './core/Filter';
 /**

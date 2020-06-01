@@ -1,5 +1,5 @@
 import {Container} from "./Container";
-import * as Ticker from "../core/Ticker";
+import { TickerShared } from "../core/Ticker";
 import * as Utils from "../utils/Utils";
 import {DragEvent} from "../interaction/DragEvent";
 import {MouseScrollEvent} from "../interaction/MouseScrollEvent";
@@ -138,7 +138,7 @@ export class ScrollingContainer extends Container {
                 this._Position.copyFrom(this._innerContainer.position);
                 this.scrolling = true;
                 this.setScrollPosition();
-                Ticker.shared.addUpdateEvent(this.updateScrollPosition, this);
+                TickerShared.add(this.updateScrollPosition, this);
             }
         };
 
@@ -152,7 +152,7 @@ export class ScrollingContainer extends Container {
         this.dragEvent.onDragEnd = () => {
             if (this.scrolling) {
                 this.scrolling = false;
-                Ticker.shared.removeUpdateEvent(this.updateScrollPosition, this);
+                TickerShared.remove(this.updateScrollPosition, this);
             }
         };
         
@@ -382,6 +382,7 @@ export class ScrollingContainer extends Container {
     public release() {
         super.release();
         //this.offAll();
+        TickerShared.remove(this.updateScrollPosition, this);
         this.dragEvent && this.dragEvent.remove();
         this.mouseScrollEvent && this.mouseScrollEvent.remove(); 
 

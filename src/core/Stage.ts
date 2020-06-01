@@ -1,8 +1,8 @@
-import {shared as TickerShared} from "./Ticker";
+import * as tween from "../tween/private/index";
+import { TickerShared } from "./Ticker";
 import { DisplayLayoutAbstract } from "./DisplayLayoutAbstract";
 import { DisplayObject } from "./DisplayObject";
 import validatorShared from "./DisplayLayoutValidator";
-import { DisplayObjectAbstract } from "./DisplayObjectAbstract";
 
 /**
  * UI的舞台对象，展示所有UI组件
@@ -14,36 +14,41 @@ import { DisplayObjectAbstract } from "./DisplayObjectAbstract";
 export class Stage extends DisplayLayoutAbstract{
 
 
-    public constructor(width: number, height: number,app?: vf.Application) {
+    public constructor(width: number, height: number,app: vf.Application) {
         super(); 
         this.width = width;
         this.height = height;
-        this._stageWidth = width;
-        this._stageWidth = height;
-        this.setActualSize(width,height);
         this.container.name = "Stage";
         this.container.hitArea = new vf.Rectangle(0, 0, width, height);
         this.container.interactive = true;
         this.container.interactiveChildren = true;
-        this.initialized = true;
         this.$nestLevel = 1;
         this.app = app;
+        this.initialized = true;
+
+        if(!TickerShared.started){
+            TickerShared.start();
+        }
+        TickerShared.add(tween.update,this);
+
+        if (!this.container.parent) {
+            this.app.stage.addChild(this.container);
+        }
+        
     }
 
-    public app?: vf.Application;
-    public _stageWidth = 0;//调整缩放后的值
-    public _stageHeight = 0;//调整缩放后的值
+    public app: vf.Application | any;
     /**
      * 是否组织原始数据继续传递
      */
     public originalEventPreventDefault = false;
 
     public get stageWidth(){
-        return this._stageWidth;
+        return this.container.width;
     }
 
     public get stageHeight(){
-        return this._stageHeight;
+        return this.container.height;
     }
 
     public get scaleX() {
@@ -52,7 +57,6 @@ export class Stage extends DisplayLayoutAbstract{
 
     public set scaleX(value: number) {
         this.container.scale.x = value;
-        this._stageWidth = value * this.width;
     }
 
     public get scaleY() {
@@ -61,20 +65,19 @@ export class Stage extends DisplayLayoutAbstract{
 
     public set scaleY(value: number) {
         this.container.scale.y = value;
-        this._stageHeight = value * this.height;
     }
 
     public set Scale(value: vf.Point){
         this.container.scale.copyFrom(value);
-        this._stageWidth = value.x * this.width;
-        this._stageHeight = value.y * this.height;
     }
 
     public release(){
         super.release();
+        TickerShared.remove(tween.update,this);
     }
 
     public releaseAll(){
+        TickerShared.remove(tween.update,this);
         
         for(let i=0;i<this.uiChildren.length;i++){
             const ui = this.uiChildren[i] as DisplayObject;
@@ -83,9 +86,10 @@ export class Stage extends DisplayLayoutAbstract{
         this.uiChildren = [];
         this.container.removeAllListeners();
         this.container.removeChildren();
-        TickerShared.removeAllListeners();
         validatorShared.removeAllListeners();
         validatorShared.removeDepthQueueAll();
+
+        this.app = null;
     }
 
  

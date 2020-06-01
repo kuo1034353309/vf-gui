@@ -25,7 +25,7 @@ export default class TestTween {
             .repeat(Infinity)
             .easing(vf.gui.Easing.Linear.None)
             .yoyo(true)
-            .start(0);
+            .start();
 
 
         const rootNode = new Node(undefined, root);
@@ -68,7 +68,8 @@ class Node {
             .repeat(Infinity)
             .easing(vf.gui.Easing.Linear.None)
             .yoyo(true)
-            .start().delay(2000);
+            .delay(1000)
+            .start()
 
         new vf.gui.Tween({ color: "#4caf50" })
             .to({ color: "#136086" }, 7000)

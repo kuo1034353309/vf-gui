@@ -31,8 +31,6 @@ export default class TestApplication {
 
     private initTest() {
         this.resize();
-        this.app.ticker.maxFPS = 60;
-        this.app.ticker.add(this.updata, this);
         this.callback.call(this.thisObj, this.app, this.uiStage);
         window.addEventListener("resize", () => {
             this.resize();
@@ -42,9 +40,5 @@ export default class TestApplication {
     private resize() {
         this.app.resize();
         this.uiStage.resize();
-    }
-
-    private updata(deltaTime: number) {
-        vf.gui.TickerShared.update(deltaTime, this.app.ticker.lastTime, this.app.ticker.elapsedMS);
     }
 }

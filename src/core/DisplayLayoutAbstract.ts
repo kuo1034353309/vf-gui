@@ -807,6 +807,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         values[UIKeys.x] = value;
         if (this.container.x !== value) {
             this.container.x = value;
+            this.invalidateDisplayList();
             this.invalidateParentLayout();
         }
     }
@@ -824,6 +825,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         values[UIKeys.y] = value;
         if (value !== this.container.y) {
             this.container.y = value;
+            this.invalidateDisplayList();
             this.invalidateParentLayout();
         }
     }
