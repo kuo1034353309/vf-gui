@@ -10,11 +10,11 @@
     "watch": "webpack --watch --config ./webpack_config/webpack.config.js",
     "start": "webpack-dev-server --open --config ./webpack_config/webpack.config.js",
     "prod": "webpack --config ./webpack_config/publish-webpack.config",
-    "npmPublish": "npm publish --access public -registry=https://registry.npmjs.org",
     "lint": "eslint ./src/*.* ./src/**/*.*  --fix",
     "docs": "typedoc",
     "dts": "dts-generator --project  ./  --out ./dist/gui.d.ts",
-    "release": "node buildPublish.js"
+    "release": "node buildPublish.js",
+    "npmPublish": "npm publish --access public -registry=https://registry.npmjs.org"
   },
   "keywords": [
     "vf-gui",
