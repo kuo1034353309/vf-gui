@@ -134,11 +134,12 @@ export class ClickEvent {
 
     private _onMouseDown(e: InteractionEvent) {
         if (
-            (this.double && this.onClick) ||
+            this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onClick ||
             this.onPress ||
             this.obj.listenerCount(TouchMouseEvent.onPress) > 0 ||
             this.obj.listenerCount(TouchMouseEvent.onDown) > 0 ||
-            (this.double && this.obj.listenerCount(TouchMouseEvent.onClick) > 0)
+            this.obj.listenerCount(TouchMouseEvent.onClick) > 0)
         ) {
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
         }
@@ -214,11 +215,12 @@ export class ClickEvent {
         if (e.data.identifier !== this.id) return;
 
         if (
-            this.onPress ||
-            (!this.double && this.onClick) ||
+            this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onPress ||
+            this.onClick ||
             this.obj.listenerCount(TouchMouseEvent.onUp) > 0 ||
             this.obj.listenerCount(TouchMouseEvent.onPress) > 0 ||
-            (!this.double && this.obj.listenerCount(TouchMouseEvent.onClick) > 0)
+            this.obj.listenerCount(TouchMouseEvent.onClick) > 0)
         ) {
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
         }
@@ -241,9 +243,10 @@ export class ClickEvent {
     private _onMouseUpOutside(e: InteractionEvent) {
         if (e.data.identifier !== this.id) return;
         if (
-            this.onPress ||
+            this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onPress ||
             this.obj.listenerCount(TouchMouseEvent.onUp) > 0 ||
-            this.obj.listenerCount(TouchMouseEvent.onPress) > 0
+            this.obj.listenerCount(TouchMouseEvent.onPress) > 0)
         ) {
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
         }
@@ -253,7 +256,7 @@ export class ClickEvent {
 
     private _onMouseOver(e: InteractionEvent) {
         if (!this.ishover) {
-            if (this.onHover || this.obj.listenerCount(TouchMouseEvent.onHover) > 0) {
+            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onHover || this.obj.listenerCount(TouchMouseEvent.onHover) > 0)) {
                 (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
             }
 
@@ -267,7 +270,7 @@ export class ClickEvent {
 
     private _onMouseOut(e: InteractionEvent) {
         if (this.ishover) {
-            if (this.onHover || this.obj.listenerCount(TouchMouseEvent.onHover) > 0) {
+            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onHover || this.obj.listenerCount(TouchMouseEvent.onHover) > 0)) {
                 (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
             }
 
@@ -280,7 +283,7 @@ export class ClickEvent {
     }
 
     private _onMouseMove(e: InteractionEvent) {
-        if (this.onMove || this.obj.listenerCount(TouchMouseEvent.onMove) > 0) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onMove || this.obj.listenerCount(TouchMouseEvent.onMove) > 0)) {
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
         }
         this.setLocalPoint(e);

@@ -9,7 +9,7 @@ export default class TestDrag {
 
     private onLoad(app: vf.Application, uiStage: vf.gui.Stage) {
         
-
+        // uiStage.id = 'stage';
         const c1 = this.getNewContainer("自由拖动");
         c1.rect.name = "c1";
         c1.container.x = 15;

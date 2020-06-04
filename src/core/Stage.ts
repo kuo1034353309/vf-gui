@@ -3,10 +3,7 @@ import { TickerShared } from "./Ticker";
 import { DisplayLayoutAbstract } from "./DisplayLayoutAbstract";
 import { DisplayObject } from "./DisplayObject";
 import validatorShared from "./DisplayLayoutValidator";
-<<<<<<< HEAD
 import { SyncManager } from "../Interaction/syncManager";
-=======
->>>>>>> 88af81caddae9ec8deee7f5cc6b22a9d771c63b5
 
 /**
  * UI的舞台对象，展示所有UI组件
@@ -28,15 +25,7 @@ export class Stage extends DisplayLayoutAbstract{
         this.container.interactiveChildren = true;
         this.$nestLevel = 1;
         this.app = app;
-<<<<<<< HEAD
         this.syncManager = new SyncManager(this);
-    }
-
-    public app?: vf.Application;
-    public _stageWidth = 0;//调整缩放后的值
-    public _stageHeight = 0;//调整缩放后的值
-    public syncManager: SyncManager;
-=======
         this.initialized = true;
 
         if(!TickerShared.started){
@@ -51,7 +40,7 @@ export class Stage extends DisplayLayoutAbstract{
     }
 
     public app: vf.Application | any;
->>>>>>> 88af81caddae9ec8deee7f5cc6b22a9d771c63b5
+    public syncManager: SyncManager; 
     /**
      * 是否组织原始数据继续传递
      */
@@ -59,7 +48,7 @@ export class Stage extends DisplayLayoutAbstract{
     /**
      * 是否同步交互事件
      */
-    public syncInteractiveFlag = true; //TODO:默认false
+    public syncInteractiveFlag = false; //TODO:默认false
 
     public get stageWidth(){
         return this.container.width;

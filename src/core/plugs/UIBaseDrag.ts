@@ -5,6 +5,7 @@ import { DisplayObjectAbstract } from "../DisplayObjectAbstract";
 import { Stage } from "../Stage";
 import { getDisplayObject, debug, getDisplayPathById } from "../../utils/Utils";
 import { SyncManager } from "../../Interaction/syncManager";
+import { TickerShared } from "../Ticker";
 
 /**
  *  组件的拖拽操作
@@ -351,7 +352,7 @@ export class UIBaseDrag implements Lifecycle {
                 if (this.dragging) {
                     this.dragging = false;
                     //如果没有可被放置掉落的容器，0秒后返回原容器
-                    setTimeout(() => {
+                    TickerShared.addOnce(() => {
                         if (this.target == undefined) {
                             return;
                         }
@@ -397,7 +398,7 @@ export class UIBaseDrag implements Lifecycle {
                         e.data.tiltY = dragPosition.y;
                         this._actionData = {type:ComponentEvent.DRAG_END,data: e.data};
                         target.emit(ComponentEvent.DRAG_END, target, e);
-                    }, 0);
+                    })
                 }
                 
 
@@ -438,7 +439,10 @@ export class UIBaseDrag implements Lifecycle {
         if (this.target == undefined) {
             return;
         }
-        (SyncManager.getInstance(this.target.stage) as SyncManager).collectEvent(e, this.target);
+        if(this.target.stage && this.target.stage.syncInteractiveFlag){
+            (SyncManager.getInstance(this.target.stage) as SyncManager).collectEvent(e, this.target);
+        }
+        
         const target = this.target;
         const item = DragDropController.getEventItem(e, this.dropGroup);
         if (item && item.dragOption.dragging) {

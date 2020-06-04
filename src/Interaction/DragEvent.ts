@@ -73,7 +73,7 @@ export class DragEvent {
     }
 
     private _onDragStart(e: InteractionEvent) {
-        if(e.type == TouchMouseEventEnum.mousedown || e.type == TouchMouseEventEnum.touchstart){
+        if(this.obj.stage && this.obj.stage.syncInteractiveFlag && (e.type == TouchMouseEventEnum.mousedown || e.type == TouchMouseEventEnum.touchstart)){
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
         }
         
@@ -115,7 +115,7 @@ export class DragEvent {
         }
         if (e.data.identifier !== this.id) return;
 
-        if (e.type == TouchMouseEventEnum.mousemove || e.type == TouchMouseEventEnum.touchmove) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (e.type == TouchMouseEventEnum.mousemove || e.type == TouchMouseEventEnum.touchmove)) {
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj.stage as DisplayObjectAbstract);
         }
 
@@ -150,11 +150,12 @@ export class DragEvent {
         if (e.data.identifier !== this.id) return;
 
         if (
-            e.type == TouchMouseEventEnum.mouseup ||
+            this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (e.type == TouchMouseEventEnum.mouseup ||
             e.type == TouchMouseEventEnum.mouseupoutside ||
             e.type == TouchMouseEventEnum.touchend ||
             e.type == TouchMouseEventEnum.touchendoutside ||
-            e.type == TouchMouseEventEnum.touchcancel
+            e.type == TouchMouseEventEnum.touchcancel)
         ) {
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj.stage as DisplayObjectAbstract);
         }

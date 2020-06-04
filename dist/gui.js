@@ -112,21 +112,21 @@ return /******/ (function(modules) { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", { value: true });
 var InteractionEvent_1 = __webpack_require__(/*! ../event/InteractionEvent */ "./src/event/InteractionEvent.ts");
 var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
+var Ticker_1 = __webpack_require__(/*! ../core/Ticker */ "./src/core/Ticker.ts");
 var SyncManager = /** @class */ (function () {
     function SyncManager(stage) {
-        var _this = this;
-        this._lostEvent = [];
-        this._throttleFlag = false;
-        this._throttleTimer = null;
+        this.offsetTime = 0; //本地Date.now()与中心服务器的差值
+        this._crossTime = 0; //穿越的时间
+        this._initTime = 0; //初始化成功时的时间
+        this._lostEvent = []; //节流中的event
+        this._throttleFlag = false; //节流状态
+        this._throttleTimer = null; //节流时间函数
+        this._evtDataList = []; //历史信令整理后的数组
         this._interactionEvent = new InteractionEvent_1.InteractionEvent();
         if (!this._interactionEvent.data) {
             this._interactionEvent.data = new vf.interaction.InteractionData();
         }
         this._stage = stage;
-        //测试
-        window.addEventListener('message', function (event) {
-            _this.receiveEvent(event.data);
-        }, false);
     }
     /**
      * 对应一个stage有一个syncManager的实例
@@ -135,6 +135,12 @@ var SyncManager = /** @class */ (function () {
         if (stage) {
             return stage.syncManager;
         }
+    };
+    /**
+     * 开始同步
+     */
+    SyncManager.prototype.init = function () {
+        this._initTime = performance.now();
     };
     /**
      * 收集交互事件
@@ -159,34 +165,46 @@ var SyncManager = /** @class */ (function () {
     };
     /**
      * 接收操作
+     * @signalType 信令类型  live-实时信令   history-历史信令
      */
-    SyncManager.prototype.receiveEvent = function (eventData) {
-        this.parseEventData(eventData);
+    SyncManager.prototype.receiveEvent = function (eventData, signalType) {
+        if (signalType === void 0) { signalType = "live"; }
+        console.log('receive syncEvent: ', eventData);
+        if (signalType == "history") {
+            this.dealHistoryEvent(eventData);
+        }
+        else {
+            this.parseEventData(eventData);
+        }
+    };
+    SyncManager.prototype.currentTime = function () {
+        var time = performance.now() - this._initTime - this.offsetTime + this._crossTime;
+        return Math.floor(time);
     };
     /**
      * 构造一个新的e，用于同步，数据要尽量精简
      */
     SyncManager.prototype.createEventData = function (e, obj) {
         var event = {};
-        event.code = 'evt_' + Date.now();
         event.type = e.type;
         event.path = Utils_1.getDisplayPathById(obj);
         var data = {};
         event.data = data;
         data.identifier = e.data.identifier;
-        data.global = { x: e.data.global.x, y: e.data.global.y };
+        data.global = { x: Math.floor(e.data.global.x), y: Math.floor(e.data.global.y) };
         //!!!important: e.data.originalEvent  不支持事件继续传递
-        return JSON.stringify(event);
+        var time = this.currentTime();
+        return {
+            code: "interaction_" + time,
+            time: time,
+            data: JSON.stringify(event)
+        };
     };
     /**
      * 发送操作
      */
     SyncManager.prototype.sendEvent = function (eventData) {
-        console.log('send sync event: ', eventData);
-        //测试，iframe
-        if (window.parent !== window) {
-            window.parent.postMessage(eventData, '*');
-        }
+        this._stage.emit('sendSyncEvent', eventData);
     };
     /**
      * 更新节流状态
@@ -204,8 +222,6 @@ var SyncManager = /** @class */ (function () {
      */
     SyncManager.prototype.throttle = function (eventData) {
         var _this = this;
-        this.sendEvent(eventData);
-        return;
         if (!this._throttleFlag) {
             this._throttleFlag = true;
             this.sendEvent(eventData);
@@ -218,18 +234,88 @@ var SyncManager = /** @class */ (function () {
             this._lostEvent.push(eventData);
         }
     };
+    SyncManager.prototype.resetStage = function () {
+        var stage = this._stage;
+        if (stage.reset) {
+            stage.reset();
+        }
+        else {
+            console.error("当前stage没有reset方法，使用输入同步需要自定义reset方法用于场景重置!!!");
+        }
+    };
     /**
      * 解析收到的event
      */
     SyncManager.prototype.parseEventData = function (eventData) {
-        var event = JSON.parse(eventData);
-        this._interactionEvent.signalling = true;
-        this._interactionEvent.type = event.type;
-        var data = event.data;
-        this._interactionEvent.data.identifier = data.identifier;
-        this._interactionEvent.data.global.set(data.global.x, data.global.y);
-        this._obj = this._stage.getChildByPath(event.path);
-        this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
+        var time = eventData.time;
+        //判断信令时间，是否需要向后穿越
+        var currentTime = this.currentTime();
+        if (currentTime < time) {
+            var druation = time - currentTime;
+            this.crossTime(druation);
+        }
+        if (eventData.code.indexOf('interaction_') == 0) {
+            var event_1 = JSON.parse(eventData.data);
+            this._interactionEvent.signalling = true;
+            this._interactionEvent.type = event_1.type;
+            var data = event_1.data;
+            this._interactionEvent.data.identifier = data.identifier;
+            this._interactionEvent.data.global.set(data.global.x, data.global.y);
+            this._obj = this._stage.getChildByPath(event_1.path);
+            this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
+        }
+        else {
+            //非交互输入事件
+        }
+    };
+    /**
+     * 时间未到，需要穿越到未来
+     */
+    SyncManager.prototype.crossTime = function (druation) {
+        var resetRenderFlag = false;
+        if (this._stage.renderable) {
+            this._stage.renderable = false;
+            resetRenderFlag = true;
+        }
+        Ticker_1.TickerShared.crossingTime(druation);
+        if (resetRenderFlag) {
+            this._stage.renderable = true;
+        }
+        this._crossTime += druation;
+        console.log('crossTime: ', druation);
+    };
+    /**
+     * 处理历史信令，将历史输入事件按时间顺序放置到一个数组
+     * @param eventData
+     */
+    SyncManager.prototype.dealHistoryEvent = function (eventData) {
+        if (!eventData)
+            return;
+        this._evtDataList = [];
+        for (var key in eventData) {
+            this._evtDataList.push(eventData[key]);
+        }
+        this._evtDataList.sort(function (a, b) {
+            return a.time - b.time;
+        });
+        this.resumeStatus();
+    };
+    /**
+     * 恢复状态
+     */
+    SyncManager.prototype.resumeStatus = function () {
+        //恢复过程只需要计算状态，不需要渲染
+        if (this._evtDataList.length == 0)
+            return;
+        this._initTime = performance.now();
+        this.resetStage();
+        this._stage.renderable = false;
+        for (var i = 0; i < this._evtDataList.length; ++i) {
+            var _eventData = this._evtDataList[i];
+            //执行操作
+            this.parseEventData(_eventData);
+        }
+        this._stage.renderable = true;
     };
     return SyncManager;
 }());
@@ -2824,24 +2910,19 @@ var UI_1 = __webpack_require__(/*! ../UI */ "./src/UI.ts");
  */
 var Scheduler = /** @class */ (function (_super) {
     __extends(Scheduler, _super);
-    function Scheduler(_timeout, _interval) {
-        if (_timeout === void 0) { _timeout = Infinity; }
-        if (_interval === void 0) { _interval = 0; }
+    function Scheduler(timeout, interval) {
+        if (timeout === void 0) { timeout = Infinity; }
+        if (interval === void 0) { interval = 0; }
         var _this = _super.call(this) || this;
-        _this.interval = 0;
-        _this.timeout = Infinity;
-        _this.start = 0;
-        _this.lastTick = -1;
-        _this.elapsedTimeAtPause = 0;
-        _this.lastVisited = -1;
-        _this._running = false;
-        _this._lastExecuted = 0;
+        _this._interval = 0;
+        _this._timeout = Infinity;
         _this._id = Math.random();
-        _this.TIMEOUT = 1000;
-        _this.endHandler = _this.noop;
-        _this.tickHandler = _this.noop;
-        _this.timeout = _timeout;
-        _this.interval = _interval;
+        _this._running = false;
+        _this._pausing = false;
+        _this._totalDuration = 0;
+        _this._intervalDuration = 0;
+        _this._timeout = timeout;
+        _this._interval = interval;
         _this.restart();
         return _this;
     }
@@ -2863,79 +2944,58 @@ var Scheduler = /** @class */ (function (_super) {
         return scheduler;
     };
     Scheduler.prototype.restart = function () {
-        this.elapsedTimeAtPause = 0;
-        this.start = Scheduler.clock();
-        this._lastExecuted = this.start;
-        this._running = true;
-        UI_1.TickerShared.add(this.run, this);
+        this._totalDuration = 0;
+        this._intervalDuration = 0;
+        this._pausing = false;
+        if (!this._running) {
+            this._running = true;
+            UI_1.TickerShared.add(this.run, this);
+        }
     };
     Scheduler.prototype.stop = function () {
-        this.elapsedTimeAtPause = 0;
-        this._running = false;
-        UI_1.TickerShared.remove(this.run, this);
+        if (this._running) {
+            this._running = false;
+            UI_1.TickerShared.remove(this.run, this);
+        }
     };
     Scheduler.prototype.pause = function () {
-        if (this._running) {
-            this.stop();
-            this.elapsedTimeAtPause = Scheduler.clock() - this.start;
+        if (this._running && !this._pausing) {
+            this._pausing = true;
+            UI_1.TickerShared.remove(this.run, this);
         }
     };
     Scheduler.prototype.resume = function () {
-        var _t;
-        if (!this._running) {
-            _t = this.elapsedTimeAtPause;
-            this.restart();
-            this.start = this.start - _t;
+        if (this._pausing) {
+            UI_1.TickerShared.add(this.run, this);
         }
     };
-    Scheduler.prototype.seek = function (time) {
-        this.elapsedTimeAtPause = time;
-    };
-    Scheduler.prototype.isTickable = function (num) {
-        return num - this.lastTick >= this.interval;
-    };
-    Scheduler.prototype.noop = function (evt) {
-        if (evt === void 0) { evt = null; }
-        return;
-    };
-    // Internals
-    //
-    Scheduler.prototype.run = function () {
-        var elapsed;
-        var t = Scheduler.clock();
-        var timeElapsed = t - this._lastExecuted;
-        this._lastExecuted = t;
-        if (timeElapsed >= this.TIMEOUT) {
-            return false; // init Scheduler
+    Scheduler.prototype.run = function (deltaTime) {
+        this._totalDuration += UI_1.TickerShared.deltaMS;
+        this._intervalDuration += UI_1.TickerShared.deltaMS;
+        if (this._intervalDuration >= this._interval) {
+            var info = {
+                code: "tick" /* TICK */,
+                level: "status" /* STATUS */,
+                target: this,
+                dt: this._intervalDuration,
+                elapsed: this._totalDuration,
+            };
+            this.emit("tick" /* TICK */, info);
+            this._intervalDuration = 0;
         }
-        if (this.lastVisited <= t) {
-            this.lastVisited = t;
-            elapsed = t - this.start;
-            if (this.isTickable(t)) {
-                this.lastTick = t;
-                var info = {
-                    code: "tick" /* TICK */,
-                    level: "status" /* STATUS */,
-                    target: this,
-                    elapsed: elapsed,
-                };
-                this.emit("tick" /* TICK */, info);
-            }
-            if (elapsed >= this.timeout) {
-                this.stop();
-                var info = {
-                    code: "end" /* END */,
-                    level: "status" /* STATUS */,
-                    target: this,
-                    elapsed: elapsed,
-                };
-                this.emit("end" /* END */, info);
-            }
-            // ..
+        if (this._totalDuration >= this._timeout) {
+            this.stop();
+            var info = {
+                code: "end" /* END */,
+                level: "status" /* STATUS */,
+                target: this,
+                dt: this._intervalDuration,
+                elapsed: this._totalDuration,
+            };
+            this.emit("end" /* END */, info);
         }
         return false;
     };
-    Scheduler.clock = Date.now;
     return Scheduler;
 }(vf.utils.EventEmitter));
 exports.Scheduler = Scheduler;
@@ -2971,17 +3031,25 @@ var Ticker_1 = __webpack_require__(/*! ./Ticker */ "./src/core/Ticker.ts");
 var DisplayLayoutAbstract_1 = __webpack_require__(/*! ./DisplayLayoutAbstract */ "./src/core/DisplayLayoutAbstract.ts");
 var DisplayLayoutValidator_1 = __webpack_require__(/*! ./DisplayLayoutValidator */ "./src/core/DisplayLayoutValidator.ts");
 var syncManager_1 = __webpack_require__(/*! ../Interaction/syncManager */ "./src/Interaction/syncManager.ts");
+/**
+ * UI的舞台对象，展示所有UI组件
+ *
+ * @class
+ * @param width {Number} 舞台宽度
+ * @param height {Number} 舞台高度
+ */
 var Stage = /** @class */ (function (_super) {
     __extends(Stage, _super);
     function Stage(width, height, app) {
         var _this = _super.call(this) || this;
-        _this._stageWidth = 0; //调整缩放后的值
-        _this._stageHeight = 0; //调整缩放后的值
+        /**
+         * 是否组织原始数据继续传递
+         */
         _this.originalEventPreventDefault = false;
         /**
          * 是否同步交互事件
          */
-        _this.syncInteractiveFlag = true; //TODO:默认false
+        _this.syncInteractiveFlag = false; //TODO:默认false
         _this.width = width;
         _this.height = height;
         _this.container.name = "Stage";
@@ -2991,6 +3059,14 @@ var Stage = /** @class */ (function (_super) {
         _this.$nestLevel = 1;
         _this.app = app;
         _this.syncManager = new syncManager_1.SyncManager(_this);
+        _this.initialized = true;
+        if (!Ticker_1.TickerShared.started) {
+            Ticker_1.TickerShared.start();
+        }
+        Ticker_1.TickerShared.add(tween.update, _this);
+        if (!_this.container.parent) {
+            _this.app.stage.addChild(_this.container);
+        }
         return _this;
     }
     Object.defineProperty(Stage.prototype, "stageWidth", {
@@ -3078,8 +3154,47 @@ exports.Stage = Stage;
 
 "use strict";
 
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TickerShared = new vf.Ticker();
+var Ticker = /** @class */ (function (_super) {
+    __extends(Ticker, _super);
+    function Ticker() {
+        return _super.call(this) || this;
+    }
+    /**
+     * 时间穿越， 单位ms
+     * @param duration
+     */
+    Ticker.prototype.crossingTime = function (duration) {
+        var deltaTime = this._minElapsedMS; //帧间隔
+        while (duration > 0) {
+            duration -= deltaTime;
+            if (duration < 0) {
+                deltaTime += duration;
+            }
+            var head = this._head; //？？
+            var listener = head.next;
+            while (listener) {
+                this.deltaMS = deltaTime;
+                listener = listener.emit(deltaTime * vf.settings.TARGET_FPMS);
+            }
+        }
+    };
+    return Ticker;
+}(vf.Ticker));
+exports.TickerShared = new Ticker();
 exports.TickerShared.autoStart = false;
 exports.TickerShared.maxFPS = 30;
 
@@ -3100,6 +3215,7 @@ var Index_1 = __webpack_require__(/*! ../../interaction/Index */ "./src/interact
 var DisplayObjectAbstract_1 = __webpack_require__(/*! ../DisplayObjectAbstract */ "./src/core/DisplayObjectAbstract.ts");
 var Utils_1 = __webpack_require__(/*! ../../utils/Utils */ "./src/utils/Utils.ts");
 var syncManager_1 = __webpack_require__(/*! ../../Interaction/syncManager */ "./src/Interaction/syncManager.ts");
+var Ticker_1 = __webpack_require__(/*! ../Ticker */ "./src/core/Ticker.ts");
 /**
  *  组件的拖拽操作
  *
@@ -3423,7 +3539,7 @@ var UIBaseDrag = /** @class */ (function () {
                 if (_this.dragging) {
                     _this.dragging = false;
                     //如果没有可被放置掉落的容器，0秒后返回原容器
-                    setTimeout(function () {
+                    Ticker_1.TickerShared.addOnce(function () {
                         if (_this.target == undefined) {
                             return;
                         }
@@ -3468,7 +3584,7 @@ var UIBaseDrag = /** @class */ (function () {
                         e.data.tiltY = dragPosition.y;
                         _this._actionData = { type: Index_1.ComponentEvent.DRAG_END, data: e.data };
                         target.emit(Index_1.ComponentEvent.DRAG_END, target, e);
-                    }, 0);
+                    });
                 }
             };
         }
@@ -3502,7 +3618,9 @@ var UIBaseDrag = /** @class */ (function () {
         if (this.target == undefined) {
             return;
         }
-        syncManager_1.SyncManager.getInstance(this.target.stage).collectEvent(e, this.target);
+        if (this.target.stage && this.target.stage.syncInteractiveFlag) {
+            syncManager_1.SyncManager.getInstance(this.target.stage).collectEvent(e, this.target);
+        }
         var target = this.target;
         var item = Index_1.DragDropController.getEventItem(e, this.dropGroup);
         if (item && item.dragOption.dragging) {
@@ -9279,11 +9397,12 @@ var ClickEvent = /** @class */ (function () {
         this.isStop = true;
     };
     ClickEvent.prototype._onMouseDown = function (e) {
-        if ((this.double && this.onClick) ||
-            this.onPress ||
-            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0 ||
-            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onDown) > 0 ||
-            (this.double && this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onClick) > 0)) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onClick ||
+                this.onPress ||
+                this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0 ||
+                this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onDown) > 0 ||
+                this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onClick) > 0)) {
             syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
         }
         this.setLocalPoint(e);
@@ -9356,11 +9475,12 @@ var ClickEvent = /** @class */ (function () {
     ClickEvent.prototype._onMouseUp = function (e) {
         if (e.data.identifier !== this.id)
             return;
-        if (this.onPress ||
-            (!this.double && this.onClick) ||
-            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onUp) > 0 ||
-            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0 ||
-            (!this.double && this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onClick) > 0)) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onPress ||
+                this.onClick ||
+                this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onUp) > 0 ||
+                this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0 ||
+                this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onClick) > 0)) {
             syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
         }
         this._mouseUpAll(e);
@@ -9379,16 +9499,17 @@ var ClickEvent = /** @class */ (function () {
     ClickEvent.prototype._onMouseUpOutside = function (e) {
         if (e.data.identifier !== this.id)
             return;
-        if (this.onPress ||
-            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onUp) > 0 ||
-            this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onPress ||
+                this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onUp) > 0 ||
+                this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onPress) > 0)) {
             syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
         }
         this._mouseUpAll(e);
     };
     ClickEvent.prototype._onMouseOver = function (e) {
         if (!this.ishover) {
-            if (this.onHover || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onHover) > 0) {
+            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onHover || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onHover) > 0)) {
                 syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
             }
             this.ishover = true;
@@ -9400,7 +9521,7 @@ var ClickEvent = /** @class */ (function () {
     };
     ClickEvent.prototype._onMouseOut = function (e) {
         if (this.ishover) {
-            if (this.onHover || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onHover) > 0) {
+            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onHover || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onHover) > 0)) {
                 syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
             }
             this.ishover = false;
@@ -9411,7 +9532,7 @@ var ClickEvent = /** @class */ (function () {
         }
     };
     ClickEvent.prototype._onMouseMove = function (e) {
-        if (this.onMove || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onMove) > 0) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onMove || this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onMove) > 0)) {
             syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
         }
         this.setLocalPoint(e);
@@ -9594,7 +9715,7 @@ var DragEvent = /** @class */ (function () {
         }
     };
     DragEvent.prototype._onDragStart = function (e) {
-        if (e.type == "mousedown" /* mousedown */ || e.type == "touchstart" /* touchstart */) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (e.type == "mousedown" /* mousedown */ || e.type == "touchstart" /* touchstart */)) {
             syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj);
         }
         if (this.obj.dragStopPropagation && e.data.originalEvent && e.data.originalEvent.stopPropagation) {
@@ -9629,7 +9750,7 @@ var DragEvent = /** @class */ (function () {
         }
         if (e.data.identifier !== this.id)
             return;
-        if (e.type == "mousemove" /* mousemove */ || e.type == "touchmove" /* touchmove */) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (e.type == "mousemove" /* mousemove */ || e.type == "touchmove" /* touchmove */)) {
             syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj.stage);
         }
         this.mouse.copyFrom(e.data.global);
@@ -9661,11 +9782,12 @@ var DragEvent = /** @class */ (function () {
             e.stopPropagation();
         if (e.data.identifier !== this.id)
             return;
-        if (e.type == "mouseup" /* mouseup */ ||
-            e.type == "mouseupoutside" /* mouseupoutside */ ||
-            e.type == "touchend" /* touchend */ ||
-            e.type == "touchendoutside" /* touchendoutside */ ||
-            e.type == "touchcancel" /* touchcancel */) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (e.type == "mouseup" /* mouseup */ ||
+                e.type == "mouseupoutside" /* mouseupoutside */ ||
+                e.type == "touchend" /* touchend */ ||
+                e.type == "touchendoutside" /* touchendoutside */ ||
+                e.type == "touchcancel" /* touchcancel */)) {
             syncManager_1.SyncManager.getInstance(this.obj.stage).collectEvent(e, this.obj.stage);
         }
         if (this.bound && this.obj.stage) {
@@ -10113,21 +10235,21 @@ exports.MouseScrollEvent = MouseScrollEvent;
 Object.defineProperty(exports, "__esModule", { value: true });
 var InteractionEvent_1 = __webpack_require__(/*! ../event/InteractionEvent */ "./src/event/InteractionEvent.ts");
 var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
+var Ticker_1 = __webpack_require__(/*! ../core/Ticker */ "./src/core/Ticker.ts");
 var SyncManager = /** @class */ (function () {
     function SyncManager(stage) {
-        var _this = this;
-        this._lostEvent = [];
-        this._throttleFlag = false;
-        this._throttleTimer = null;
+        this.offsetTime = 0; //本地Date.now()与中心服务器的差值
+        this._crossTime = 0; //穿越的时间
+        this._initTime = 0; //初始化成功时的时间
+        this._lostEvent = []; //节流中的event
+        this._throttleFlag = false; //节流状态
+        this._throttleTimer = null; //节流时间函数
+        this._evtDataList = []; //历史信令整理后的数组
         this._interactionEvent = new InteractionEvent_1.InteractionEvent();
         if (!this._interactionEvent.data) {
             this._interactionEvent.data = new vf.interaction.InteractionData();
         }
         this._stage = stage;
-        //测试
-        window.addEventListener('message', function (event) {
-            _this.receiveEvent(event.data);
-        }, false);
     }
     /**
      * 对应一个stage有一个syncManager的实例
@@ -10136,6 +10258,12 @@ var SyncManager = /** @class */ (function () {
         if (stage) {
             return stage.syncManager;
         }
+    };
+    /**
+     * 开始同步
+     */
+    SyncManager.prototype.init = function () {
+        this._initTime = performance.now();
     };
     /**
      * 收集交互事件
@@ -10160,34 +10288,46 @@ var SyncManager = /** @class */ (function () {
     };
     /**
      * 接收操作
+     * @signalType 信令类型  live-实时信令   history-历史信令
      */
-    SyncManager.prototype.receiveEvent = function (eventData) {
-        this.parseEventData(eventData);
+    SyncManager.prototype.receiveEvent = function (eventData, signalType) {
+        if (signalType === void 0) { signalType = "live"; }
+        console.log('receive syncEvent: ', eventData);
+        if (signalType == "history") {
+            this.dealHistoryEvent(eventData);
+        }
+        else {
+            this.parseEventData(eventData);
+        }
+    };
+    SyncManager.prototype.currentTime = function () {
+        var time = performance.now() - this._initTime - this.offsetTime + this._crossTime;
+        return Math.floor(time);
     };
     /**
      * 构造一个新的e，用于同步，数据要尽量精简
      */
     SyncManager.prototype.createEventData = function (e, obj) {
         var event = {};
-        event.code = 'evt_' + Date.now();
         event.type = e.type;
         event.path = Utils_1.getDisplayPathById(obj);
         var data = {};
         event.data = data;
         data.identifier = e.data.identifier;
-        data.global = { x: e.data.global.x, y: e.data.global.y };
+        data.global = { x: Math.floor(e.data.global.x), y: Math.floor(e.data.global.y) };
         //!!!important: e.data.originalEvent  不支持事件继续传递
-        return JSON.stringify(event);
+        var time = this.currentTime();
+        return {
+            code: "interaction_" + time,
+            time: time,
+            data: JSON.stringify(event)
+        };
     };
     /**
      * 发送操作
      */
     SyncManager.prototype.sendEvent = function (eventData) {
-        console.log('send sync event: ', eventData);
-        //测试，iframe
-        if (window.parent !== window) {
-            window.parent.postMessage(eventData, '*');
-        }
+        this._stage.emit('sendSyncEvent', eventData);
     };
     /**
      * 更新节流状态
@@ -10205,8 +10345,6 @@ var SyncManager = /** @class */ (function () {
      */
     SyncManager.prototype.throttle = function (eventData) {
         var _this = this;
-        this.sendEvent(eventData);
-        return;
         if (!this._throttleFlag) {
             this._throttleFlag = true;
             this.sendEvent(eventData);
@@ -10219,18 +10357,88 @@ var SyncManager = /** @class */ (function () {
             this._lostEvent.push(eventData);
         }
     };
+    SyncManager.prototype.resetStage = function () {
+        var stage = this._stage;
+        if (stage.reset) {
+            stage.reset();
+        }
+        else {
+            console.error("当前stage没有reset方法，使用输入同步需要自定义reset方法用于场景重置!!!");
+        }
+    };
     /**
      * 解析收到的event
      */
     SyncManager.prototype.parseEventData = function (eventData) {
-        var event = JSON.parse(eventData);
-        this._interactionEvent.signalling = true;
-        this._interactionEvent.type = event.type;
-        var data = event.data;
-        this._interactionEvent.data.identifier = data.identifier;
-        this._interactionEvent.data.global.set(data.global.x, data.global.y);
-        this._obj = this._stage.getChildByPath(event.path);
-        this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
+        var time = eventData.time;
+        //判断信令时间，是否需要向后穿越
+        var currentTime = this.currentTime();
+        if (currentTime < time) {
+            var druation = time - currentTime;
+            this.crossTime(druation);
+        }
+        if (eventData.code.indexOf('interaction_') == 0) {
+            var event_1 = JSON.parse(eventData.data);
+            this._interactionEvent.signalling = true;
+            this._interactionEvent.type = event_1.type;
+            var data = event_1.data;
+            this._interactionEvent.data.identifier = data.identifier;
+            this._interactionEvent.data.global.set(data.global.x, data.global.y);
+            this._obj = this._stage.getChildByPath(event_1.path);
+            this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
+        }
+        else {
+            //非交互输入事件
+        }
+    };
+    /**
+     * 时间未到，需要穿越到未来
+     */
+    SyncManager.prototype.crossTime = function (druation) {
+        var resetRenderFlag = false;
+        if (this._stage.renderable) {
+            this._stage.renderable = false;
+            resetRenderFlag = true;
+        }
+        Ticker_1.TickerShared.crossingTime(druation);
+        if (resetRenderFlag) {
+            this._stage.renderable = true;
+        }
+        this._crossTime += druation;
+        console.log('crossTime: ', druation);
+    };
+    /**
+     * 处理历史信令，将历史输入事件按时间顺序放置到一个数组
+     * @param eventData
+     */
+    SyncManager.prototype.dealHistoryEvent = function (eventData) {
+        if (!eventData)
+            return;
+        this._evtDataList = [];
+        for (var key in eventData) {
+            this._evtDataList.push(eventData[key]);
+        }
+        this._evtDataList.sort(function (a, b) {
+            return a.time - b.time;
+        });
+        this.resumeStatus();
+    };
+    /**
+     * 恢复状态
+     */
+    SyncManager.prototype.resumeStatus = function () {
+        //恢复过程只需要计算状态，不需要渲染
+        if (this._evtDataList.length == 0)
+            return;
+        this._initTime = performance.now();
+        this.resetStage();
+        this._stage.renderable = false;
+        for (var i = 0; i < this._evtDataList.length; ++i) {
+            var _eventData = this._evtDataList[i];
+            //执行操作
+            this.parseEventData(_eventData);
+        }
+        this._stage.renderable = true;
     };
     return SyncManager;
 }());

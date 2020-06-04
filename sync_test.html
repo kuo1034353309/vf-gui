@@ -22,18 +22,23 @@
     </style>
 </head>
 <body>
-    <iframe id="iframe1" class="firame1" src="http://127.0.0.1:5501/test.html?type=TestDrag"></iframe>
-    <iframe id="iframe2" class="firame2" src="http://127.0.0.1:5501/test.html?type=TestDrag"></iframe>
+    <iframe id="iframe1" class="firame1" src="http://127.0.0.1:5501/test.html?type=TestSyncInteraction"></iframe>
+    <iframe id="iframe2" class="firame2" src="http://127.0.0.1:5501/test.html?type=TestSyncInteraction"></iframe>
     <script>
         window.addEventListener('message', event => {
             var iframe1 = document.getElementById('iframe1').contentWindow;
             var iframe2 = document.getElementById('iframe2').contentWindow;
-            
             if(event.source == iframe1){
-                iframe2.postMessage(event.data, '*');
+                setTimeout(() => {
+                    iframe2.postMessage(event.data, '*');
+                }, 100);
+                
             }
             else{
-                iframe1.postMessage(event.data, '*');
+                setTimeout(() => {
+                    iframe1.postMessage(event.data, '*');
+                }, 100);
+                
             }
         }, false)
     </script>
