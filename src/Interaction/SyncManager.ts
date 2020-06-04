@@ -68,6 +68,23 @@ export class SyncManager {
     }
 
     /**
+     * 收集自定义事件
+     * data
+     */
+    public collectCustomEvent(customData: any, obj: DisplayObjectAbstract){
+        let eventData: any = {};
+        let time = this.currentTime();
+        eventData.code = 'customEvent_' + vf.utils.uid() + time;
+        eventData.time = time;
+        let data: any = {
+            data: customData,
+            path: getDisplayPathById(obj)
+        }
+        eventData.data = JSON.stringify(data);
+        this.sendEvent(eventData);
+    }
+
+    /**
      * 接收操作
      * @signalType 信令类型  live-实时信令   history-历史信令
      */
@@ -99,7 +116,7 @@ export class SyncManager {
         //!!!important: e.data.originalEvent  不支持事件继续传递
         let time = this.currentTime();
         return {
-            code: "interaction_" + time,
+            code: "interaction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event)
         }
@@ -171,8 +188,11 @@ export class SyncManager {
             this._obj = this._stage.getChildByPath(event.path) as DisplayObjectAbstract;
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
         }
-        else{
-            //非交互输入事件
+        else if(eventData.code.indexOf('customEvent_') == 0){
+            //自定义事件
+            let event = JSON.parse(eventData.data);
+            let obj: DisplayObjectAbstract = this._stage.getChildByPath(event.path) as DisplayObjectAbstract;
+            obj.emit('customEvent', event.data);
         }
     }
 
@@ -216,7 +236,7 @@ export class SyncManager {
     private resumeStatus() {
         //恢复过程只需要计算状态，不需要渲染
         if (this._evtDataList.length == 0) return;
-        this._initTime = performance.now();
+        this.init();
         this.resetStage();
 
         this._stage.renderable = false;

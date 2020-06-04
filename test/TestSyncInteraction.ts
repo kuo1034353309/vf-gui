@@ -5,8 +5,9 @@ import { InteractionEvent } from "src/event/Index";
 import { Scheduler } from "../src/UI";
 import { gui } from "src/vf-gui";
 
-const HISTORY: boolean = false;
-let history: any = {};
+let historyFlag: boolean = true;
+let historyData: any = {};
+
 export default class TestSyncInteraction {
     private id = 0;
     public constructor(app: vf.Application, uiStage: vf.gui.Stage) {
@@ -17,12 +18,15 @@ export default class TestSyncInteraction {
 
         app.ticker.maxFPS = 30;
         vf.Ticker.shared.maxFPS = 30;
+
         const basicText = new vf.gui.Label();
         basicText.style.left = 15;
         basicText.style.top = 50;
         basicText.style.color = 0xffffff;
-        basicText.text = "30"
+        basicText.text = (Math.random() * 1000).toString();
         uiStage.addChild(basicText);
+
+        
 
 
         //图片
@@ -141,39 +145,59 @@ export default class TestSyncInteraction {
         }, this);
 
         uiStage.on('sendSyncEvent', (data: any) => {
-            history[data.code] = data;
-            if(!HISTORY){
+            historyData[data.code] = data;
+            if(!historyFlag){
                 //测试，iframe
                 if(window.parent !== window){
-                    window.parent.postMessage(data, '*');
+                    window.parent.postMessage({
+                        type: 'live',
+                        data: data
+                    }, '*');
                 }
             }
         });
 
+        setTimeout(() => {
+            uiStage.syncManager.collectCustomEvent(basicText.text, uiStage);
+        }, 1000);
+
+        uiStage.on('customEvent', (data: any) => {
+            basicText.text = data;
+        })
+
         window.addEventListener(
             "message",
             (event) => {
-                uiStage.syncManager.receiveEvent(event.data, HISTORY ? "history" : "live")
+                uiStage.syncManager.receiveEvent(event.data.data, event.data.type)
+                if(event.data.type == 'history'){
+                    historyFlag = false;
+                }
             },
             false
         );
 
         const btn = new vf.gui.Button();
-        btn.x = 200;
+        btn.x = 300;
         btn.y = 30;
         btn.text = "同步";
         uiStage.addChild(btn);
 
         btn.on(vf.gui.Interaction.TouchMouseEvent.onClick, () => {
+            if(!historyFlag) return;
             if(window.parent !== window){
-                window.parent.postMessage(history, '*');
-                history = {};
+                window.parent.postMessage({
+                    type: 'history',
+                    data: historyData
+                }, '*');
+                historyData = {};
+                historyFlag = false;
             }
         });
 
         uiStage.syncInteractiveFlag = true;
         uiStage.reset = () => {
             console.log('场景reset。。。。。')
+            img3.x = 200;
         }
     }
 }

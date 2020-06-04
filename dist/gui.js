@@ -164,6 +164,22 @@ var SyncManager = /** @class */ (function () {
         }
     };
     /**
+     * 收集自定义事件
+     * data
+     */
+    SyncManager.prototype.collectCustomEvent = function (customData, obj) {
+        var eventData = {};
+        var time = this.currentTime();
+        eventData.code = 'customEvent_' + vf.utils.uid() + time;
+        eventData.time = time;
+        var data = {
+            data: customData,
+            path: Utils_1.getDisplayPathById(obj)
+        };
+        eventData.data = JSON.stringify(data);
+        this.sendEvent(eventData);
+    };
+    /**
      * 接收操作
      * @signalType 信令类型  live-实时信令   history-历史信令
      */
@@ -195,7 +211,7 @@ var SyncManager = /** @class */ (function () {
         //!!!important: e.data.originalEvent  不支持事件继续传递
         var time = this.currentTime();
         return {
-            code: "interaction_" + time,
+            code: "interaction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event)
         };
@@ -264,8 +280,11 @@ var SyncManager = /** @class */ (function () {
             this._obj = this._stage.getChildByPath(event_1.path);
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
         }
-        else {
-            //非交互输入事件
+        else if (eventData.code.indexOf('customEvent_') == 0) {
+            //自定义事件
+            var event_2 = JSON.parse(eventData.data);
+            var obj = this._stage.getChildByPath(event_2.path);
+            obj.emit('customEvent', event_2.data);
         }
     };
     /**
@@ -307,7 +326,7 @@ var SyncManager = /** @class */ (function () {
         //恢复过程只需要计算状态，不需要渲染
         if (this._evtDataList.length == 0)
             return;
-        this._initTime = performance.now();
+        this.init();
         this.resetStage();
         this._stage.renderable = false;
         for (var i = 0; i < this._evtDataList.length; ++i) {
@@ -10287,6 +10306,22 @@ var SyncManager = /** @class */ (function () {
         }
     };
     /**
+     * 收集自定义事件
+     * data
+     */
+    SyncManager.prototype.collectCustomEvent = function (customData, obj) {
+        var eventData = {};
+        var time = this.currentTime();
+        eventData.code = 'customEvent_' + vf.utils.uid() + time;
+        eventData.time = time;
+        var data = {
+            data: customData,
+            path: Utils_1.getDisplayPathById(obj)
+        };
+        eventData.data = JSON.stringify(data);
+        this.sendEvent(eventData);
+    };
+    /**
      * 接收操作
      * @signalType 信令类型  live-实时信令   history-历史信令
      */
@@ -10318,7 +10353,7 @@ var SyncManager = /** @class */ (function () {
         //!!!important: e.data.originalEvent  不支持事件继续传递
         var time = this.currentTime();
         return {
-            code: "interaction_" + time,
+            code: "interaction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event)
         };
@@ -10387,8 +10422,11 @@ var SyncManager = /** @class */ (function () {
             this._obj = this._stage.getChildByPath(event_1.path);
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
         }
-        else {
-            //非交互输入事件
+        else if (eventData.code.indexOf('customEvent_') == 0) {
+            //自定义事件
+            var event_2 = JSON.parse(eventData.data);
+            var obj = this._stage.getChildByPath(event_2.path);
+            obj.emit('customEvent', event_2.data);
         }
     };
     /**
@@ -10430,7 +10468,7 @@ var SyncManager = /** @class */ (function () {
         //恢复过程只需要计算状态，不需要渲染
         if (this._evtDataList.length == 0)
             return;
-        this._initTime = performance.now();
+        this.init();
         this.resetStage();
         this._stage.renderable = false;
         for (var i = 0; i < this._evtDataList.length; ++i) {
