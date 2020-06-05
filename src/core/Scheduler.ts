@@ -1,4 +1,4 @@
-import { TickerShared } from "../UI";
+import { TickerShared } from "./Ticker";
 import { EventType } from "../event/EventType";
 import { EventLevel } from "../event/EventLevel";
 

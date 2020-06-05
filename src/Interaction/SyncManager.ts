@@ -17,6 +17,7 @@ export class SyncManager {
             this._interactionEvent.data = new vf.interaction.InteractionData();
         }
         this._stage = stage;
+        TickerShared.addOnce(this.init);
     }
 
     /**
@@ -29,6 +30,7 @@ export class SyncManager {
     }
 
     public offsetTime: number = 0; //本地Date.now()与中心服务器的差值
+    private _resetTimeFlag: boolean = false; //是否对齐过时间
     private _crossTime: number = 0; //穿越的时间
     private _initTime: number = 0; //初始化成功时的时间
     private _interactionEvent: InteractionEvent; //交互event对象
@@ -37,7 +39,7 @@ export class SyncManager {
     private _lostEvent: any[] = []; //节流中的event
     private _throttleFlag: boolean = false; //节流状态
     private _throttleTimer: any = null; //节流时间函数
-    private _evtDataList: any[] = [];  //历史信令整理后的数组
+    private _evtDataList: any[] = []; //历史信令整理后的数组
 
     /**
      * 开始同步
@@ -71,15 +73,15 @@ export class SyncManager {
      * 收集自定义事件
      * data
      */
-    public collectCustomEvent(customData: any, obj: DisplayObjectAbstract){
+    public collectCustomEvent(customData: any, obj: DisplayObjectAbstract) {
         let eventData: any = {};
         let time = this.currentTime();
-        eventData.code = 'customEvent_' + vf.utils.uid() + time;
+        eventData.code = "customEvent_" + vf.utils.uid() + time;
         eventData.time = time;
         let data: any = {
             data: customData,
-            path: getDisplayPathById(obj)
-        }
+            path: getDisplayPathById(obj),
+        };
         eventData.data = JSON.stringify(data);
         this.sendEvent(eventData);
     }
@@ -89,14 +91,23 @@ export class SyncManager {
      * @signalType 信令类型  live-实时信令   history-历史信令
      */
     public receiveEvent(eventData: any, signalType: string = "live") {
-        console.log('receive syncEvent: ', eventData);
         if (signalType == "history") {
             this.dealHistoryEvent(eventData);
         } else {
+            if (!this._resetTimeFlag) {
+                this._resetTimeFlag = true;
+                //判断是否需要穿越到过去,忽略500ms的网络延时
+                if (eventData.time < this.currentTime() - 500) {
+                    this.resetStage();
+                }
+            }
             this.parseEventData(eventData);
         }
     }
 
+    /**
+     * 获取当前时间
+     */
     private currentTime() {
         let time = performance.now() - this._initTime - this.offsetTime + this._crossTime;
         return Math.floor(time);
@@ -118,15 +129,15 @@ export class SyncManager {
         return {
             code: "interaction_" + vf.utils.uid() + time,
             time: time,
-            data: JSON.stringify(event)
-        }
+            data: JSON.stringify(event),
+        };
     }
 
     /**
      * 发送操作
      */
     private sendEvent(eventData: any) {
-        this._stage.emit('sendSyncEvent', eventData);
+        this._stage.emit("sendSyncEvent", eventData);
     }
 
     /**
@@ -157,14 +168,14 @@ export class SyncManager {
         }
     }
 
-    private resetStage(){
+    private resetStage() {
         const stage = this._stage as any;
-        if(stage.reset){
+        if (stage.reset) {
             stage.reset();
-        }
-        else{
+        } else {
             console.error("当前stage没有reset方法，使用输入同步需要自定义reset方法用于场景重置!!!");
         }
+        this.init();
     }
 
     /**
@@ -178,7 +189,7 @@ export class SyncManager {
             let druation = time - currentTime;
             this.crossTime(druation);
         }
-        if(eventData.code.indexOf('interaction_') == 0){
+        if (eventData.code.indexOf("interaction_") == 0) {
             let event = JSON.parse(eventData.data);
             this._interactionEvent.signalling = true;
             this._interactionEvent.type = event.type;
@@ -187,12 +198,11 @@ export class SyncManager {
             this._interactionEvent.data.global.set(data.global.x, data.global.y);
             this._obj = this._stage.getChildByPath(event.path) as DisplayObjectAbstract;
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
-        }
-        else if(eventData.code.indexOf('customEvent_') == 0){
+        } else if (eventData.code.indexOf("customEvent_") == 0) {
             //自定义事件
             let event = JSON.parse(eventData.data);
             let obj: DisplayObjectAbstract = this._stage.getChildByPath(event.path) as DisplayObjectAbstract;
-            obj.emit('customEvent', event.data);
+            obj.emit("customEvent", event.data);
         }
     }
 
@@ -210,33 +220,31 @@ export class SyncManager {
             this._stage.renderable = true;
         }
         this._crossTime += druation;
-        console.log('crossTime: ', druation);
     }
 
     /**
      * 处理历史信令，将历史输入事件按时间顺序放置到一个数组
-     * @param eventData 
+     * @param eventData
      */
-    private dealHistoryEvent(eventData: any){
-        if(!eventData) return;
+    private dealHistoryEvent(eventData: any) {
+        if (!eventData) return;
         this._evtDataList = [];
-        for(let key in eventData){
+        for (let key in eventData) {
             this._evtDataList.push(eventData[key]);
         }
-        this._evtDataList.sort((a,b)=>{
+        this._evtDataList.sort((a, b) => {
             return a.time - b.time;
-        })
+        });
 
         this.resumeStatus();
     }
-    
+
     /**
      * 恢复状态
      */
     private resumeStatus() {
         //恢复过程只需要计算状态，不需要渲染
         if (this._evtDataList.length == 0) return;
-        this.init();
         this.resetStage();
 
         this._stage.renderable = false;

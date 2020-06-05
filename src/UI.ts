@@ -220,11 +220,13 @@ import * as Enum from './enum/Index';
 
 import { Scheduler } from './core/Scheduler';
 
+import { SyncManager } from './Interaction/SyncManager';
+
 export declare type Application = vf.Application;
 
 /** 请不要在编写UI组件内部使用本类 */
 export {
     Audio,Filter, Utils, Stage, Container, ScrollingContainer, Slider,
     Label, TextInput, Button, CheckBox, Rect, Circle, Graphics, FollowLine, Tracing, ConnectLine, ScrollBar, Interaction,
-    DisplayObject, TickerShared, Tween, Timeline, Easing, Image, SpriteAnimated, Event, Enum, Scheduler
+    DisplayObject, TickerShared, Tween, Timeline, Easing, Image, SpriteAnimated, Event, Enum, Scheduler, SyncManager
 };

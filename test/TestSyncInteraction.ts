@@ -117,16 +117,19 @@ export default class TestSyncInteraction {
         let speed:number = 100;
         let flag = true;
         let interval = null;
+        let count = 0;
+        let totaloffset = 0;
+        let totalTime = 0;
         img3.on(vf.gui.Interaction.TouchMouseEvent.onClick, ()=>{
-            console.log('点击')
             if(interval){
                 interval.stop();
                 interval = null;
             }
             else{
                 interval = vf.gui.Scheduler.setInterval(0, (info: any)=>{
-                    let offset: number = Math.ceil(speed * info.dt / 1000);
-                    console.log(offset);
+                    let offset: number = speed * info.dt / 1000;
+                    totaloffset += offset;
+                    totalTime += info.dt;
                     if(flag){
                         img3.x += offset;
                         if(img3.x > 600){
@@ -157,9 +160,10 @@ export default class TestSyncInteraction {
             }
         });
 
-        setTimeout(() => {
+        setInterval(() => {
+            basicText.text = (Math.random() * 1000).toString();
             uiStage.syncManager.collectCustomEvent(basicText.text, uiStage);
-        }, 1000);
+        }, 5000);
 
         uiStage.on('customEvent', (data: any) => {
             basicText.text = data;
@@ -197,7 +201,7 @@ export default class TestSyncInteraction {
         uiStage.syncInteractiveFlag = true;
         uiStage.reset = () => {
             console.log('场景reset。。。。。')
-            img3.x = 200;
+            // img3.x = 200;
         }
     }
 }
