@@ -282,7 +282,7 @@ export class UIBaseDrag implements Lifecycle {
                     if (debug) { //debug 模式下，日志信息
                         const stage = target.stage;
                         if (stage) {
-                            stage.inputLog({
+                            stage.sendToPlayer({
                                 code: ComponentEvent.DRAG_START,
                                 level: 'info', target: target,
                                 data: [target.parent, containerStart.x - stageOffset.x, containerStart.y - stageOffset.y],
@@ -329,7 +329,7 @@ export class UIBaseDrag implements Lifecycle {
                     if (debug) {//debug 模式下，日志信息
                         const stage = target.stage;
                         if (stage) {
-                            stage.inputLog({
+                            stage.sendToPlayer({
                                 code: ComponentEvent.DRAG_MOVE,
                                 level: 'info',
                                 target: target,
@@ -379,7 +379,7 @@ export class UIBaseDrag implements Lifecycle {
                         if (debug) {//debug 模式下，日志信息
                             const stage = target.stage;
                             if (stage) {
-                                stage.inputLog({
+                                stage.sendToPlayer({
                                     code: ComponentEvent.DRAG_END,
                                     level: 'info',
                                     target: target,
@@ -398,7 +398,7 @@ export class UIBaseDrag implements Lifecycle {
                         e.data.tiltY = dragPosition.y;
                         this._actionData = {type:ComponentEvent.DRAG_END,data: e.data};
                         target.emit(ComponentEvent.DRAG_END, target, e);
-                    })
+                    }, this)
                 }
                 
 
@@ -463,7 +463,7 @@ export class UIBaseDrag implements Lifecycle {
             if (debug) {//debug 模式下，日志信息
                 const stage = target.stage;
                 if (stage) {
-                    stage.inputLog({
+                    stage.sendToPlayer({
                         code: ComponentEvent.DRAG_TARGET,
                         level: 'info',
                         target: item,

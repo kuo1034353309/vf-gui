@@ -116,35 +116,35 @@ export default class TestSyncInteraction {
         img3.interactabled = true;
         let speed:number = 100;
         let flag = true;
-        let interval = null;
-        let count = 0;
-        let totaloffset = 0;
-        let totalTime = 0;
-        img3.on(vf.gui.Interaction.TouchMouseEvent.onClick, ()=>{
-            if(interval){
-                interval.stop();
-                interval = null;
+        let pauseFlag = true;
+        let totalOffset = 0;
+        let interval = vf.gui.Scheduler.setInterval(0, (info: any)=>{
+            let offset: number = speed * info.dt / 1000;
+            totalOffset += info.dt;
+            //console.log(totalOffset);
+            if(flag){
+                img3.x += offset;
+                if(img3.x > 600){
+                    flag = false;
+                }
             }
             else{
-                interval = vf.gui.Scheduler.setInterval(0, (info: any)=>{
-                    let offset: number = speed * info.dt / 1000;
-                    totaloffset += offset;
-                    totalTime += info.dt;
-                    if(flag){
-                        img3.x += offset;
-                        if(img3.x > 600){
-                            flag = false;
-                        }
-                    }
-                    else{
-                        img3.x -= offset;
-                        if(img3.x < 200){
-                            flag = true;
-                        }
-                    }
-                })
+                img3.x -= offset;
+                if(img3.x < 200){
+                    flag = true;
+                }
             }
-
+        })
+        interval.pause();
+        img3.on(vf.gui.Interaction.TouchMouseEvent.onClick, ()=>{
+            if(pauseFlag){
+                interval.resume();
+                pauseFlag = false;
+            }
+            else{
+                interval.pause();
+                pauseFlag = true;
+            }
         }, this);
 
         uiStage.on('sendSyncEvent', (data: any) => {
@@ -162,10 +162,10 @@ export default class TestSyncInteraction {
 
         setInterval(() => {
             basicText.text = (Math.random() * 1000).toString();
-            uiStage.syncManager.collectCustomEvent(basicText.text, uiStage);
+            uiStage.syncManager.sendCustomEvent(basicText.text);
         }, 5000);
 
-        uiStage.on('customEvent', (data: any) => {
+        uiStage.on('receiveCustomEvent', (data: any) => {
             basicText.text = data;
         })
 
@@ -201,7 +201,9 @@ export default class TestSyncInteraction {
         uiStage.syncInteractiveFlag = true;
         uiStage.reset = () => {
             console.log('场景reset。。。。。')
-            // img3.x = 200;
+            img3.x = 200;
+            flag = true;
+            pauseFlag = true;
         }
     }
 }

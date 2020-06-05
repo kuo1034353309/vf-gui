@@ -180,7 +180,7 @@ export class ClickEvent {
         if (debug) {
             const stage = this.obj.stage;
             if (stage && event !== TouchMouseEvent.onMove) {
-                stage.inputLog({
+                stage.sendToPlayer({
                     code: event,
                     level: "info",
                     target: this.obj,

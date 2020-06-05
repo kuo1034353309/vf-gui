@@ -128,7 +128,8 @@ var SyncManager = /** @class */ (function () {
             this._interactionEvent.data = new vf.interaction.InteractionData();
         }
         this._stage = stage;
-        Ticker_1.TickerShared.addOnce(this.init);
+        Ticker_1.TickerShared.addOnce(this.init, this);
+        console.log('.......', this._stage);
     }
     /**
      * 对应一个stage有一个syncManager的实例
@@ -143,6 +144,14 @@ var SyncManager = /** @class */ (function () {
      */
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
+        var stage = this._stage;
+        console.log('syncManager init:', this._initTime, stage);
+        if (stage.syncInteractiveFlag) {
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
     };
     /**
      * 收集交互事件
@@ -169,16 +178,12 @@ var SyncManager = /** @class */ (function () {
      * 收集自定义事件
      * data
      */
-    SyncManager.prototype.collectCustomEvent = function (customData, obj) {
+    SyncManager.prototype.sendCustomEvent = function (customData) {
         var eventData = {};
         var time = this.currentTime();
-        eventData.code = "customEvent_" + vf.utils.uid() + time;
+        eventData.code = "syncCustomEvent_" + vf.utils.uid() + time;
         eventData.time = time;
-        var data = {
-            data: customData,
-            path: Utils_1.getDisplayPathById(obj),
-        };
-        eventData.data = JSON.stringify(data);
+        eventData.data = JSON.stringify(customData);
         this.sendEvent(eventData);
     };
     /**
@@ -188,6 +193,7 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.receiveEvent = function (eventData, signalType) {
         if (signalType === void 0) { signalType = "live"; }
         if (signalType == "history") {
+            console.log('history:', eventData);
             this.dealHistoryEvent(eventData);
         }
         else {
@@ -222,7 +228,7 @@ var SyncManager = /** @class */ (function () {
         //!!!important: e.data.originalEvent  不支持事件继续传递
         var time = this.currentTime();
         return {
-            code: "interaction_" + vf.utils.uid() + time,
+            code: "syncInteraction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event),
         };
@@ -231,7 +237,16 @@ var SyncManager = /** @class */ (function () {
      * 发送操作
      */
     SyncManager.prototype.sendEvent = function (eventData) {
-        this._stage.emit("sendSyncEvent", eventData);
+        var stage = this._stage;
+        //派发至uistage
+        stage.emit("sendSyncEvent", eventData);
+        //派发至player
+        var msg = {
+            level: 'command',
+            code: 'syncEvent',
+            data: eventData
+        };
+        stage.sendToPlayer(msg);
     };
     /**
      * 更新节流状态
@@ -269,12 +284,13 @@ var SyncManager = /** @class */ (function () {
         else {
             console.error("当前stage没有reset方法，使用输入同步需要自定义reset方法用于场景重置!!!");
         }
-        this.init();
+        this._initTime = performance.now();
     };
     /**
      * 解析收到的event
      */
     SyncManager.prototype.parseEventData = function (eventData) {
+        var stage = this._stage;
         var time = eventData.time;
         //判断信令时间，是否需要向后穿越
         var currentTime = this.currentTime();
@@ -282,21 +298,26 @@ var SyncManager = /** @class */ (function () {
             var druation = time - currentTime;
             this.crossTime(druation);
         }
-        if (eventData.code.indexOf("interaction_") == 0) {
+        if (eventData.code.indexOf("syncInteraction_") == 0) {
             var event_1 = JSON.parse(eventData.data);
             this._interactionEvent.signalling = true;
             this._interactionEvent.type = event_1.type;
             var data = event_1.data;
             this._interactionEvent.data.identifier = data.identifier;
             this._interactionEvent.data.global.set(data.global.x, data.global.y);
-            this._obj = this._stage.getChildByPath(event_1.path);
+            this._obj = stage.getChildByPath(event_1.path);
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
         }
-        else if (eventData.code.indexOf("customEvent_") == 0) {
+        else if (eventData.code.indexOf("syncCustomEvent_") == 0) {
             //自定义事件
-            var event_2 = JSON.parse(eventData.data);
-            var obj = this._stage.getChildByPath(event_2.path);
-            obj.emit("customEvent", event_2.data);
+            var data = JSON.parse(eventData.data);
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.on('receiveCustomEvent', this.sendCustomEvent);
+            }
+            else {
+                stage.emit("receiveCustomEvent", data);
+            }
         }
     };
     /**
@@ -385,7 +406,8 @@ var SyncManager = /** @class */ (function () {
             this._interactionEvent.data = new vf.interaction.InteractionData();
         }
         this._stage = stage;
-        Ticker_1.TickerShared.addOnce(this.init);
+        Ticker_1.TickerShared.addOnce(this.init, this);
+        console.log('.......', this._stage);
     }
     /**
      * 对应一个stage有一个syncManager的实例
@@ -400,6 +422,14 @@ var SyncManager = /** @class */ (function () {
      */
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
+        var stage = this._stage;
+        console.log('syncManager init:', this._initTime, stage);
+        if (stage.syncInteractiveFlag) {
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
     };
     /**
      * 收集交互事件
@@ -426,16 +456,12 @@ var SyncManager = /** @class */ (function () {
      * 收集自定义事件
      * data
      */
-    SyncManager.prototype.collectCustomEvent = function (customData, obj) {
+    SyncManager.prototype.sendCustomEvent = function (customData) {
         var eventData = {};
         var time = this.currentTime();
-        eventData.code = "customEvent_" + vf.utils.uid() + time;
+        eventData.code = "syncCustomEvent_" + vf.utils.uid() + time;
         eventData.time = time;
-        var data = {
-            data: customData,
-            path: Utils_1.getDisplayPathById(obj),
-        };
-        eventData.data = JSON.stringify(data);
+        eventData.data = JSON.stringify(customData);
         this.sendEvent(eventData);
     };
     /**
@@ -445,6 +471,7 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.receiveEvent = function (eventData, signalType) {
         if (signalType === void 0) { signalType = "live"; }
         if (signalType == "history") {
+            console.log('history:', eventData);
             this.dealHistoryEvent(eventData);
         }
         else {
@@ -479,7 +506,7 @@ var SyncManager = /** @class */ (function () {
         //!!!important: e.data.originalEvent  不支持事件继续传递
         var time = this.currentTime();
         return {
-            code: "interaction_" + vf.utils.uid() + time,
+            code: "syncInteraction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event),
         };
@@ -488,7 +515,16 @@ var SyncManager = /** @class */ (function () {
      * 发送操作
      */
     SyncManager.prototype.sendEvent = function (eventData) {
-        this._stage.emit("sendSyncEvent", eventData);
+        var stage = this._stage;
+        //派发至uistage
+        stage.emit("sendSyncEvent", eventData);
+        //派发至player
+        var msg = {
+            level: 'command',
+            code: 'syncEvent',
+            data: eventData
+        };
+        stage.sendToPlayer(msg);
     };
     /**
      * 更新节流状态
@@ -526,12 +562,13 @@ var SyncManager = /** @class */ (function () {
         else {
             console.error("当前stage没有reset方法，使用输入同步需要自定义reset方法用于场景重置!!!");
         }
-        this.init();
+        this._initTime = performance.now();
     };
     /**
      * 解析收到的event
      */
     SyncManager.prototype.parseEventData = function (eventData) {
+        var stage = this._stage;
         var time = eventData.time;
         //判断信令时间，是否需要向后穿越
         var currentTime = this.currentTime();
@@ -539,21 +576,26 @@ var SyncManager = /** @class */ (function () {
             var druation = time - currentTime;
             this.crossTime(druation);
         }
-        if (eventData.code.indexOf("interaction_") == 0) {
+        if (eventData.code.indexOf("syncInteraction_") == 0) {
             var event_1 = JSON.parse(eventData.data);
             this._interactionEvent.signalling = true;
             this._interactionEvent.type = event_1.type;
             var data = event_1.data;
             this._interactionEvent.data.identifier = data.identifier;
             this._interactionEvent.data.global.set(data.global.x, data.global.y);
-            this._obj = this._stage.getChildByPath(event_1.path);
+            this._obj = stage.getChildByPath(event_1.path);
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
         }
-        else if (eventData.code.indexOf("customEvent_") == 0) {
+        else if (eventData.code.indexOf("syncCustomEvent_") == 0) {
             //自定义事件
-            var event_2 = JSON.parse(eventData.data);
-            var obj = this._stage.getChildByPath(event_2.path);
-            obj.emit("customEvent", event_2.data);
+            var data = JSON.parse(eventData.data);
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.on('receiveCustomEvent', this.sendCustomEvent);
+            }
+            else {
+                stage.emit("receiveCustomEvent", data);
+            }
         }
     };
     /**
@@ -3254,6 +3296,7 @@ var Scheduler = /** @class */ (function (_super) {
     };
     Scheduler.prototype.resume = function () {
         if (this._pausing) {
+            this._pausing = false;
             Ticker_1.TickerShared.add(this.run, this);
         }
     };
@@ -3420,11 +3463,24 @@ var Stage = /** @class */ (function (_super) {
         //this.updateChildren();
     };
     /**
-     * 虚接口，子类可以扩充
+     * 接收来自player的消息
+     * @param msg
      */
-    Stage.prototype.inputLog = function (msg) {
+    Stage.prototype.receiveFromPlayer = function (msg) {
+        if (msg.code == 'syncEvent') {
+            var data = msg.data; //{data: eventData, type: 'live/history'}
+            this.syncManager.receiveEvent(data.data, data.type);
+        }
+    };
+    /**
+     * 虚接口，子类可以扩充,往player发消息
+     */
+    Stage.prototype.sendToPlayer = function (msg) {
         //
         //console.log(msg);
+    };
+    Stage.prototype.getSystemEvent = function () {
+        return null;
     };
     return Stage;
 }(DisplayLayoutAbstract_1.DisplayLayoutAbstract));
@@ -3763,7 +3819,7 @@ var UIBaseDrag = /** @class */ (function () {
                     if (Utils_1.debug) { //debug 模式下，日志信息
                         var stage = target.stage;
                         if (stage) {
-                            stage.inputLog({
+                            stage.sendToPlayer({
                                 code: Index_1.ComponentEvent.DRAG_START,
                                 level: 'info', target: target,
                                 data: [target.parent, containerStart_1.x - stageOffset_1.x, containerStart_1.y - stageOffset_1.y],
@@ -3807,7 +3863,7 @@ var UIBaseDrag = /** @class */ (function () {
                     if (Utils_1.debug) { //debug 模式下，日志信息
                         var stage = target.stage;
                         if (stage) {
-                            stage.inputLog({
+                            stage.sendToPlayer({
                                 code: Index_1.ComponentEvent.DRAG_MOVE,
                                 level: 'info',
                                 target: target,
@@ -3854,7 +3910,7 @@ var UIBaseDrag = /** @class */ (function () {
                         if (Utils_1.debug) { //debug 模式下，日志信息
                             var stage = target.stage;
                             if (stage) {
-                                stage.inputLog({
+                                stage.sendToPlayer({
                                     code: Index_1.ComponentEvent.DRAG_END,
                                     level: 'info',
                                     target: target,
@@ -3872,7 +3928,7 @@ var UIBaseDrag = /** @class */ (function () {
                         e.data.tiltY = dragPosition.y;
                         _this._actionData = { type: Index_1.ComponentEvent.DRAG_END, data: e.data };
                         target.emit(Index_1.ComponentEvent.DRAG_END, target, e);
-                    });
+                    }, _this);
                 }
             };
         }
@@ -3929,7 +3985,7 @@ var UIBaseDrag = /** @class */ (function () {
             if (Utils_1.debug) { //debug 模式下，日志信息
                 var stage = target.stage;
                 if (stage) {
-                    stage.inputLog({
+                    stage.sendToPlayer({
                         code: Index_1.ComponentEvent.DRAG_TARGET,
                         level: 'info',
                         target: item,
@@ -9729,7 +9785,7 @@ var ClickEvent = /** @class */ (function () {
         if (Utils_1.debug) {
             var stage = this.obj.stage;
             if (stage && event !== TouchMouseEvent_1.TouchMouseEvent.onMove) {
-                stage.inputLog({
+                stage.toPlayer({
                     code: event,
                     level: "info",
                     target: this.obj,
@@ -10539,7 +10595,8 @@ var SyncManager = /** @class */ (function () {
             this._interactionEvent.data = new vf.interaction.InteractionData();
         }
         this._stage = stage;
-        Ticker_1.TickerShared.addOnce(this.init);
+        Ticker_1.TickerShared.addOnce(this.init, this);
+        console.log('.......', this._stage);
     }
     /**
      * 对应一个stage有一个syncManager的实例
@@ -10554,6 +10611,14 @@ var SyncManager = /** @class */ (function () {
      */
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
+        var stage = this._stage;
+        console.log('syncManager init:', this._initTime, stage);
+        if (stage.syncInteractiveFlag) {
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
     };
     /**
      * 收集交互事件
@@ -10580,16 +10645,12 @@ var SyncManager = /** @class */ (function () {
      * 收集自定义事件
      * data
      */
-    SyncManager.prototype.collectCustomEvent = function (customData, obj) {
+    SyncManager.prototype.sendCustomEvent = function (customData) {
         var eventData = {};
         var time = this.currentTime();
-        eventData.code = "customEvent_" + vf.utils.uid() + time;
+        eventData.code = "syncCustomEvent_" + vf.utils.uid() + time;
         eventData.time = time;
-        var data = {
-            data: customData,
-            path: Utils_1.getDisplayPathById(obj),
-        };
-        eventData.data = JSON.stringify(data);
+        eventData.data = JSON.stringify(customData);
         this.sendEvent(eventData);
     };
     /**
@@ -10599,6 +10660,7 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.receiveEvent = function (eventData, signalType) {
         if (signalType === void 0) { signalType = "live"; }
         if (signalType == "history") {
+            console.log('history:', eventData);
             this.dealHistoryEvent(eventData);
         }
         else {
@@ -10633,7 +10695,7 @@ var SyncManager = /** @class */ (function () {
         //!!!important: e.data.originalEvent  不支持事件继续传递
         var time = this.currentTime();
         return {
-            code: "interaction_" + vf.utils.uid() + time,
+            code: "syncInteraction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event),
         };
@@ -10642,7 +10704,16 @@ var SyncManager = /** @class */ (function () {
      * 发送操作
      */
     SyncManager.prototype.sendEvent = function (eventData) {
-        this._stage.emit("sendSyncEvent", eventData);
+        var stage = this._stage;
+        //派发至uistage
+        stage.emit("sendSyncEvent", eventData);
+        //派发至player
+        var msg = {
+            level: 'command',
+            code: 'syncEvent',
+            data: eventData
+        };
+        stage.sendToPlayer(msg);
     };
     /**
      * 更新节流状态
@@ -10680,12 +10751,13 @@ var SyncManager = /** @class */ (function () {
         else {
             console.error("当前stage没有reset方法，使用输入同步需要自定义reset方法用于场景重置!!!");
         }
-        this.init();
+        this._initTime = performance.now();
     };
     /**
      * 解析收到的event
      */
     SyncManager.prototype.parseEventData = function (eventData) {
+        var stage = this._stage;
         var time = eventData.time;
         //判断信令时间，是否需要向后穿越
         var currentTime = this.currentTime();
@@ -10693,21 +10765,26 @@ var SyncManager = /** @class */ (function () {
             var druation = time - currentTime;
             this.crossTime(druation);
         }
-        if (eventData.code.indexOf("interaction_") == 0) {
+        if (eventData.code.indexOf("syncInteraction_") == 0) {
             var event_1 = JSON.parse(eventData.data);
             this._interactionEvent.signalling = true;
             this._interactionEvent.type = event_1.type;
             var data = event_1.data;
             this._interactionEvent.data.identifier = data.identifier;
             this._interactionEvent.data.global.set(data.global.x, data.global.y);
-            this._obj = this._stage.getChildByPath(event_1.path);
+            this._obj = stage.getChildByPath(event_1.path);
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
         }
-        else if (eventData.code.indexOf("customEvent_") == 0) {
+        else if (eventData.code.indexOf("syncCustomEvent_") == 0) {
             //自定义事件
-            var event_2 = JSON.parse(eventData.data);
-            var obj = this._stage.getChildByPath(event_2.path);
-            obj.emit("customEvent", event_2.data);
+            var data = JSON.parse(eventData.data);
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.on('receiveCustomEvent', this.sendCustomEvent);
+            }
+            else {
+                stage.emit("receiveCustomEvent", data);
+            }
         }
     };
     /**

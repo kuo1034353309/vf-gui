@@ -17,7 +17,8 @@ export class SyncManager {
             this._interactionEvent.data = new vf.interaction.InteractionData();
         }
         this._stage = stage;
-        TickerShared.addOnce(this.init);
+        TickerShared.addOnce(this.init, this);
+        console.log('.......', this._stage);
     }
 
     /**
@@ -46,6 +47,14 @@ export class SyncManager {
      */
     public init() {
         this._initTime = performance.now();
+        const stage = this._stage;
+        console.log('syncManager init:', this._initTime, stage);
+        if(stage.syncInteractiveFlag){
+            let systemEvent = stage.getSystemEvent();
+            if(systemEvent){
+                systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
     }
 
     /**
@@ -73,16 +82,12 @@ export class SyncManager {
      * 收集自定义事件
      * data
      */
-    public collectCustomEvent(customData: any, obj: DisplayObjectAbstract) {
+    public sendCustomEvent(customData: any) {
         let eventData: any = {};
         let time = this.currentTime();
-        eventData.code = "customEvent_" + vf.utils.uid() + time;
+        eventData.code = "syncCustomEvent_" + vf.utils.uid() + time;
         eventData.time = time;
-        let data: any = {
-            data: customData,
-            path: getDisplayPathById(obj),
-        };
-        eventData.data = JSON.stringify(data);
+        eventData.data = JSON.stringify(customData);
         this.sendEvent(eventData);
     }
 
@@ -92,6 +97,7 @@ export class SyncManager {
      */
     public receiveEvent(eventData: any, signalType: string = "live") {
         if (signalType == "history") {
+            console.log('history:', eventData);
             this.dealHistoryEvent(eventData);
         } else {
             if (!this._resetTimeFlag) {
@@ -127,7 +133,7 @@ export class SyncManager {
         //!!!important: e.data.originalEvent  不支持事件继续传递
         let time = this.currentTime();
         return {
-            code: "interaction_" + vf.utils.uid() + time,
+            code: "syncInteraction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event),
         };
@@ -137,7 +143,16 @@ export class SyncManager {
      * 发送操作
      */
     private sendEvent(eventData: any) {
-        this._stage.emit("sendSyncEvent", eventData);
+        const stage = this._stage;
+        //派发至uistage
+        stage.emit("sendSyncEvent", eventData);
+        //派发至player
+        let msg = {
+            level: 'command',
+            code: 'syncEvent',
+            data: eventData
+        }
+        stage.sendToPlayer(msg);
     }
 
     /**
@@ -175,13 +190,14 @@ export class SyncManager {
         } else {
             console.error("当前stage没有reset方法，使用输入同步需要自定义reset方法用于场景重置!!!");
         }
-        this.init();
+        this._initTime = performance.now();
     }
 
     /**
      * 解析收到的event
      */
     private parseEventData(eventData: any) {
+        const stage = this._stage;
         let time = eventData.time;
         //判断信令时间，是否需要向后穿越
         let currentTime = this.currentTime();
@@ -189,20 +205,25 @@ export class SyncManager {
             let druation = time - currentTime;
             this.crossTime(druation);
         }
-        if (eventData.code.indexOf("interaction_") == 0) {
+        if (eventData.code.indexOf("syncInteraction_") == 0) {
             let event = JSON.parse(eventData.data);
             this._interactionEvent.signalling = true;
             this._interactionEvent.type = event.type;
             let data = event.data;
             this._interactionEvent.data.identifier = data.identifier;
             this._interactionEvent.data.global.set(data.global.x, data.global.y);
-            this._obj = this._stage.getChildByPath(event.path) as DisplayObjectAbstract;
+            this._obj = stage.getChildByPath(event.path) as DisplayObjectAbstract;
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
-        } else if (eventData.code.indexOf("customEvent_") == 0) {
+        } else if (eventData.code.indexOf("syncCustomEvent_") == 0) {
             //自定义事件
-            let event = JSON.parse(eventData.data);
-            let obj: DisplayObjectAbstract = this._stage.getChildByPath(event.path) as DisplayObjectAbstract;
-            obj.emit("customEvent", event.data);
+            let data = JSON.parse(eventData.data);
+            let systemEvent = stage.getSystemEvent();
+            if(systemEvent){
+                systemEvent.on('receiveCustomEvent', this.sendCustomEvent);
+            }
+            else{
+                stage.emit("receiveCustomEvent", data);
+            }
         }
     }
 

@@ -32,11 +32,9 @@ export class Stage extends DisplayLayoutAbstract{
             TickerShared.start();
         }
         TickerShared.add(tween.update,this);
-
         if (!this.container.parent) {
             this.app.stage.addChild(this.container);
         }
-        
     }
 
     public app: vf.Application | any;
@@ -106,11 +104,25 @@ export class Stage extends DisplayLayoutAbstract{
     }
 
     /**
-     * 虚接口，子类可以扩充
+     * 接收来自player的消息
+     * @param msg 
      */
-    public inputLog(msg: any){
+    public receiveFromPlayer(msg: any){
+        if(msg.code == 'syncEvent'){
+            let data = msg.data; //{data: eventData, type: 'live/history'}
+            this.syncManager.receiveEvent(data.data, data.type);
+        }
+    }
+
+    /**
+     * 虚接口，子类可以扩充,往player发消息
+     */
+    public sendToPlayer(msg: any){
         //
         //console.log(msg);
     }
 
+    public getSystemEvent(): vf.utils.EventEmitter{
+        return null as any;
+    }
 }

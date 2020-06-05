@@ -67,6 +67,7 @@ export class Scheduler extends vf.utils.EventEmitter{
 
     public resume(): void{
         if(this._pausing){
+            this._pausing = false;
             TickerShared.add(this.run, this);
         }
     }
