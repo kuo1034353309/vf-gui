@@ -12,7 +12,7 @@ export const $tempLocalBounds = new vf.Rectangle();
 export class DisplayLayoutAbstract extends DisplayObjectAbstract {
 
     public constructor() {
-        super()
+        super();
         this.initializeUIValues();
     }
 
