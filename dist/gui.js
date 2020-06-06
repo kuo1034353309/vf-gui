@@ -129,7 +129,6 @@ var SyncManager = /** @class */ (function () {
         }
         this._stage = stage;
         Ticker_1.TickerShared.addOnce(this.init, this);
-        console.log('.......', this._stage);
     }
     /**
      * 对应一个stage有一个syncManager的实例
@@ -145,11 +144,19 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
         var stage = this._stage;
-        console.log('syncManager init:', this._initTime, stage);
         if (stage.syncInteractiveFlag) {
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
+    };
+    SyncManager.prototype.release = function () {
+        var stage = this._stage;
+        if (stage.syncInteractiveFlag) {
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.off('sendCustomEvent', this.sendCustomEvent);
             }
         }
     };
@@ -313,7 +320,7 @@ var SyncManager = /** @class */ (function () {
             var data = JSON.parse(eventData.data);
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
-                systemEvent.on('receiveCustomEvent', this.sendCustomEvent);
+                systemEvent.emit('receiveCustomEvent', this.sendCustomEvent);
             }
             else {
                 stage.emit("receiveCustomEvent", data);
@@ -407,7 +414,6 @@ var SyncManager = /** @class */ (function () {
         }
         this._stage = stage;
         Ticker_1.TickerShared.addOnce(this.init, this);
-        console.log('.......', this._stage);
     }
     /**
      * 对应一个stage有一个syncManager的实例
@@ -423,11 +429,19 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
         var stage = this._stage;
-        console.log('syncManager init:', this._initTime, stage);
         if (stage.syncInteractiveFlag) {
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
+    };
+    SyncManager.prototype.release = function () {
+        var stage = this._stage;
+        if (stage.syncInteractiveFlag) {
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.off('sendCustomEvent', this.sendCustomEvent);
             }
         }
     };
@@ -591,7 +605,7 @@ var SyncManager = /** @class */ (function () {
             var data = JSON.parse(eventData.data);
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
-                systemEvent.on('receiveCustomEvent', this.sendCustomEvent);
+                systemEvent.emit('receiveCustomEvent', this.sendCustomEvent);
             }
             else {
                 stage.emit("receiveCustomEvent", data);
@@ -3444,9 +3458,11 @@ var Stage = /** @class */ (function (_super) {
     Stage.prototype.release = function () {
         _super.prototype.release.call(this);
         Ticker_1.TickerShared.remove(tween.update, this);
+        this.syncManager.release();
     };
     Stage.prototype.releaseAll = function () {
         Ticker_1.TickerShared.remove(tween.update, this);
+        this.syncManager.release();
         for (var i = 0; i < this.uiChildren.length; i++) {
             var ui = this.uiChildren[i];
             ui.releaseAll();
@@ -9785,7 +9801,7 @@ var ClickEvent = /** @class */ (function () {
         if (Utils_1.debug) {
             var stage = this.obj.stage;
             if (stage && event !== TouchMouseEvent_1.TouchMouseEvent.onMove) {
-                stage.toPlayer({
+                stage.sendToPlayer({
                     code: event,
                     level: "info",
                     target: this.obj,
@@ -10596,7 +10612,6 @@ var SyncManager = /** @class */ (function () {
         }
         this._stage = stage;
         Ticker_1.TickerShared.addOnce(this.init, this);
-        console.log('.......', this._stage);
     }
     /**
      * 对应一个stage有一个syncManager的实例
@@ -10612,11 +10627,19 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
         var stage = this._stage;
-        console.log('syncManager init:', this._initTime, stage);
         if (stage.syncInteractiveFlag) {
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
+    };
+    SyncManager.prototype.release = function () {
+        var stage = this._stage;
+        if (stage.syncInteractiveFlag) {
+            var systemEvent = stage.getSystemEvent();
+            if (systemEvent) {
+                systemEvent.off('sendCustomEvent', this.sendCustomEvent);
             }
         }
     };
@@ -10780,7 +10803,7 @@ var SyncManager = /** @class */ (function () {
             var data = JSON.parse(eventData.data);
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
-                systemEvent.on('receiveCustomEvent', this.sendCustomEvent);
+                systemEvent.emit('receiveCustomEvent', this.sendCustomEvent);
             }
             else {
                 stage.emit("receiveCustomEvent", data);

@@ -79,10 +79,12 @@ export class Stage extends DisplayLayoutAbstract{
     public release(){
         super.release();
         TickerShared.remove(tween.update,this);
+        this.syncManager.release();
     }
 
     public releaseAll(){
         TickerShared.remove(tween.update,this);
+        this.syncManager.release();
         
         for(let i=0;i<this.uiChildren.length;i++){
             const ui = this.uiChildren[i] as DisplayObject;

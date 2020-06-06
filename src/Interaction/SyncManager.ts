@@ -18,7 +18,6 @@ export class SyncManager {
         }
         this._stage = stage;
         TickerShared.addOnce(this.init, this);
-        console.log('.......', this._stage);
     }
 
     /**
@@ -48,11 +47,20 @@ export class SyncManager {
     public init() {
         this._initTime = performance.now();
         const stage = this._stage;
-        console.log('syncManager init:', this._initTime, stage);
         if(stage.syncInteractiveFlag){
             let systemEvent = stage.getSystemEvent();
             if(systemEvent){
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
+    }
+
+    public release(){
+        const stage = this._stage;
+        if(stage.syncInteractiveFlag){
+            let systemEvent = stage.getSystemEvent();
+            if(systemEvent){
+                systemEvent.off('sendCustomEvent', this.sendCustomEvent);
             }
         }
     }
@@ -219,7 +227,7 @@ export class SyncManager {
             let data = JSON.parse(eventData.data);
             let systemEvent = stage.getSystemEvent();
             if(systemEvent){
-                systemEvent.on('receiveCustomEvent', this.sendCustomEvent);
+                systemEvent.emit('receiveCustomEvent', this.sendCustomEvent);
             }
             else{
                 stage.emit("receiveCustomEvent", data);
