@@ -170,7 +170,7 @@ export default class TestSyncInteraction {
 
         uiStage.on('receiveCustomEvent', (data: any) => {
             console.log('ziye-----receiveCustomEvent:', data)
-            basicText.text = data;
+            basicText.text = data.data;
         })
 
         window.addEventListener(

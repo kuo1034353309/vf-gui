@@ -25,7 +25,6 @@ export class Stage extends DisplayLayoutAbstract{
         this.container.interactiveChildren = true;
         this.$nestLevel = 1;
         this.app = app;
-        this.syncManager = new SyncManager(this);
         this.initialized = true;
 
         if(!TickerShared.started){
@@ -38,7 +37,7 @@ export class Stage extends DisplayLayoutAbstract{
     }
 
     public app: vf.Application | any;
-    public syncManager: SyncManager; 
+    public syncManager: SyncManager | undefined; 
     /**
      * 是否组织原始数据继续传递
      */
@@ -46,7 +45,17 @@ export class Stage extends DisplayLayoutAbstract{
     /**
      * 是否同步交互事件
      */
-    public syncInteractiveFlag = false; //TODO:默认false
+    private _syncInteractiveFlag = false; //TODO:默认false
+    public set syncInteractiveFlag(value: boolean){
+        this._syncInteractiveFlag = value;
+        if(!this.syncManager){
+            this.syncManager = new SyncManager(this);
+        }
+    }
+
+    public get syncInteractiveFlag(){
+        return this._syncInteractiveFlag;
+    }
 
     public get stageWidth(){
         return this.container.width;
@@ -79,12 +88,12 @@ export class Stage extends DisplayLayoutAbstract{
     public release(){
         super.release();
         TickerShared.remove(tween.update,this);
-        this.syncManager.release();
+        this.syncManager && this.syncManager.release();
     }
 
     public releaseAll(){
         TickerShared.remove(tween.update,this);
-        this.syncManager.release();
+        this.syncManager && this.syncManager.release();
         
         for(let i=0;i<this.uiChildren.length;i++){
             const ui = this.uiChildren[i] as DisplayObject;
@@ -112,7 +121,7 @@ export class Stage extends DisplayLayoutAbstract{
     public receiveFromPlayer(msg: any){
         if(msg.code == 'syncEvent'){
             let data = msg.data; //{data: eventData, type: 'live/history'}
-            this.syncManager.receiveEvent(data.data, data.type);
+            this.syncManager && this.syncManager.receiveEvent(data.data, data.type);
         }
     }
 

@@ -47,7 +47,6 @@ export class SyncManager {
     public init() {
         this._initTime = performance.now();
         const stage = this._stage;
-        console.log('syncManager init',this._initTime, stage.syncInteractiveFlag, stage.getSystemEvent());
         if(stage.syncInteractiveFlag){
             let systemEvent = stage.getSystemEvent();
             if(systemEvent){
