@@ -29,6 +29,7 @@ export class SyncManager {
         }
     }
 
+    public resumeStatusFlag = false;  //是否正在恢复状态
     public offsetTime: number = 0; //本地Date.now()与中心服务器的差值
     private _resetTimeFlag: boolean = false; //是否对齐过时间
     private _crossTime: number = 0; //穿越的时间
@@ -277,7 +278,7 @@ export class SyncManager {
         //恢复过程只需要计算状态，不需要渲染
         if (this._evtDataList.length == 0) return;
         this.resetStage();
-
+        this.resumeStatusFlag = true;
         this._stage.renderable = false;
         for (let i = 0; i < this._evtDataList.length; ++i) {
             let _eventData = this._evtDataList[i];
@@ -285,5 +286,6 @@ export class SyncManager {
             this.parseEventData(_eventData);
         }
         this._stage.renderable = true;
+        this.resumeStatusFlag = false;
     }
 }
