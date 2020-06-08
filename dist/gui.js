@@ -144,9 +144,11 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
         var stage = this._stage;
+        console.log('syncManager init', this._initTime, stage.syncInteractiveFlag, stage.getSystemEvent());
         if (stage.syncInteractiveFlag) {
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
+                this.sendCustomEvent = this.sendCustomEvent.bind(this);
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
             }
         }
@@ -200,7 +202,6 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.receiveEvent = function (eventData, signalType) {
         if (signalType === void 0) { signalType = "live"; }
         if (signalType == "history") {
-            console.log('history:', eventData);
             this.dealHistoryEvent(eventData);
         }
         else {
@@ -320,7 +321,7 @@ var SyncManager = /** @class */ (function () {
             var data = JSON.parse(eventData.data);
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
-                systemEvent.emit('receiveCustomEvent', this.sendCustomEvent);
+                systemEvent.emit('receiveCustomEvent', data);
             }
             else {
                 stage.emit("receiveCustomEvent", data);
@@ -351,7 +352,9 @@ var SyncManager = /** @class */ (function () {
             return;
         this._evtDataList = [];
         for (var key in eventData) {
-            this._evtDataList.push(eventData[key]);
+            if (key.indexOf('syncInteraction_') == 0 || key.indexOf('syncCustomEvent_') == 0) {
+                this._evtDataList.push(eventData[key]);
+            }
         }
         this._evtDataList.sort(function (a, b) {
             return a.time - b.time;
@@ -429,9 +432,11 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
         var stage = this._stage;
+        console.log('syncManager init', this._initTime, stage.syncInteractiveFlag, stage.getSystemEvent());
         if (stage.syncInteractiveFlag) {
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
+                this.sendCustomEvent = this.sendCustomEvent.bind(this);
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
             }
         }
@@ -485,7 +490,6 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.receiveEvent = function (eventData, signalType) {
         if (signalType === void 0) { signalType = "live"; }
         if (signalType == "history") {
-            console.log('history:', eventData);
             this.dealHistoryEvent(eventData);
         }
         else {
@@ -605,7 +609,7 @@ var SyncManager = /** @class */ (function () {
             var data = JSON.parse(eventData.data);
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
-                systemEvent.emit('receiveCustomEvent', this.sendCustomEvent);
+                systemEvent.emit('receiveCustomEvent', data);
             }
             else {
                 stage.emit("receiveCustomEvent", data);
@@ -636,7 +640,9 @@ var SyncManager = /** @class */ (function () {
             return;
         this._evtDataList = [];
         for (var key in eventData) {
-            this._evtDataList.push(eventData[key]);
+            if (key.indexOf('syncInteraction_') == 0 || key.indexOf('syncCustomEvent_') == 0) {
+                this._evtDataList.push(eventData[key]);
+            }
         }
         this._evtDataList.sort(function (a, b) {
             return a.time - b.time;
@@ -3277,6 +3283,11 @@ var Scheduler = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Scheduler.setEnterFrame = function (listener) {
+        var scheduler = new Scheduler(Infinity, 0);
+        scheduler.addListener("tick" /* TICK */, listener);
+        return scheduler;
+    };
     Scheduler.setInterval = function (time, listener) {
         var scheduler = new Scheduler(Infinity, time);
         scheduler.addListener("tick" /* TICK */, listener);
@@ -10627,9 +10638,11 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.init = function () {
         this._initTime = performance.now();
         var stage = this._stage;
+        console.log('syncManager init', this._initTime, stage.syncInteractiveFlag, stage.getSystemEvent());
         if (stage.syncInteractiveFlag) {
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
+                this.sendCustomEvent = this.sendCustomEvent.bind(this);
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
             }
         }
@@ -10683,7 +10696,6 @@ var SyncManager = /** @class */ (function () {
     SyncManager.prototype.receiveEvent = function (eventData, signalType) {
         if (signalType === void 0) { signalType = "live"; }
         if (signalType == "history") {
-            console.log('history:', eventData);
             this.dealHistoryEvent(eventData);
         }
         else {
@@ -10803,7 +10815,7 @@ var SyncManager = /** @class */ (function () {
             var data = JSON.parse(eventData.data);
             var systemEvent = stage.getSystemEvent();
             if (systemEvent) {
-                systemEvent.emit('receiveCustomEvent', this.sendCustomEvent);
+                systemEvent.emit('receiveCustomEvent', data);
             }
             else {
                 stage.emit("receiveCustomEvent", data);
@@ -10834,7 +10846,9 @@ var SyncManager = /** @class */ (function () {
             return;
         this._evtDataList = [];
         for (var key in eventData) {
-            this._evtDataList.push(eventData[key]);
+            if (key.indexOf('syncInteraction_') == 0 || key.indexOf('syncCustomEvent_') == 0) {
+                this._evtDataList.push(eventData[key]);
+            }
         }
         this._evtDataList.sort(function (a, b) {
             return a.time - b.time;

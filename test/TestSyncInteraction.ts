@@ -118,7 +118,7 @@ export default class TestSyncInteraction {
         let flag = true;
         let pauseFlag = true;
         let totalOffset = 0;
-        let interval = vf.gui.Scheduler.setInterval(0, (info: any)=>{
+        let interval = vf.gui.Scheduler.setEnterFrame((info: any)=>{
             let offset: number = speed * info.dt / 1000;
             totalOffset += info.dt;
             //console.log(totalOffset);
@@ -162,10 +162,14 @@ export default class TestSyncInteraction {
 
         setInterval(() => {
             basicText.text = (Math.random() * 1000).toString();
-            uiStage.syncManager.sendCustomEvent(basicText.text);
+            uiStage.syncManager.sendCustomEvent({
+                code: 'customEvent',
+                level: 'command',
+                data: basicText.text});
         }, 5000);
 
         uiStage.on('receiveCustomEvent', (data: any) => {
+            console.log('ziye-----receiveCustomEvent:', data)
             basicText.text = data;
         })
 

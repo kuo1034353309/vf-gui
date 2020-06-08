@@ -89,7 +89,6 @@ export class Scheduler extends vf.utils.EventEmitter{
                 dt: this._intervalDuration,  //by ziye 返回执行间隔
                 elapsed: this._totalDuration,
             };
-            console.log('scheduler emit tick')
             this.emit(EventType.TICK, info);
             this._intervalDuration = 0;
         }

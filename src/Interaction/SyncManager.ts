@@ -47,9 +47,11 @@ export class SyncManager {
     public init() {
         this._initTime = performance.now();
         const stage = this._stage;
+        console.log('syncManager init',this._initTime, stage.syncInteractiveFlag, stage.getSystemEvent());
         if(stage.syncInteractiveFlag){
             let systemEvent = stage.getSystemEvent();
             if(systemEvent){
+                this.sendCustomEvent = this.sendCustomEvent.bind(this);
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
             }
         }
@@ -105,7 +107,6 @@ export class SyncManager {
      */
     public receiveEvent(eventData: any, signalType: string = "live") {
         if (signalType == "history") {
-            console.log('history:', eventData);
             this.dealHistoryEvent(eventData);
         } else {
             if (!this._resetTimeFlag) {
@@ -227,7 +228,7 @@ export class SyncManager {
             let data = JSON.parse(eventData.data);
             let systemEvent = stage.getSystemEvent();
             if(systemEvent){
-                systemEvent.emit('receiveCustomEvent', this.sendCustomEvent);
+                systemEvent.emit('receiveCustomEvent', data);
             }
             else{
                 stage.emit("receiveCustomEvent", data);
@@ -259,7 +260,9 @@ export class SyncManager {
         if (!eventData) return;
         this._evtDataList = [];
         for (let key in eventData) {
-            this._evtDataList.push(eventData[key]);
+            if(key.indexOf('syncInteraction_') == 0 || key.indexOf('syncCustomEvent_') == 0){
+                this._evtDataList.push(eventData[key]);
+            }
         }
         this._evtDataList.sort((a, b) => {
             return a.time - b.time;
