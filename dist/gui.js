@@ -1387,48 +1387,55 @@ exports.DisplayLayoutAbstract = DisplayLayoutAbstract;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 //states
+/**
+ * 兼容处理，不支持的浏览器，使用description
+ * @param description
+ */
+function getSymbol(description) {
+    return Symbol("explicitWidth") || description;
+}
 /** 标记属性失效 */
-exports.invalidatePropertiesFlag = Symbol("invalidatePropertiesFlag");
+exports.invalidatePropertiesFlag = getSymbol("invalidatePropertiesFlag");
 /** 标记大小失效 */
-exports.invalidateSizeFlag = Symbol("invalidateSizeFlag");
+exports.invalidateSizeFlag = getSymbol("invalidateSizeFlag");
 /** 标记显示失效 */
-exports.invalidateDisplayListFlag = Symbol("invalidateDisplayListFlag");
+exports.invalidateDisplayListFlag = getSymbol("invalidateDisplayListFlag");
 //Properties
-exports.explicitWidth = Symbol("explicitWidth");
-exports.explicitHeight = Symbol("explicitHeight");
-exports.width = Symbol("width");
-exports.height = Symbol("height");
-exports.minWidth = Symbol("minWidth");
-exports.maxWidth = Symbol("maxWidth");
-exports.minHeight = Symbol("minHeight");
-exports.maxHeight = Symbol("maxHeight");
-exports.percentWidth = Symbol("percentWidth");
-exports.percentHeight = Symbol("percentHeight");
-exports.scaleX = Symbol("scaleX");
-exports.scaleY = Symbol("scaleY");
-exports.x = Symbol("x");
-exports.y = Symbol("y");
-exports.skewX = Symbol("skewX");
-exports.skewY = Symbol("skewY");
-exports.pivotX = Symbol("pivotX");
-exports.pivotY = Symbol("pivotY");
-exports.rotation = Symbol("rotation");
-exports.zIndex = Symbol("zIndex");
-exports.measuredWidth = Symbol("measuredWidth");
-exports.measuredHeight = Symbol("measuredHeight");
-exports.oldPreferWidth = Symbol("oldPreferWidth");
-exports.oldPreferHeight = Symbol("oldPreferHeight");
-exports.oldX = Symbol("oldX");
-exports.oldY = Symbol("oldY");
-exports.oldWidth = Symbol("oldWidth");
-exports.oldHeight = Symbol("oldHeight");
+exports.explicitWidth = getSymbol("explicitWidth");
+exports.explicitHeight = getSymbol("explicitHeight");
+exports.width = getSymbol("width");
+exports.height = getSymbol("height");
+exports.minWidth = getSymbol("minWidth");
+exports.maxWidth = getSymbol("maxWidth");
+exports.minHeight = getSymbol("minHeight");
+exports.maxHeight = getSymbol("maxHeight");
+exports.percentWidth = getSymbol("percentWidth");
+exports.percentHeight = getSymbol("percentHeight");
+exports.scaleX = getSymbol("scaleX");
+exports.scaleY = getSymbol("scaleY");
+exports.x = getSymbol("x");
+exports.y = getSymbol("y");
+exports.skewX = getSymbol("skewX");
+exports.skewY = getSymbol("skewY");
+exports.pivotX = getSymbol("pivotX");
+exports.pivotY = getSymbol("pivotY");
+exports.rotation = getSymbol("rotation");
+exports.zIndex = getSymbol("zIndex");
+exports.measuredWidth = getSymbol("measuredWidth");
+exports.measuredHeight = getSymbol("measuredHeight");
+exports.oldPreferWidth = getSymbol("oldPreferWidth");
+exports.oldPreferHeight = getSymbol("oldPreferHeight");
+exports.oldX = getSymbol("oldX");
+exports.oldY = getSymbol("oldY");
+exports.oldWidth = getSymbol("oldWidth");
+exports.oldHeight = getSymbol("oldHeight");
 //Styles
-exports.left = Symbol("left");
-exports.right = Symbol("right");
-exports.top = Symbol("top");
-exports.bottom = Symbol("bottom");
-exports.horizontalCenter = Symbol("horizontalCenter");
-exports.verticalCenter = Symbol("verticalCenter");
+exports.left = getSymbol("left");
+exports.right = getSymbol("right");
+exports.top = getSymbol("top");
+exports.bottom = getSymbol("bottom");
+exports.horizontalCenter = getSymbol("horizontalCenter");
+exports.verticalCenter = getSymbol("verticalCenter");
 
 
 /***/ }),
@@ -5229,6 +5236,9 @@ var Image = /** @class */ (function (_super) {
         }
         if (this._texture) {
             this._texture.removeAllListeners();
+        }
+        if (src === undefined && this._source === undefined) {
+            return;
         }
         if (src !== this._source) {
             this._source = src;
@@ -13802,13 +13812,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.4.3.1.4.3.1.4.3) ==1.4.3.1.4.3.1.4.3;
+//     return this.lastIndexOf(word, pos1.4.4.1.4.4.1.4.4) ==1.4.4.1.4.4.1.4.4;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.4.3";
+window.vf.gui.version = "1.4.4";
 
 
 /***/ })

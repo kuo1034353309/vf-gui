@@ -248,45 +248,45 @@ declare module 'src/interaction/DragEvent' {
 }
 declare module 'src/core/DisplayLayoutKeys' {
 	/** 标记属性失效 */
-	export const invalidatePropertiesFlag: unique symbol;
+	export const invalidatePropertiesFlag: symbol;
 	/** 标记大小失效 */
-	export const invalidateSizeFlag: unique symbol;
+	export const invalidateSizeFlag: symbol;
 	/** 标记显示失效 */
-	export const invalidateDisplayListFlag: unique symbol;
-	export const explicitWidth: unique symbol;
-	export const explicitHeight: unique symbol;
-	export const width: unique symbol;
-	export const height: unique symbol;
-	export const minWidth: unique symbol;
-	export const maxWidth: unique symbol;
-	export const minHeight: unique symbol;
-	export const maxHeight: unique symbol;
-	export const percentWidth: unique symbol;
-	export const percentHeight: unique symbol;
-	export const scaleX: unique symbol;
-	export const scaleY: unique symbol;
-	export const x: unique symbol;
-	export const y: unique symbol;
-	export const skewX: unique symbol;
-	export const skewY: unique symbol;
-	export const pivotX: unique symbol;
-	export const pivotY: unique symbol;
-	export const rotation: unique symbol;
-	export const zIndex: unique symbol;
-	export const measuredWidth: unique symbol;
-	export const measuredHeight: unique symbol;
-	export const oldPreferWidth: unique symbol;
-	export const oldPreferHeight: unique symbol;
-	export const oldX: unique symbol;
-	export const oldY: unique symbol;
-	export const oldWidth: unique symbol;
-	export const oldHeight: unique symbol;
-	export const left: unique symbol;
-	export const right: unique symbol;
-	export const top: unique symbol;
-	export const bottom: unique symbol;
-	export const horizontalCenter: unique symbol;
-	export const verticalCenter: unique symbol;
+	export const invalidateDisplayListFlag: symbol;
+	export const explicitWidth: symbol;
+	export const explicitHeight: symbol;
+	export const width: symbol;
+	export const height: symbol;
+	export const minWidth: symbol;
+	export const maxWidth: symbol;
+	export const minHeight: symbol;
+	export const maxHeight: symbol;
+	export const percentWidth: symbol;
+	export const percentHeight: symbol;
+	export const scaleX: symbol;
+	export const scaleY: symbol;
+	export const x: symbol;
+	export const y: symbol;
+	export const skewX: symbol;
+	export const skewY: symbol;
+	export const pivotX: symbol;
+	export const pivotY: symbol;
+	export const rotation: symbol;
+	export const zIndex: symbol;
+	export const measuredWidth: symbol;
+	export const measuredHeight: symbol;
+	export const oldPreferWidth: symbol;
+	export const oldPreferHeight: symbol;
+	export const oldX: symbol;
+	export const oldY: symbol;
+	export const oldWidth: symbol;
+	export const oldHeight: symbol;
+	export const left: symbol;
+	export const right: symbol;
+	export const top: symbol;
+	export const bottom: symbol;
+	export const horizontalCenter: symbol;
+	export const verticalCenter: symbol;
 
 }
 declare module 'src/display/Label' {
@@ -4274,6 +4274,41 @@ declare module 'src/vf-gui' {
 	export { gui };
 
 }
+declare module 'src/Interaction/KeyboardEvent' {
+	import { DisplayObject } from 'src/core/DisplayObject'; class KeyboardSelectEvent {
+	    /**
+	     * document的键盘事件
+	    */
+	    constructor();
+	    private obj;
+	    private ctrlDown;
+	    private shiftDown;
+	    private shiftKey;
+	    private ctrlKey;
+	    private cmdKey;
+	    private isAddEvent;
+	    private keyDownEventBind;
+	    private keyUpEventBind;
+	    private pasteEventBind;
+	    private copyEventBind;
+	    private cutEventBind;
+	    private addEvent;
+	    private removeEvent;
+	    protected keyDownEvent(e: KeyboardEvent): void;
+	    protected keyUpEvent(e: KeyboardEvent): void;
+	    protected copyEvent(e: ClipboardEvent): void;
+	    protected cutEvent(e: ClipboardEvent): void;
+	    protected pasteEvent(e: ClipboardEvent): void;
+	    focus(obj: DisplayObject): void;
+	    blur(): void;
+	}
+	/**
+	 * KeyboardSelectEvent 的实例
+	 */
+	export const keyboardShared: KeyboardSelectEvent;
+	export {};
+
+}
 declare interface ObjectConstructor {
     assign(...objects: Record<string, any>[]): Record<string, any>;
 }
@@ -4450,41 +4485,6 @@ declare module 'src/enum/ComponentEvent' {
 	 * 播放音效 {name,mode}
 	 */
 	export const PLAY_AUDIO = "PLAY_AUDIO";
-
-}
-declare module 'src/interaction/KeyboardEvent' {
-	import { DisplayObject } from 'src/core/DisplayObject'; class KeyboardSelectEvent {
-	    /**
-	     * document的键盘事件
-	    */
-	    constructor();
-	    private obj;
-	    private ctrlDown;
-	    private shiftDown;
-	    private shiftKey;
-	    private ctrlKey;
-	    private cmdKey;
-	    private isAddEvent;
-	    private keyDownEventBind;
-	    private keyUpEventBind;
-	    private pasteEventBind;
-	    private copyEventBind;
-	    private cutEventBind;
-	    private addEvent;
-	    private removeEvent;
-	    protected keyDownEvent(e: KeyboardEvent): void;
-	    protected keyUpEvent(e: KeyboardEvent): void;
-	    protected copyEvent(e: ClipboardEvent): void;
-	    protected cutEvent(e: ClipboardEvent): void;
-	    protected pasteEvent(e: ClipboardEvent): void;
-	    focus(obj: DisplayObject): void;
-	    blur(): void;
-	}
-	/**
-	 * KeyboardSelectEvent 的实例
-	 */
-	export const keyboardShared: KeyboardSelectEvent;
-	export {};
 
 }
 declare module 'src/tween/private/PlaybackPosition' {
