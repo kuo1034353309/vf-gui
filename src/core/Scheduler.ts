@@ -13,6 +13,12 @@ export class Scheduler extends vf.utils.EventEmitter{
         return this._id;
     }
 
+    public static setEnterFrame(listener: () => void): Scheduler {
+        const scheduler: Scheduler = new Scheduler(Infinity, 0);
+        scheduler.addListener(EventType.TICK, listener);
+        return scheduler;
+    }
+
     public static setInterval(time: number, listener: () => void): Scheduler {
         const scheduler: Scheduler = new Scheduler(Infinity, time);
         scheduler.addListener(EventType.TICK, listener);
@@ -83,6 +89,7 @@ export class Scheduler extends vf.utils.EventEmitter{
                 dt: this._intervalDuration,  //by ziye 返回执行间隔
                 elapsed: this._totalDuration,
             };
+            console.log('scheduler emit tick')
             this.emit(EventType.TICK, info);
             this._intervalDuration = 0;
         }
