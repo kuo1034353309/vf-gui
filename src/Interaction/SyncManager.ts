@@ -4,7 +4,7 @@
  */
 
 import { InteractionEvent } from "../event/InteractionEvent";
-import { getDisplayPathById } from "../utils/Utils";
+import { getDisplayPathById, debug} from "../utils/Utils";
 import { Stage } from "../UI";
 import { DisplayObjectAbstract } from "../core/DisplayObjectAbstract";
 import { TouchMouseEventEnum } from "./TouchMouseEventEnum";
@@ -17,6 +17,13 @@ export class SyncManager {
             this._interactionEvent.data = new vf.interaction.InteractionData();
         }
         this._stage = stage;
+        if(stage.syncInteractiveFlag){
+            let systemEvent = stage.getSystemEvent();
+            if(systemEvent){
+                this.sendCustomEvent = this.sendCustomEvent.bind(this);
+                systemEvent.on('sendCustomEvent', this.sendCustomEvent);
+            }
+        }
         TickerShared.addOnce(this.init, this);
     }
 
@@ -41,20 +48,12 @@ export class SyncManager {
     private _throttleFlag: boolean = false; //节流状态
     private _throttleTimer: any = null; //节流时间函数
     private _evtDataList: any[] = []; //历史信令整理后的数组
-
+    private _lastMoveEvent: any[] = []; //上一个move事件，用于稀疏，如果是连续的move操作，则使用相同的code，这样信令服务器会merge掉之前的move操作，在恢复时会拿到更少的数据量
     /**
      * 开始同步
      */
     public init() {
         this._initTime = performance.now();
-        const stage = this._stage;
-        if(stage.syncInteractiveFlag){
-            let systemEvent = stage.getSystemEvent();
-            if(systemEvent){
-                this.sendCustomEvent = this.sendCustomEvent.bind(this);
-                systemEvent.on('sendCustomEvent', this.sendCustomEvent);
-            }
-        }
     }
 
     public release(){
@@ -141,11 +140,30 @@ export class SyncManager {
         data.global = { x: Math.floor(e.data.global.x), y: Math.floor(e.data.global.y) };
         //!!!important: e.data.originalEvent  不支持事件继续传递
         let time = this.currentTime();
-        return {
+        let eventData = {
             code: "syncInteraction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event),
-        };
+        }
+        //稀疏move，将相同的一组move使用相同的code
+        if(e.type === TouchMouseEventEnum.mousemove || e.type === TouchMouseEventEnum.touchmove){
+            if(this._lastMoveEvent.length > 0){
+                let lastEvent = this._lastMoveEvent[0];
+                if(lastEvent.type == event.type && lastEvent.obj == obj){
+                    //使用相同的code
+                    eventData.code = lastEvent.code;
+                }
+            }
+            this._lastMoveEvent[0] = {
+                type: e.type,
+                obj: obj,
+                code: eventData.code
+            }
+        }
+        else{
+            this._lastMoveEvent = [];
+        }
+        return eventData;
     }
 
     /**
@@ -277,15 +295,20 @@ export class SyncManager {
     private resumeStatus() {
         //恢复过程只需要计算状态，不需要渲染
         if (this._evtDataList.length == 0) return;
+        let start = performance.now();
         this.resetStage();
+        let resetTime = performance.now();
         this.resumeStatusFlag = true;
         this._stage.renderable = false;
         for (let i = 0; i < this._evtDataList.length; ++i) {
-            let _eventData = this._evtDataList[i];
             //执行操作
-            this.parseEventData(_eventData);
+            this.parseEventData(this._evtDataList[i]);
         }
         this._stage.renderable = true;
         this.resumeStatusFlag = false;
+        let now = performance.now();
+        if(debug){
+            console.log(`恢复总耗时：${now - start}, reset耗时: ${resetTime - start}, 执行操作耗时：${now - resetTime}}`);
+        }
     }
 }
