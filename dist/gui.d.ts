@@ -172,16 +172,79 @@ declare module 'src/tween/private/constants' {
 	/**
 	 * 链式补间动画的key前缀
 	 */
-	export const CHAINED_TWEENS = "_chainedTweens";
-	export const STRING_PROP = "STRING_PROP";
-	export const NUM_REGEX: RegExp;
-	export function decomposeString(fromValue: string | any): any;
-	export function decompose(prop: any, obj: any, from: any, to: any): any;
-	export const RGB = "rgb(";
-	export const RGBA = "rgba(";
-	export function isRGBColor(v: any, i: number, r?: string): boolean;
-	export function recompose(prop: any, obj: any, from: any, to: any, t: any, originalT: any, stringBuffer?: any): any;
-	export const SET_NESTED: (nested: any) => any;
+	export class DragEvent {
+	    constructor(obj: DisplayObject);
+	    private obj;
+	    id: number;
+	    private offset;
+	    private movementX;
+	    private movementY;
+	    private bound;
+	    private start;
+	    private mouse;
+	    private cancel;
+	    private dragging;
+	    private isStop;
+	    /**
+	     * 限制拖动抽,XY,X抽或Y抽
+	     */
+	    dragRestrictAxis?: "x" | "y";
+	    startEvent(): void;
+	    executeAction(e: InteractionEvent): void;
+	    private _onDragStart;
+	    private _onDragMove;
+	    private _onDragEnd;
+	    /** 清除拖动 */
+	    stopEvent(): void;
+	    remove(): void;
+	    onDragPress: ((e: InteractionEvent, isPressed: boolean, dragObj?: DragEvent) => void) | undefined;
+	    onDragEnd: ((e: InteractionEvent, dragObj?: DragEvent) => void) | undefined;
+	    onDragMove: ((e: InteractionEvent, offset: vf.Point, dragObj?: DragEvent) => void) | undefined;
+	    onDragStart: ((e: InteractionEvent, dragObj?: DragEvent) => void) | undefined;
+	}
+
+}
+declare module 'src/core/DisplayLayoutKeys' {
+	/** 标记属性失效 */
+	export const invalidatePropertiesFlag: symbol;
+	/** 标记大小失效 */
+	export const invalidateSizeFlag: symbol;
+	/** 标记显示失效 */
+	export const invalidateDisplayListFlag: symbol;
+	export const explicitWidth: symbol;
+	export const explicitHeight: symbol;
+	export const width: symbol;
+	export const height: symbol;
+	export const minWidth: symbol;
+	export const maxWidth: symbol;
+	export const minHeight: symbol;
+	export const maxHeight: symbol;
+	export const percentWidth: symbol;
+	export const percentHeight: symbol;
+	export const scaleX: symbol;
+	export const scaleY: symbol;
+	export const x: symbol;
+	export const y: symbol;
+	export const skewX: symbol;
+	export const skewY: symbol;
+	export const pivotX: symbol;
+	export const pivotY: symbol;
+	export const rotation: symbol;
+	export const zIndex: symbol;
+	export const measuredWidth: symbol;
+	export const measuredHeight: symbol;
+	export const oldPreferWidth: symbol;
+	export const oldPreferHeight: symbol;
+	export const oldX: symbol;
+	export const oldY: symbol;
+	export const oldWidth: symbol;
+	export const oldHeight: symbol;
+	export const left: symbol;
+	export const right: symbol;
+	export const top: symbol;
+	export const bottom: symbol;
+	export const horizontalCenter: symbol;
+	export const verticalCenter: symbol;
 
 }
 declare module 'src/tween/private/Interpolation' {
@@ -1476,7 +1539,13 @@ declare module 'src/display/Label' {
 	    /**
 	     * 设置分辨力比例
 	     */
-	    resolution: number;
+	    interactiveChildren: boolean;
+	    /**
+	     * 标记全部失效，子类实现
+	     */
+	    allInvalidate(): void;
+	    private _enabled;
+	    enabled: boolean;
 	    /**
 	     * 文本内容
 	     */

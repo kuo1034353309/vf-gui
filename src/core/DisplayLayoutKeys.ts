@@ -1,48 +1,56 @@
 //states
+/**
+ * 兼容处理，不支持的浏览器，使用description
+ * @param description 
+ */
+function getSymbol(description: string | number | undefined){
+    return Symbol("explicitWidth") || description;
+}
 /** 标记属性失效 */
-export const invalidatePropertiesFlag = Symbol("invalidatePropertiesFlag");
+export const invalidatePropertiesFlag = getSymbol("invalidatePropertiesFlag");
 /** 标记大小失效 */
-export const invalidateSizeFlag = Symbol("invalidateSizeFlag");
+export const invalidateSizeFlag = getSymbol("invalidateSizeFlag");
 /** 标记显示失效 */
-export const invalidateDisplayListFlag = Symbol("invalidateDisplayListFlag");
+export const invalidateDisplayListFlag = getSymbol("invalidateDisplayListFlag");
 
 //Properties
-export const explicitWidth = Symbol("explicitWidth");
-export const explicitHeight = Symbol("explicitHeight");
-export const width = Symbol("width");
-export const height = Symbol("height");
-export const minWidth = Symbol("minWidth");
-export const maxWidth = Symbol("maxWidth");
-export const minHeight = Symbol("minHeight");
-export const maxHeight = Symbol("maxHeight");
-export const percentWidth = Symbol("percentWidth");
-export const percentHeight = Symbol("percentHeight");
-export const scaleX = Symbol("scaleX");
-export const scaleY = Symbol("scaleY");
-export const x = Symbol("x");
-export const y = Symbol("y");
-export const skewX = Symbol("skewX");
-export const skewY = Symbol("skewY");
-export const pivotX = Symbol("pivotX");
-export const pivotY = Symbol("pivotY");
-export const rotation = Symbol("rotation");
-export const zIndex = Symbol("zIndex");
-export const measuredWidth = Symbol("measuredWidth");
-export const measuredHeight = Symbol("measuredHeight");
-export const oldPreferWidth = Symbol("oldPreferWidth");
-export const oldPreferHeight = Symbol("oldPreferHeight");
-export const oldX = Symbol("oldX");
-export const oldY = Symbol("oldY");
-export const oldWidth = Symbol("oldWidth");
-export const oldHeight = Symbol("oldHeight");
+export const explicitWidth = getSymbol("explicitWidth");
+export const explicitHeight = getSymbol("explicitHeight");
+export const width = getSymbol("width");
+export const height = getSymbol("height");
+export const minWidth = getSymbol("minWidth");
+export const maxWidth = getSymbol("maxWidth");
+export const minHeight = getSymbol("minHeight");
+export const maxHeight = getSymbol("maxHeight");
+export const percentWidth = getSymbol("percentWidth");
+export const percentHeight = getSymbol("percentHeight");
+export const scaleX = getSymbol("scaleX");
+export const scaleY = getSymbol("scaleY");
+export const x = getSymbol("x");
+export const y = getSymbol("y");
+export const skewX = getSymbol("skewX");
+export const skewY = getSymbol("skewY");
+export const pivotX = getSymbol("pivotX");
+export const pivotY = getSymbol("pivotY");
+export const rotation = getSymbol("rotation");
+export const zIndex = getSymbol("zIndex");
+export const measuredWidth = getSymbol("measuredWidth");
+export const measuredHeight = getSymbol("measuredHeight");
+export const oldPreferWidth = getSymbol("oldPreferWidth");
+export const oldPreferHeight = getSymbol("oldPreferHeight");
+export const oldX = getSymbol("oldX");
+export const oldY = getSymbol("oldY");
+export const oldWidth = getSymbol("oldWidth");
+export const oldHeight = getSymbol("oldHeight");
 
 //Styles
-export const left = Symbol("left");
-export const right = Symbol("right");
-export const top = Symbol("top");
-export const bottom = Symbol("bottom");
-export const horizontalCenter = Symbol("horizontalCenter");
-export const verticalCenter = Symbol("verticalCenter");
+export const left = getSymbol("left");
+export const right = getSymbol("right");
+export const top = getSymbol("top");
+export const bottom = getSymbol("bottom");
+export const horizontalCenter = getSymbol("horizontalCenter");
+export const verticalCenter = getSymbol("verticalCenter");
+
 
 
 

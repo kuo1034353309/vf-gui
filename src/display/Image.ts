@@ -129,7 +129,9 @@ export class Image extends DisplayObject implements MaskSprite{
         if (this._texture) {
             this._texture.removeAllListeners();
         }
-
+        if(src === undefined && this._source === undefined) {
+            return;
+        }
         if (src !== this._source) {
             this._source = src;
             const texture = this._texture = getTexture(src);
