@@ -1590,6 +1590,10 @@ declare module 'src/core/DisplayObjectAbstract' {
 	     * 子对象是否可以接收事件，设置false后，会绕过HitTest方法的递归
 	     */
 	    interactiveChildren: boolean;
+	    /**
+	     * 标记全部失效，子类实现
+	     */
+	    allInvalidate(): void;
 	    private _enabled;
 	    enabled: boolean;
 	    /**

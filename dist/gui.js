@@ -703,10 +703,12 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     * 标记提交过需要验证组件尺寸，以便在稍后屏幕更新期间调用该组件的 measure(),updatesize() 方法。
     */
     DisplayLayoutAbstract.prototype.invalidateSize = function () {
-        var values = this.$values;
-        if (!values[UIKeys.invalidateSizeFlag]) {
-            values[UIKeys.invalidateSizeFlag] = true;
-            DisplayLayoutValidator_1.default.invalidateSize(this);
+        if (!this.visible) { // 隐藏元素后，布局失效
+            var values = this.$values;
+            if (!values[UIKeys.invalidateSizeFlag]) {
+                values[UIKeys.invalidateSizeFlag] = true;
+                DisplayLayoutValidator_1.default.invalidateSize(this);
+            }
         }
     };
     /**
@@ -714,10 +716,12 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     * 标记需要验证显示列表，以便在稍后屏幕更新期间调用该组件的 updateDisplayList() 方法。
     */
     DisplayLayoutAbstract.prototype.invalidateDisplayList = function () {
-        var values = this.$values;
-        if (!values[UIKeys.invalidateDisplayListFlag]) {
-            values[UIKeys.invalidateDisplayListFlag] = true;
-            DisplayLayoutValidator_1.default.invalidateDisplayList(this);
+        if (!this.visible) { // 隐藏元素后，布局失效
+            var values = this.$values;
+            if (!values[UIKeys.invalidateDisplayListFlag]) {
+                values[UIKeys.invalidateDisplayListFlag] = true;
+                DisplayLayoutValidator_1.default.invalidateDisplayList(this);
+            }
         }
     };
     /**
@@ -725,13 +729,15 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      * 标记父级容器的尺寸和显示列表为失效
      */
     DisplayLayoutAbstract.prototype.invalidateParentLayout = function () {
-        var parent = this.parent;
-        if (!parent) {
-            return;
-        }
-        if (parent instanceof DisplayLayoutAbstract) {
-            parent.invalidateSize();
-            parent.invalidateDisplayList();
+        if (!this.visible) { // 隐藏元素后，布局失效
+            var parent_1 = this.parent;
+            if (!parent_1) {
+                return;
+            }
+            if (parent_1 instanceof DisplayLayoutAbstract) {
+                parent_1.invalidateSize();
+                parent_1.invalidateDisplayList();
+            }
         }
     };
     /**
@@ -2269,6 +2275,9 @@ var DisplayObject = /** @class */ (function (_super) {
      * 更新显示列表,子类重写，实现布局
      */
     DisplayObject.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
+        if (this.visible || this.alpha <= 0) { // 隐藏元素后，布局失效
+            return;
+        }
         if (this._style && this._style.display !== "none") {
             //console.log("displayStyle",unscaledWidth,unscaledHeight,this.left,this.right,this.x,this.y);
             CSSLayout_1.updateDisplayLayout(this, unscaledWidth, unscaledHeight);
@@ -2539,6 +2548,11 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    /**
+     * 标记全部失效，子类实现
+     */
+    DisplayObjectAbstract.prototype.allInvalidate = function () {
+    };
     Object.defineProperty(DisplayObjectAbstract.prototype, "enabled", {
         get: function () {
             return this._enabled;
@@ -2561,6 +2575,9 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
         set: function (value) {
             if (this._visible === value) {
                 return;
+            }
+            if (value === true) {
+                this.allInvalidate();
             }
             this._visible = value;
             this.container.visible = value;
@@ -13812,13 +13829,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.4.4.1.4.4.1.4.4) ==1.4.4.1.4.4.1.4.4;
+//     return this.lastIndexOf(word, pos1.5.1.1.5.1.1.5.1) ==1.5.1.1.5.1.1.5.1;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.4.4";
+window.vf.gui.version = "1.5.1";
 
 
 /***/ })
