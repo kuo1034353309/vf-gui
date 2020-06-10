@@ -13,7 +13,7 @@ const MAX_ARC = 0.09; // 5度
 /** 点数字转换成字符的数位 */
 const DIGIT = 90;
 /** 字符列表 ascii */
-const NUMBER_TO_STR = "$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}";
+const NUMBER_TO_STR = "$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}";
 
 /** 压缩比例，有损压缩 */
 const COMPRESS_RATE = 2;
