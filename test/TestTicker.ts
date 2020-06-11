@@ -10,12 +10,12 @@ export default class TestTicker {
     private onLoad(app: vf.Application, uiStage: vf.gui.Stage) {
 
         //添加心跳
-        vf.gui.TickerShared.addUpdateEvent(this.update, this);
+        vf.gui.TickerShared.add(this.update, this);
 
         //两秒后卸载当前跳
         // setTimeout(() => {
         //     if(this.update)
-        //         vf.gui.TickerShared.removeUpdateEvent(this.update,this);
+        //         vf.gui.TickerShared.remove(this.update,this);
         // }, 2000);
 
         //两秒后关闭整个心跳，包含缓动组件等所有

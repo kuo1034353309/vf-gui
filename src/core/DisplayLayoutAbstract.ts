@@ -12,7 +12,7 @@ export const $tempLocalBounds = new vf.Rectangle();
 export class DisplayLayoutAbstract extends DisplayObjectAbstract {
 
     public constructor() {
-        super()
+        super();
         this.initializeUIValues();
     }
 
@@ -294,10 +294,12 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     * 标记提交过需要验证组件尺寸，以便在稍后屏幕更新期间调用该组件的 measure(),updatesize() 方法。
     */
     public invalidateSize(): void {
-        const values = this.$values;
-        if (!values[UIKeys.invalidateSizeFlag]) {
-            values[UIKeys.invalidateSizeFlag] = true;
-            validatorShared.invalidateSize(this);
+        if (!this.visible) { // 隐藏元素后，布局失效
+            const values = this.$values;
+            if (!values[UIKeys.invalidateSizeFlag]) {
+                values[UIKeys.invalidateSizeFlag] = true;
+                validatorShared.invalidateSize(this);
+            }
         }
     }
     /**
@@ -305,10 +307,12 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     * 标记需要验证显示列表，以便在稍后屏幕更新期间调用该组件的 updateDisplayList() 方法。
     */
     public invalidateDisplayList(): void {
-        const values = this.$values;
-        if (!values[UIKeys.invalidateDisplayListFlag]) {
-            values[UIKeys.invalidateDisplayListFlag] = true;
-            validatorShared.invalidateDisplayList(this);
+        if (!this.visible) { // 隐藏元素后，布局失效
+            const values = this.$values;
+            if (!values[UIKeys.invalidateDisplayListFlag]) {
+                values[UIKeys.invalidateDisplayListFlag] = true;
+                validatorShared.invalidateDisplayList(this);
+            }
         }
     }
     /**
@@ -316,13 +320,15 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 标记父级容器的尺寸和显示列表为失效
      */
     protected invalidateParentLayout(): void {
-        const parent = this.parent;
-        if (!parent){
-            return;
-        } 
-        if (parent instanceof DisplayLayoutAbstract) {
-            parent.invalidateSize();
-            parent.invalidateDisplayList();
+        if (!this.visible) { // 隐藏元素后，布局失效
+            const parent = this.parent;
+            if (!parent){
+                return;
+            } 
+            if (parent instanceof DisplayLayoutAbstract) {
+                parent.invalidateSize();
+                parent.invalidateDisplayList();
+            }
         }
     }
     /**
@@ -807,6 +813,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         values[UIKeys.x] = value;
         if (this.container.x !== value) {
             this.container.x = value;
+            this.invalidateDisplayList();
             this.invalidateParentLayout();
         }
     }
@@ -824,6 +831,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         values[UIKeys.y] = value;
         if (value !== this.container.y) {
             this.container.y = value;
+            this.invalidateDisplayList();
             this.invalidateParentLayout();
         }
     }

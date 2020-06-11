@@ -197,6 +197,13 @@ export class DisplayObjectAbstract extends vf.utils.EventEmitter implements Life
         return this.container.interactiveChildren;
     }
 
+    /**
+     * 标记全部失效，子类实现
+     */
+    public allInvalidate(){
+
+    }
+
     private _enabled = true;
     public get enabled() {
         return this._enabled;
@@ -220,6 +227,9 @@ export class DisplayObjectAbstract extends vf.utils.EventEmitter implements Life
     public set visible(value) {
         if (this._visible === value) {
             return;
+        }
+        if (value === true) {
+            this.allInvalidate();
         }
         this._visible = value;
         this.container.visible = value;

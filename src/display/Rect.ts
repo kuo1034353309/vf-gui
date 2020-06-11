@@ -95,17 +95,11 @@ export class Rect extends DisplayObject implements MaskSprite{
     public drawRoundedRect(){
         const graphics = this.graphics;
         graphics.clear();
-        if(this._radius>=(this.width/2)){
-            graphics.lineStyle(this._lineWidth,this._lineColor,1,1,true);
-        }else{
-            graphics.lineStyle(this._lineWidth,this._lineColor);
-        }
-        
+        graphics.lineStyle(this._lineWidth,this._lineColor);
         if(this._color !== undefined)
             graphics.beginFill(this._color);   
         
-        
-        graphics.drawRoundedRect(this._anchorX?-this._anchorX*this.width:0,this._anchorY?-this._anchorY*this.height:0,this.width, this.height,this._radius);
+        graphics.drawRoundedRect(this._anchorX?-this._anchorX*this.width:0,this._anchorY?-this._anchorY*this.height:0,this.width, this.height,Math.min(15,this._radius));
         graphics.endFill();
     }
     
