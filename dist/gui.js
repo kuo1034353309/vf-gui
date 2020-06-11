@@ -3563,6 +3563,7 @@ var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
  *
  * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestLabel
  */
+var audioLib = new Array();
 var Audio = /** @class */ (function (_super) {
     __extends(Audio, _super);
     function Audio() {
@@ -3571,8 +3572,7 @@ var Audio = /** @class */ (function (_super) {
         _this._loop = false;
         _this._playbackRate = 1;
         _this._volume = 1;
-        if (_this._src)
-            _this.initAudio();
+        _this._id = Utils_1.now().toString();
         return _this;
     }
     Audio.prototype.initAudio = function () {
@@ -3594,6 +3594,7 @@ var Audio = /** @class */ (function (_super) {
             _this.emit("canplaythrough", e);
         }, this);
         this.audio.on("play", function (e) {
+            console.log("i'm", e);
             _this.emit("play", e);
         }, this);
         this.audio.on("pause", function (e) {
@@ -3607,6 +3608,7 @@ var Audio = /** @class */ (function (_super) {
         });
         this.audio.on("ended", function (e) {
             _this.emit("ended", e);
+            _this.dispose();
         }, this);
     };
     Object.defineProperty(Audio.prototype, "src", {
@@ -3722,7 +3724,14 @@ var Audio = /** @class */ (function (_super) {
      * @param {number} [length] - 声音持续时间（以秒为单位）
      */
     Audio.prototype.play = function (time, offset, length) {
-        this.audio && this.audio.play(time, offset, length);
+        //自动找到自己本体;
+        if (this.audio) {
+            this.audio.play(time, offset, length);
+        }
+        else {
+            this.initAudio();
+            this.audio.play(time, offset, length);
+        }
     };
     /**
     * 停止声音
@@ -3756,6 +3765,7 @@ var Audio = /** @class */ (function (_super) {
         if (this.audio) {
             this.audio.removeAllListeners();
             this.audio.dispose();
+            this.audio = undefined;
         }
     };
     Object.defineProperty(Audio.prototype, "isPlaying", {
@@ -3769,7 +3779,6 @@ var Audio = /** @class */ (function (_super) {
         configurable: true
     });
     Audio.prototype.commitProperties = function () {
-        this.initAudio();
     };
     return Audio;
 }(DisplayObject_1.DisplayObject));
