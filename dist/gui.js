@@ -2275,7 +2275,7 @@ var DisplayObject = /** @class */ (function (_super) {
      * 更新显示列表,子类重写，实现布局
      */
     DisplayObject.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
-        if (this.visible || this.alpha <= 0) { // 隐藏元素后，布局失效
+        if (!this.visible || this.alpha <= 0) { // 隐藏元素后，布局失效
             return;
         }
         if (this._style && this._style.display !== "none") {
@@ -3563,7 +3563,6 @@ var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
  *
  * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestLabel
  */
-var audioLib = new Array();
 var Audio = /** @class */ (function (_super) {
     __extends(Audio, _super);
     function Audio() {
@@ -3594,7 +3593,6 @@ var Audio = /** @class */ (function (_super) {
             _this.emit("canplaythrough", e);
         }, this);
         this.audio.on("play", function (e) {
-            console.log("i'm", e);
             _this.emit("play", e);
         }, this);
         this.audio.on("pause", function (e) {
@@ -3724,7 +3722,6 @@ var Audio = /** @class */ (function (_super) {
      * @param {number} [length] - 声音持续时间（以秒为单位）
      */
     Audio.prototype.play = function (time, offset, length) {
-        //自动找到自己本体;
         if (this.audio) {
             this.audio.play(time, offset, length);
         }
@@ -3779,6 +3776,7 @@ var Audio = /** @class */ (function (_super) {
         configurable: true
     });
     Audio.prototype.commitProperties = function () {
+        //
     };
     return Audio;
 }(DisplayObject_1.DisplayObject));
@@ -13838,13 +13836,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.5.1.1.5.1.1.5.1) ==1.5.1.1.5.1.1.5.1;
+//     return this.lastIndexOf(word, pos1.5.3.1.5.3.1.5.3) ==1.5.3.1.5.3.1.5.3;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.5.1";
+window.vf.gui.version = "1.5.3";
 
 
 /***/ })

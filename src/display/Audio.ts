@@ -1,6 +1,6 @@
 import { DisplayObject } from "../core/DisplayObject";
 import { IAudioOption } from "vf.js";
-import { getSound } from "../utils/Utils";
+import { getSound, now } from "../utils/Utils";
 
 /**
  * 音频组件
@@ -28,7 +28,7 @@ import { getSound } from "../utils/Utils";
  export class Audio extends DisplayObject {
 
     private audio?: vf.IAudio;
-    private _id: String;
+    private _id: string;
     private _src: any;
   
     private _autoplay = false;
@@ -228,6 +228,6 @@ import { getSound } from "../utils/Utils";
         return (this.audio as any)._isPlaying;
     }
     protected commitProperties() {
-       
+       //
     }
 }
