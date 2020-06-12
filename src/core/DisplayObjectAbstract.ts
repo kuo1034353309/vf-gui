@@ -228,10 +228,10 @@ export class DisplayObjectAbstract extends vf.utils.EventEmitter implements Life
         if (this._visible === value) {
             return;
         }
+        this._visible = value;
         if (value === true) {
             this.allInvalidate();
         }
-        this._visible = value;
         this.container.visible = value;
     }
 

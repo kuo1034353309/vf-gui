@@ -2576,10 +2576,10 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
             if (this._visible === value) {
                 return;
             }
+            this._visible = value;
             if (value === true) {
                 this.allInvalidate();
             }
-            this._visible = value;
             this.container.visible = value;
         },
         enumerable: true,
@@ -13836,13 +13836,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.5.3.1.5.3.1.5.3) ==1.5.3.1.5.3.1.5.3;
+//     return this.lastIndexOf(word, pos1.5.7.1.5.7.1.5.7) ==1.5.7.1.5.7.1.5.7;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.5.3";
+window.vf.gui.version = "1.5.7";
 
 
 /***/ })
