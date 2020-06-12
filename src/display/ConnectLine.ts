@@ -135,6 +135,7 @@ export class ConnectLine extends DisplayObject {
         }
         this._lineColor = value;
         this.invalidateProperties();
+        this.invalidateDisplayList();
     }
     /**
      * 线条粗细

@@ -703,7 +703,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     * 标记提交过需要验证组件尺寸，以便在稍后屏幕更新期间调用该组件的 measure(),updatesize() 方法。
     */
     DisplayLayoutAbstract.prototype.invalidateSize = function () {
-        if (!this.visible) { // 隐藏元素后，布局失效
+        if (this.visible) { // 隐藏元素后，布局失效
             var values = this.$values;
             if (!values[UIKeys.invalidateSizeFlag]) {
                 values[UIKeys.invalidateSizeFlag] = true;
@@ -716,7 +716,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     * 标记需要验证显示列表，以便在稍后屏幕更新期间调用该组件的 updateDisplayList() 方法。
     */
     DisplayLayoutAbstract.prototype.invalidateDisplayList = function () {
-        if (!this.visible) { // 隐藏元素后，布局失效
+        if (this.visible) { // 隐藏元素后，布局失效
             var values = this.$values;
             if (!values[UIKeys.invalidateDisplayListFlag]) {
                 values[UIKeys.invalidateDisplayListFlag] = true;
@@ -729,7 +729,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      * 标记父级容器的尺寸和显示列表为失效
      */
     DisplayLayoutAbstract.prototype.invalidateParentLayout = function () {
-        if (!this.visible) { // 隐藏元素后，布局失效
+        if (this.visible) { // 隐藏元素后，布局失效
             var parent_1 = this.parent;
             if (!parent_1) {
                 return;
@@ -4356,6 +4356,7 @@ var ConnectLine = /** @class */ (function (_super) {
             }
             this._lineColor = value;
             this.invalidateProperties();
+            this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -13836,13 +13837,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.5.7.1.5.7.1.5.7) ==1.5.7.1.5.7.1.5.7;
+//     return this.lastIndexOf(word, pos1.5.9.1.5.9.1.5.9) ==1.5.9.1.5.9.1.5.9;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.5.7";
+window.vf.gui.version = "1.5.9";
 
 
 /***/ })
