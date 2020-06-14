@@ -34,12 +34,12 @@ export function updateBasicDisplayList(target: DisplayObject|undefined,unscaledW
         return;
     //console.log(target.container.name);
     const values = target.$values;
-    const parentValues =  target.parent ? target.parent.$values : undefined;
+    const parent =  target.parent;
     let parentWidth =  1;
     let parentHeight = 1;
-    if(parentValues){
-        parentWidth = parentValues[UIKeys.width] || parentValues[UIKeys.explicitWidth] || 1;
-        parentHeight = parentValues[UIKeys.height] || parentValues[UIKeys.explicitHeight] || 1;
+    if(parent){
+        parentWidth = parent.width || 1;
+        parentHeight = parent.height || 1;
     }
     const hCenter = formatRelative(values[UIKeys.horizontalCenter], parentWidth * 0.5);
     const vCenter = formatRelative(values[UIKeys.verticalCenter], parentHeight * 0.5);
@@ -59,7 +59,7 @@ export function updateBasicDisplayList(target: DisplayObject|undefined,unscaledW
         childHeight = parentHeight - bottom - top;
     }
 
-    target.setMeasuredSize(childWidth,childHeight);
+    //target.setMeasuredSize(childWidth,childHeight);
     target.setActualSize(childWidth,childHeight);
     
     let childX = NaN;

@@ -45,7 +45,7 @@ export class ScrollBar extends Slider {
         super.triggerValueChanging();
         const scrollingContainer = this._scrollingContainer;
         if (scrollingContainer) {
-            const sizeAmt = scrollingContainer._height / scrollingContainer.innerContainer.height || 0.001;
+            const sizeAmt = scrollingContainer.explicitHeight / scrollingContainer.innerContainer.height || 0.001;
             if (sizeAmt < 1)
                 scrollingContainer.forcePctPosition(this.vertical ? "y" : "x", this._amt);
         }
@@ -186,7 +186,7 @@ export class ScrollBar extends Slider {
         const tracklightImg = this.tracklightImg;
 
         if (this.vertical) {
-            val = this._height * this._amt;
+            val = this.explicitHeight * this._amt;
             const minheight = thumbImg.height/2;
             const maxheight = this.height - minheight;
             if(val<minheight){
@@ -198,7 +198,7 @@ export class ScrollBar extends Slider {
             thumbImg.y = val;
         }
         else {
-            val = this._width* this._amt;
+            val = this.explicitWidth* this._amt;
             const thumbImgWidth = thumbImg.width/2;
             const maxwidth = this.width - thumbImgWidth;
             if(val<thumbImgWidth){

@@ -3,18 +3,9 @@ import { DisplayObject } from "../core/DisplayObject";
 import {MaskSprite} from "../core/MaskSprite";
 
 /** ===================== background  ===================== */
-export function drawBackgroundColor(background: vf.Graphics,color: number, w: number,h: number){
-    background.clear();
-    background.beginFill(color);
-    background.drawRoundedRect(0, 0, w, h, 0);
-    background.endFill();
-}
-export function backgroundColor(target: DisplayObject){
+export function drawBackgroundColor(target: DisplayObject){
 
-    if(target.style == undefined){
-        return;
-    }
-    if(target.style.backgroundColor == undefined  && target.$background == undefined){
+    if(target.backgroundColor === undefined){
         return;
     }
     if (target.$background === undefined) {
@@ -22,7 +13,15 @@ export function backgroundColor(target: DisplayObject){
         target.$background.name = "background";
         target.container.addChildAt(target.$background, 0);
     }
-    drawBackgroundColor(target.$background,target.style.backgroundColor as number,target.width,target.height);
+    if(target.backgroundColor === '') {
+        target.$background.clear();
+    }
+    else {
+        target.$background.clear();
+        target.$background.beginFill(target.backgroundColor);
+        target.$background.drawRoundedRect(0, 0,target.width,target.height, 0);
+        target.$background.endFill();
+    }
 }
 
 export function backgroundPositionSize(target: DisplayObject){

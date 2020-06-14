@@ -1,7 +1,7 @@
 import { DisplayObject } from "../core/DisplayObject";
 import * as CSSFunction from "./CSSSSystem";
 import { ComponentEvent } from "../interaction/Index";
-import { getStringFunctionParam } from "../utils/Utils";
+import { formatRelative } from "../utils/Utils";
 
 
 /**
@@ -22,23 +22,6 @@ export type Align = "flex-start" | "flex-end" | "center";
 
 /** 布局模式 */
 export type Display = "none" | "block" | "grid";
-
-function formatRelative(value: number | string | undefined): { percent: number; value: number } {
-
-    if (value == undefined) {
-        return { percent: NaN, value: NaN };
-    }
-    if (typeof value === "number") {
-        return { percent: NaN, value: value };
-    }
-    const str = value;
-    const index = str.indexOf("%");
-    if (index == -1) {
-        return { percent: NaN, value: +str };
-    }
-    const percent = +str.substring(0, index);
-    return { percent: Math.min(percent * 0.01, 1), value: NaN };
-}
 
 /**
  * 组件样式表
@@ -157,9 +140,12 @@ export class CSSStyle {
         return this.parent.width;
     }
     public set width(value: number | string) {
-        const relative = formatRelative(value);
-        this.parent.width = relative.value;
-        this.parent.percentWidth = relative.percent;
+        if(typeof value === 'number') {
+            this.parent.width = value;
+        }
+        else {
+            this.parent.percentWidth = formatRelative(value,1);
+        }
     }
     /**
      * 表示显示对象的高度，以像素为单位。
@@ -168,9 +154,12 @@ export class CSSStyle {
         return this.parent.height;
     }
     public set height(value: number | string) {
-        const relative = formatRelative(value);
-        this.parent.height = relative.value;
-        this.parent.percentHeight = relative.percent;
+        if(typeof value === 'number') {
+            this.parent.height = value;
+        }
+        else {
+            this.parent.percentHeight = formatRelative(value,1);
+        }
     }
 
     /**
@@ -255,7 +244,10 @@ export class CSSStyle {
         return this.parent.scaleX;
     }
     public set scaleX(value) {
-        this.parent.scaleX = value;
+        const parent = this.parent;
+        parent.scaleX = value;
+        parent.invalidateSize();
+        parent.invalidateParentLayout();
     }
     /**
      * 缩放
@@ -264,7 +256,10 @@ export class CSSStyle {
         return this.parent.scaleY;
     }
     public set scaleY(value) {
-        this.parent.scaleY = value;
+        const parent = this.parent;
+        parent.scaleY = value;
+        parent.invalidateSize();
+        parent.invalidateParentLayout();
     }
     /**
      * 设置元素水平拉伸扭曲（角度）。
@@ -273,7 +268,9 @@ export class CSSStyle {
         return this.parent.skewX;
     }
     public set skewX(value) {
-        this.parent.skewX = value;
+        const parent = this.parent;
+        parent.skewX = value;
+        parent.invalidateDisplayList();
     }
     /**
      * 设置元素垂直拉伸扭曲（角度）。
@@ -282,7 +279,9 @@ export class CSSStyle {
         return this.parent.skewY;
     }
     public set skewY(value) {
-        this.parent.skewY = value;
+        const parent = this.parent;
+        parent.skewY = value;
+        parent.invalidateDisplayList();
     }
 
     /**
@@ -292,7 +291,7 @@ export class CSSStyle {
         return this.parent.rotation;
     }
     public set rotate(value) {
-        this.parent.rotation = value;
+        this.rotation = value;
     }
     /**
      * 设置元素旋转 （角度）
@@ -301,7 +300,9 @@ export class CSSStyle {
         return this.parent.rotation;
     }
     public set rotation(value: number) {
-        this.parent.rotation = value;
+        const parent = this.parent;
+        parent.rotation = value;
+        parent.invalidateDisplayList();
     }
 
     /**
@@ -311,7 +312,9 @@ export class CSSStyle {
         return this.parent.pivotX;
     }
     public set pivotX(value) {
-        this.parent.pivotX = value;
+        const parent = this.parent;
+        parent.pivotX = value;
+        parent.invalidateDisplayList();
     }
     /**
      * 轴点 像素值
@@ -320,7 +323,9 @@ export class CSSStyle {
         return this.parent.pivotY;
     }
     public set pivotY(value) {
-        this.parent.pivotY = value;
+        const parent = this.parent;
+        parent.pivotY = value;
+        parent.invalidateDisplayList();
     }
 
     /**
@@ -363,17 +368,13 @@ export class CSSStyle {
     /**
      * 设置元件的背景颜色。（16进制数字0xffffff
      * */
-    private _backgroundColor?: number;
     public get backgroundColor() {
-        return this._backgroundColor;
+        return this.parent.backgroundColor;
     }
     public set backgroundColor(value) {
-        if (value === this.backgroundColor) {
-            return;
-        }
-        this._backgroundColor = value;
-        CSSFunction.backgroundColor(this.parent);
-
+        const parent = this.parent;
+        parent.backgroundColor = value;
+        parent.invalidateDisplayList();
     }
 
     /**
@@ -719,21 +720,17 @@ export class CSSStyle {
         if (target.width == 0 || target.height == 0) {
             return;
         }
-        if (this.backgroundColor && target.$background) {
-
+        if (target.backgroundColor && target.$background) {
             const background = target.$background;
-            //console.log("onResize backgroundColor",background.width , target.width ,background.height ,target.height)
             background.clear();
-            background.beginFill(this.backgroundColor);
+            background.beginFill(target.backgroundColor);
             background.drawRoundedRect(0, 0, target.width, target.height, 0);
             background.endFill();
-
         }
         if (target.$background && target.$background.mask) {
-            //console.log("onResize backgroundColor mask",this.backgroundColor)
             const mask = target.$background.mask as vf.Graphics;
             mask.clear();
-            mask.beginFill(this.backgroundColor);
+            mask.beginFill(target.backgroundColor);
             mask.drawRoundedRect(0, 0, target.width, target.height, 0);
             mask.endFill();
         }
