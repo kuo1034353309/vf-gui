@@ -4,6 +4,7 @@ import validatorShared from "./DisplayLayoutValidator";
 import { ComponentEvent } from "../interaction/Index";
 import { formatRelative } from "../utils/Utils";
 import { DisplayObjectAbstract } from "./DisplayObjectAbstract";
+import { measure } from "../layout/CSSLayout";
 
 export const $tempLocalBounds = new vf.Rectangle();
 /**
@@ -23,8 +24,6 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      */
     public $values: any = {};
 
-    public includeInLayout = true;
-
     /**
      * 背景(内部使用)
      */
@@ -38,6 +37,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
             [UIKeys.invalidatePropertiesFlag]: true,
             [UIKeys.invalidateSizeFlag]: true,
             [UIKeys.invalidateDisplayListFlag]: true,
+            [UIKeys.includeInLayout]: true,
             [UIKeys.left]: NaN,
             [UIKeys.right]: NaN,
             [UIKeys.top]: NaN,
@@ -310,7 +310,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     public invalidateParentLayout(): void {
         if (this.visible) { // 隐藏元素后，布局失效
             const parent = this.parent;
-            if (!parent) {
+            if (!parent || !this.$values[UIKeys.includeInLayout]) {
                 return;
             }
             if (parent instanceof DisplayLayoutAbstract) {
@@ -328,7 +328,17 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         this.emit(ComponentEvent.MOVE, this);
 
     }
-
+    /**
+     * @private
+     * 设置测量结果。
+     * @param width 测量宽度
+     * @param height 测量高度
+     */
+    public setMeasuredSize(width: number, height: number): void {
+        const values = this.$values;
+        values[UIKeys.measuredWidth] = Math.ceil(+width || 0);
+        values[UIKeys.measuredHeight] = Math.ceil(+height || 0);
+    }
     /**
      * @private
      * 设置组件的宽高。此方法不同于直接设置width,height属性，
@@ -397,7 +407,23 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         this.validateSize(true);
         this.updateSize();
     }
+    /**
+     * 指定此组件是否包含在父容器的布局中。若为false，则父级容器在测量和布局阶段都忽略此组件。默认值为true。
+     * 注意，visible属性与此属性不同，设置visible为false，父级容器仍会对其布局。
+     */
+    public get includeInLayout(): boolean {
+        return this.$values[UIKeys.includeInLayout];
+    }
 
+    public set includeInLayout(value: boolean) {
+        const values = this.$values;
+        value = !!value;
+        if (values[UIKeys.includeInLayout] === value)
+            return;
+        values[UIKeys.includeInLayout] = true;
+        this.invalidateParentLayout();
+        values[UIKeys.includeInLayout] = value;
+    }
     /**
      * @private
      * 距父级容器离左边距离

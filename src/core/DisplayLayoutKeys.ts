@@ -12,6 +12,9 @@ export const invalidatePropertiesFlag = getSymbol("invalidatePropertiesFlag");
 export const invalidateSizeFlag = getSymbol("invalidateSizeFlag");
 /** 标记显示失效 */
 export const invalidateDisplayListFlag = getSymbol("invalidateDisplayListFlag");
+/** 是否参与布局 */
+export const includeInLayout = getSymbol("includeInLayout");
+ 
 
 //Properties
 export const width = getSymbol("width");
