@@ -294,7 +294,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     * 标记提交过需要验证组件尺寸，以便在稍后屏幕更新期间调用该组件的 measure(),updatesize() 方法。
     */
     public invalidateSize(): void {
-        if (!this.visible) { // 隐藏元素后，布局失效
+        if (this.visible) { // 隐藏元素后，布局失效
             const values = this.$values;
             if (!values[UIKeys.invalidateSizeFlag]) {
                 values[UIKeys.invalidateSizeFlag] = true;
@@ -307,7 +307,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     * 标记需要验证显示列表，以便在稍后屏幕更新期间调用该组件的 updateDisplayList() 方法。
     */
     public invalidateDisplayList(): void {
-        if (!this.visible) { // 隐藏元素后，布局失效
+        if (this.visible) { // 隐藏元素后，布局失效
             const values = this.$values;
             if (!values[UIKeys.invalidateDisplayListFlag]) {
                 values[UIKeys.invalidateDisplayListFlag] = true;
@@ -320,7 +320,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 标记父级容器的尺寸和显示列表为失效
      */
     protected invalidateParentLayout(): void {
-        if (!this.visible) { // 隐藏元素后，布局失效
+        if (this.visible) { // 隐藏元素后，布局失效
             const parent = this.parent;
             if (!parent){
                 return;

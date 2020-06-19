@@ -276,7 +276,7 @@ export class DisplayObject extends DisplayLayoutAbstract implements Lifecycle {
      */
     protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void {
 
-        if (this.visible || this.alpha <=0 ) {  // 隐藏元素后，布局失效
+        if (!this.visible || this.alpha <=0 ) {  // 隐藏元素后，布局失效
             return;
         }
         if (this._style && this._style.display !== "none") {
