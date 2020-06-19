@@ -1,11 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../dist/gui.d.ts" />
 
-import { InteractionEvent } from "src/event/Index";
-import { Scheduler } from "../src/UI";
-import { gui } from "src/vf-gui";
-
-let historyFlag: boolean = true;
+let historyFlag = true;
 let historyData: any = {};
 
 export default class TestSyncInteraction {
@@ -114,12 +110,12 @@ export default class TestSyncInteraction {
         img3.src = "assets/dino.png";
         uiStage.addChild(img3);
         img3.interactabled = true;
-        let speed:number = 100;
+        const speed = 100;
         let flag = true;
         let pauseFlag = true;
         let totalOffset = 0;
-        let interval = vf.gui.Scheduler.setEnterFrame((info: any)=>{
-            let offset: number = speed * info.dt / 1000;
+        const interval = vf.gui.Scheduler.setEnterFrame((info: any)=>{
+            const offset = speed * info.dt / 1000;
             totalOffset += info.dt;
             //console.log(totalOffset);
             if(flag){
@@ -203,7 +199,7 @@ export default class TestSyncInteraction {
         });
 
         uiStage.syncInteractiveFlag = true;
-        uiStage.reset = () => {
+        (uiStage as any).reset = () => {
             console.log('场景reset。。。。。')
             img3.x = 200;
             flag = true;

@@ -13,19 +13,19 @@ export class Scheduler extends vf.utils.EventEmitter{
         return this._id;
     }
 
-    public static setEnterFrame(listener: () => void): Scheduler {
+    public static setEnterFrame(listener: (data?: any) => void): Scheduler {
         const scheduler: Scheduler = new Scheduler(Infinity, 0);
         scheduler.addListener(EventType.TICK, listener);
         return scheduler;
     }
 
-    public static setInterval(time: number, listener: () => void): Scheduler {
+    public static setInterval(time: number, listener: (data?: any) => void): Scheduler {
         const scheduler: Scheduler = new Scheduler(Infinity, time);
         scheduler.addListener(EventType.TICK, listener);
         return scheduler;
     }
 
-    public static setTimeout(time: number, listener: () => void): Scheduler {
+    public static setTimeout(time: number, listener: (data?: any) => void): Scheduler {
         const scheduler: Scheduler = new Scheduler(time, Infinity);
         scheduler.addListener(EventType.END, listener, scheduler);
         return scheduler;
