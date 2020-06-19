@@ -3,7 +3,7 @@ import { TickerShared } from "./Ticker";
 import { DisplayLayoutAbstract } from "./DisplayLayoutAbstract";
 import { DisplayObject } from "./DisplayObject";
 import validatorShared from "./DisplayLayoutValidator";
-import { SyncManager } from "../Interaction/syncManager";
+import { SyncManager } from "../interaction/SyncManager";
 
 /**
  * UI的舞台对象，展示所有UI组件

@@ -4,7 +4,7 @@ import { TouchMouseEventEnum } from "../../interaction/TouchMouseEventEnum";
 import { DisplayObjectAbstract } from "../DisplayObjectAbstract";
 import { Stage } from "../Stage";
 import { getDisplayObject, debug, getDisplayPathById } from "../../utils/Utils";
-import { SyncManager } from "../../Interaction/syncManager";
+import { SyncManager } from "../../interaction/SyncManager";
 import { TickerShared } from "../Ticker";
 
 /**

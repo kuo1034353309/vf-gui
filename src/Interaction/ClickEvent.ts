@@ -3,7 +3,7 @@ import { TouchMouseEventEnum } from "./TouchMouseEventEnum";
 import { InteractionEvent } from "../event/InteractionEvent";
 import { TouchMouseEvent } from "../event/TouchMouseEvent";
 import { debug } from "../utils/Utils";
-import { SyncManager } from "./syncManager";
+import { SyncManager } from "./SyncManager";
 
 /**
  * 点击触摸相关的事件处理订阅类,UI组件内部可以创建此类实现点击相关操作

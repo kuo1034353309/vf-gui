@@ -220,7 +220,7 @@ import * as Enum from './enum/Index';
 
 import { Scheduler } from './core/Scheduler';
 
-import { SyncManager } from './Interaction/SyncManager';
+import { SyncManager } from './interaction/SyncManager';
 
 export declare type Application = vf.Application;
 

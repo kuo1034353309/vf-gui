@@ -2,7 +2,7 @@ import { DisplayObject } from "../core/DisplayObject";
 import { TouchMouseEventEnum } from "./TouchMouseEventEnum";
 import { InteractionEvent } from "../event/InteractionEvent";
 import { ComponentEvent } from "./Index";
-import { SyncManager } from "./syncManager";
+import { SyncManager } from "./SyncManager";
 import { DisplayObjectAbstract } from "../core/DisplayObjectAbstract";
 
 /**
