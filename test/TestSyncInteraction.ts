@@ -158,7 +158,7 @@ export default class TestSyncInteraction {
 
         setInterval(() => {
             basicText.text = (Math.random() * 1000).toString();
-            uiStage.syncManager.sendCustomEvent({
+            uiStage.syncManager && uiStage.syncManager.sendCustomEvent({
                 code: 'customEvent',
                 level: 'command',
                 data: basicText.text});
@@ -172,7 +172,7 @@ export default class TestSyncInteraction {
         window.addEventListener(
             "message",
             (event) => {
-                uiStage.syncManager.receiveEvent(event.data.data, event.data.type)
+                uiStage.syncManager && uiStage.syncManager.receiveEvent(event.data.data, event.data.type)
                 if(event.data.type == 'history'){
                     historyFlag = false;
                 }
