@@ -57,7 +57,7 @@ export default class TestContainer {
         container4.style.top = 250 / (uiStage.height / 100) + "%";
         container4.style.width = 100 / (uiStage.width / 100) + "%";
         container4.style.height = 100 / (uiStage.height / 100) + "%";
-        container4.style.backgroundColor = 0xffffff;
+        container4.style.backgroundColor = 0xffffcc;
         uiStage.addChild(container4);
 
 

@@ -18,6 +18,7 @@ export class Stage extends DisplayLayoutAbstract{
         super(); 
         this.width = width;
         this.height = height;
+        this.setActualSize(width,height);
         this.container.name = "Stage";
         this.container.hitArea = new vf.Rectangle(0, 0, width, height);
         this.container.interactive = true;
@@ -37,18 +38,18 @@ export class Stage extends DisplayLayoutAbstract{
         
     }
 
-    public app: vf.Application | any;
+    public app: vf.Application;
     /**
      * 是否组织原始数据继续传递
      */
     public originalEventPreventDefault = false;
 
     public get stageWidth(){
-        return this.container.width;
+        return this.app.view.width;
     }
 
     public get stageHeight(){
-        return this.container.height;
+        return this.app.view.height;
     }
 
     public get scaleX() {
@@ -89,7 +90,7 @@ export class Stage extends DisplayLayoutAbstract{
         validatorShared.removeAllListeners();
         validatorShared.removeDepthQueueAll();
 
-        this.app = null;
+        this.app = undefined as any;
     }
 
  

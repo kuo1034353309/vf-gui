@@ -59,9 +59,8 @@ export function updateBasicDisplayList(target: DisplayObject|undefined,unscaledW
         childHeight = parentHeight - bottom - top;
     }
 
-    //target.setMeasuredSize(childWidth,childHeight);
+    target.setMeasuredSize(childWidth,childHeight);
     target.setActualSize(childWidth,childHeight);
-    
     let childX = NaN;
     let childY = NaN;
 

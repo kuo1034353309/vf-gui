@@ -142,6 +142,7 @@ export class CSSStyle {
     public set width(value: number | string) {
         if(typeof value === 'number') {
             this.parent.width = value;
+            this.parent.percentWidth = NaN;
         }
         else {
             this.parent.percentWidth = formatRelative(value,1);
@@ -156,6 +157,7 @@ export class CSSStyle {
     public set height(value: number | string) {
         if(typeof value === 'number') {
             this.parent.height = value;
+            this.parent.percentWidth = NaN;
         }
         else {
             this.parent.percentHeight = formatRelative(value,1);

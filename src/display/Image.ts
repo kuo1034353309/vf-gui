@@ -111,6 +111,20 @@ export class Image extends DisplayObject implements MaskSprite{
 
     }
 
+    protected measure(): void {
+        
+        if(this._sprite){
+            const texture = this._sprite.texture;
+            if (texture) {
+                this.setMeasuredSize(texture.frame.width, texture.frame.height);
+            }
+            else {
+                this.setMeasuredSize(0, 0);
+            }
+        }
+
+    }
+
     protected srcSystem() {
  
         const { container, src } = this;
@@ -131,15 +145,13 @@ export class Image extends DisplayObject implements MaskSprite{
                 return;
             }
             if (texture.frame.width > 1 && texture.frame.height > 1) {
-                //this.setMeasuredSize(texture.frame.width, texture.frame.height);
+                this.invalidateSize();
             }
             let invalidateDisplayList = false;
             texture.once("update", () => {
                 invalidateDisplayList = true;
-                //this.setMeasuredSize(texture.frame.width, texture.frame.height);
                 this.invalidateSize();
                 this.emit(ComponentEvent.COMPLETE, this);
-
             }, this);
 
             let sprite: vf.Sprite | vf.TilingSprite | vf.NineSlicePlane | undefined = this._sprite;

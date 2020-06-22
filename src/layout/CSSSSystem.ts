@@ -167,7 +167,7 @@ export function maskImage(target: DisplayObject){
         container.addChild(target.$mask);
     } else if (maskdisplay instanceof DisplayObject) {
 
-        if((maskdisplay as MaskSprite).maskSprite){
+        if(maskdisplay.maskSprite){
             target.$mask = maskdisplay;//gui组件
             target.$mask.name = "maskImage";
             container.mask = maskdisplay.maskSprite() || null;//vf组件
