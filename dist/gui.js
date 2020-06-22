@@ -5372,8 +5372,8 @@ var Label = /** @class */ (function (_super) {
         },
         set: function (value) {
             this.sprite.text = value;
+            this.setActualSize(this.sprite.width, this.sprite.height);
             this.invalidateSize();
-            this.invalidateDisplayList();
             this.emit(Index_1.ComponentEvent.CHANGE, this);
         },
         enumerable: true,
@@ -5386,8 +5386,8 @@ var Label = /** @class */ (function (_super) {
             }
             value.breakWords = true;
             this.sprite.style = value;
+            this.setActualSize(this.sprite.width, this.sprite.height);
             this.invalidateSize();
-            this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
