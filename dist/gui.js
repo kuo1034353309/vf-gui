@@ -1288,7 +1288,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         },
         set: function (value) {
             // this.invalidateDisplayList();
-            this.container.rotation = value;
+            this.container.angle = value;
         },
         enumerable: true,
         configurable: true
@@ -2356,7 +2356,6 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
         index = Math.min(index, this.container.children.length);
         this.emit(Index_1.ComponentEvent.ADD, this);
         this.container.addChildAt(item.container, index);
-        //item.allInvalidate();
         return item;
     };
     DisplayObjectAbstract.prototype.getChildAt = function (index) {

@@ -845,7 +845,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     }
     public set rotation(value) {
         // this.invalidateDisplayList();
-        this.container.rotation = value;
+        this.container.angle = value;
     }
 
     /**
