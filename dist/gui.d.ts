@@ -1724,6 +1724,7 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	     * 测量组件尺寸，返回尺寸是否发生变化
 	     */
 	    protected measureSizes(): boolean;
+	    private checkMeasureSizes;
 	    /**
 	     * @private
 	     *

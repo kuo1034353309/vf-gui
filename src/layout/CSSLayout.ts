@@ -136,6 +136,9 @@ export function updateDisplayLayout(target: DisplayObject, unscaledWidth: number
     if (target.style == undefined) {
         return;
     }
+    // if(target.parent){
+    //     target.parent.validateNow();
+    // }
     if (target.style.display === "block") {
         const pos = updateBasicDisplayList(target, unscaledWidth, unscaledHeight);
         //console.log(pos);

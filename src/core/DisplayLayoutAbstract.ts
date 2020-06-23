@@ -230,6 +230,15 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         return changed;
     }
 
+    private checkMeasureSizes(){
+        const values = this.$values;
+
+        if (values[UIKeys.invalidateSizeFlag]) {
+                this.measureSizes();
+                values[UIKeys.width] = this.getPreferredUWidth();
+                values[UIKeys.height] = this.getPreferredUHeight();
+        }
+    }
     /**
      * @private
      *
@@ -289,12 +298,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     * 标记提交过需要验证组件尺寸，以便在稍后屏幕更新期间调用该组件的 measure(),updatesize() 方法。
     */
     public invalidateSize(): void {
-        if (this.visible) { // 隐藏元素后，布局失效
-            const values = this.$values;
-            if (!values[UIKeys.invalidateSizeFlag]) {
-                values[UIKeys.invalidateSizeFlag] = true;
-                validatorShared.invalidateSize(this);
-            }
+        const values = this.$values;
+        if (!values[UIKeys.invalidateSizeFlag]) {
+            values[UIKeys.invalidateSizeFlag] = true;
+            validatorShared.invalidateSize(this);
         }
     }
     /**
@@ -302,12 +309,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     * 标记需要验证显示列表，以便在稍后屏幕更新期间调用该组件的 updateDisplayList() 方法。
     */
     public invalidateDisplayList(): void {
-        if (this.visible) { // 隐藏元素后，布局失效
-            const values = this.$values;
-            if (!values[UIKeys.invalidateDisplayListFlag]) {
-                values[UIKeys.invalidateDisplayListFlag] = true;
-                validatorShared.invalidateDisplayList(this);
-            }
+        const values = this.$values;
+        if (!values[UIKeys.invalidateDisplayListFlag]) {
+            values[UIKeys.invalidateDisplayListFlag] = true;
+            validatorShared.invalidateDisplayList(this);
         }
     }
     /**
@@ -315,15 +320,13 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 标记父级容器的尺寸和显示列表为失效
      */
     public invalidateParentLayout(): void {
-        if (this.visible) { // 隐藏元素后，布局失效
-            const parent = this.parent;
-            if (!parent || !this.$values[UIKeys.includeInLayout]) {
-                return;
-            }
-            if (parent instanceof DisplayLayoutAbstract) {
-                parent.invalidateSize();
-                parent.invalidateDisplayList();
-            }
+        const parent = this.parent;
+        if (!parent || !this.$values[UIKeys.includeInLayout]) {
+            return;
+        }
+        if (parent instanceof DisplayLayoutAbstract) {
+            parent.invalidateSize();
+            parent.invalidateDisplayList();
         }
     }
     /**
@@ -715,10 +718,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 组件宽度设置为undefined将使用组件的measure()方法自动计算尺寸
      */
     public get width(): number {
-        //this.validateSizeNow();
-        if(isNaN(this.$values[UIKeys.width])){
-            return this.getPreferredUWidth();
-        }
+        this.checkMeasureSizes();
+        // if(isNaN(this.$values[UIKeys.width])){
+        //     return this.getPreferredUWidth();
+        // }
         return this.$values[UIKeys.width];
     }
 
@@ -743,10 +746,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
      */
     public get height(): number {
-        //this.validateSizeNow();
-        if(isNaN(this.$values[UIKeys.height])){
-            return this.getPreferredUHeight();
-        }
+        this.checkMeasureSizes();
+        // if(isNaN(this.$values[UIKeys.height])){
+        //     return this.getPreferredUHeight();
+        // }
         return this.$values[UIKeys.height];
     }
 

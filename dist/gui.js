@@ -634,6 +634,14 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         }
         return changed;
     };
+    DisplayLayoutAbstract.prototype.checkMeasureSizes = function () {
+        var values = this.$values;
+        if (values[UIKeys.invalidateSizeFlag]) {
+            this.measureSizes();
+            values[UIKeys.width] = this.getPreferredUWidth();
+            values[UIKeys.height] = this.getPreferredUHeight();
+        }
+    };
     /**
      * @private
      *
@@ -689,12 +697,10 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     * 标记提交过需要验证组件尺寸，以便在稍后屏幕更新期间调用该组件的 measure(),updatesize() 方法。
     */
     DisplayLayoutAbstract.prototype.invalidateSize = function () {
-        if (this.visible) { // 隐藏元素后，布局失效
-            var values = this.$values;
-            if (!values[UIKeys.invalidateSizeFlag]) {
-                values[UIKeys.invalidateSizeFlag] = true;
-                DisplayLayoutValidator_1.default.invalidateSize(this);
-            }
+        var values = this.$values;
+        if (!values[UIKeys.invalidateSizeFlag]) {
+            values[UIKeys.invalidateSizeFlag] = true;
+            DisplayLayoutValidator_1.default.invalidateSize(this);
         }
     };
     /**
@@ -702,12 +708,10 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     * 标记需要验证显示列表，以便在稍后屏幕更新期间调用该组件的 updateDisplayList() 方法。
     */
     DisplayLayoutAbstract.prototype.invalidateDisplayList = function () {
-        if (this.visible) { // 隐藏元素后，布局失效
-            var values = this.$values;
-            if (!values[UIKeys.invalidateDisplayListFlag]) {
-                values[UIKeys.invalidateDisplayListFlag] = true;
-                DisplayLayoutValidator_1.default.invalidateDisplayList(this);
-            }
+        var values = this.$values;
+        if (!values[UIKeys.invalidateDisplayListFlag]) {
+            values[UIKeys.invalidateDisplayListFlag] = true;
+            DisplayLayoutValidator_1.default.invalidateDisplayList(this);
         }
     };
     /**
@@ -715,15 +719,13 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      * 标记父级容器的尺寸和显示列表为失效
      */
     DisplayLayoutAbstract.prototype.invalidateParentLayout = function () {
-        if (this.visible) { // 隐藏元素后，布局失效
-            var parent_1 = this.parent;
-            if (!parent_1 || !this.$values[UIKeys.includeInLayout]) {
-                return;
-            }
-            if (parent_1 instanceof DisplayLayoutAbstract) {
-                parent_1.invalidateSize();
-                parent_1.invalidateDisplayList();
-            }
+        var parent = this.parent;
+        if (!parent || !this.$values[UIKeys.includeInLayout]) {
+            return;
+        }
+        if (parent instanceof DisplayLayoutAbstract) {
+            parent.invalidateSize();
+            parent.invalidateDisplayList();
         }
     };
     /**
@@ -1138,10 +1140,10 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
          * 组件宽度设置为undefined将使用组件的measure()方法自动计算尺寸
          */
         get: function () {
-            //this.validateSizeNow();
-            if (isNaN(this.$values[UIKeys.width])) {
-                return this.getPreferredUWidth();
-            }
+            this.checkMeasureSizes();
+            // if(isNaN(this.$values[UIKeys.width])){
+            //     return this.getPreferredUWidth();
+            // }
             return this.$values[UIKeys.width];
         },
         /**
@@ -1167,10 +1169,10 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
          * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
          */
         get: function () {
-            //this.validateSizeNow();
-            if (isNaN(this.$values[UIKeys.height])) {
-                return this.getPreferredUHeight();
-            }
+            this.checkMeasureSizes();
+            // if(isNaN(this.$values[UIKeys.height])){
+            //     return this.getPreferredUHeight();
+            // }
             return this.$values[UIKeys.height];
         },
         /**
@@ -5700,9 +5702,13 @@ var ScrollBar = /** @class */ (function (_super) {
             scrollingContainer.dragScrolling = this._dragScrolling;
             if (this.vertical) {
                 scrollingContainer.scrollY = true;
+                if (this.parent)
+                    this.height = this.parent.height;
             }
             else {
                 scrollingContainer.scrollX = true;
+                if (this.parent)
+                    this.width = this.parent.width;
             }
             this.alignToContainer();
         }
@@ -5724,23 +5730,23 @@ var ScrollBar = /** @class */ (function (_super) {
             var scrollingContainer = this._scrollingContainer;
             var innerContainer = scrollingContainer.innerContainer;
             var _posAmt = !innerContainer[widthORheight] ? 0 : -(innerContainer[xORy] / innerContainer[widthORheight]);
-            var sizeAmt = !innerContainer[widthORheight] ? 1 : scrollingContainer["_" + widthORheight] / innerContainer[widthORheight];
+            var sizeAmt = !innerContainer[widthORheight] ? 1 : scrollingContainer[widthORheight] / innerContainer[widthORheight];
             //update amt
-            var diff = innerContainer[widthORheight] - scrollingContainer["_" + widthORheight];
-            this._amt = !scrollingContainer["_" + widthORheight] || !diff ? 0 : -(innerContainer[xORy] / diff);
+            var diff = innerContainer[widthORheight] - scrollingContainer[widthORheight];
+            this._amt = !scrollingContainer[widthORheight] || !diff ? 0 : -(innerContainer[xORy] / diff);
             var self_1 = this;
             if (sizeAmt >= 1) {
-                size = self_1["_" + widthORheight];
+                size = self_1[widthORheight];
                 //_thumb[topORleft] = size * 0.5;
                 this.toggleHidden(true);
             }
             else {
-                size = self_1["_" + widthORheight] * sizeAmt;
+                size = self_1[widthORheight] * sizeAmt;
                 if (this._amt > 1) {
-                    size -= (self_1["_" + widthORheight] - size) * (this._amt - 1);
+                    size -= (self_1[widthORheight] - size) * (this._amt - 1);
                 }
                 else if (this._amt < 0) {
-                    size -= (self_1["_" + widthORheight] - size) * -this._amt;
+                    size -= (self_1[widthORheight] - size) * -this._amt;
                 }
                 // if (this._amt < 0) {
                 //     newPos = size * 0.5;
@@ -5755,7 +5761,9 @@ var ScrollBar = /** @class */ (function (_super) {
                 this.toggleHidden(false);
             }
             _thumb[widthORheight] = size;
-            this.updatePosition();
+            if (size == _thumb[widthORheight]) {
+                this.updatePosition();
+            }
         }
     };
     ScrollBar.prototype.onDragMove = function (event, offset) {
@@ -10236,6 +10244,9 @@ function updateDisplayLayout(target, unscaledWidth, unscaledHeight) {
     if (target.style == undefined) {
         return;
     }
+    // if(target.parent){
+    //     target.parent.validateNow();
+    // }
     if (target.style.display === "block") {
         var pos = CSSBasicLayout_1.updateBasicDisplayList(target, unscaledWidth, unscaledHeight);
         //console.log(pos);
@@ -13844,13 +13855,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.6.1.1.6.1.1.6.1) ==1.6.1.1.6.1.1.6.1;
+//     return this.lastIndexOf(word, pos1.6.2.1.6.2.1.6.2) ==1.6.2.1.6.2.1.6.2;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.6.1";
+window.vf.gui.version = "1.6.2";
 
 
 /***/ })
