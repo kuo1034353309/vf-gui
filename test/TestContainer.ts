@@ -133,9 +133,9 @@ export default class TestContainer {
 
 
         vf.gui.TickerShared.add(() => {
-            container6.rotation += .1;
+            container6.rotation += 1;
             //container6.style.rotation += .1;
-            console.log(vf.gui.TickerShared.deltaTime);
+            //console.log(container6.rotation);
         }, this);
 
         setTimeout(() => {

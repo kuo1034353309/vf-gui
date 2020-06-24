@@ -1286,7 +1286,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "rotation", {
         get: function () {
-            return this.container.rotation;
+            return this.container.angle;
         },
         set: function (value) {
             // this.invalidateDisplayList();
@@ -13855,13 +13855,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.6.2.1.6.2.1.6.2) ==1.6.2.1.6.2.1.6.2;
+//     return this.lastIndexOf(word, pos1.6.3.1.6.3.1.6.3) ==1.6.3.1.6.3.1.6.3;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.6.2";
+window.vf.gui.version = "1.6.3";
 
 
 /***/ })
