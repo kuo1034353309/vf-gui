@@ -269,10 +269,10 @@ export class ScrollingContainer extends Container {
     public forcePctPosition(direction: "x" | "y", pct: number) {
         const bounds = this.getInnerBounds();
         if (this.scrollX && direction == "x") {
-            this._innerContainer.position[direction] = -((bounds.width - this._width) * pct);
+            this._innerContainer.position[direction] = -((bounds.width - this.explicitWidth) * pct);
         }
         if (this.scrollY && direction == "y") {
-            this._innerContainer[direction] = -((bounds.height - this._height) * pct);
+            this._innerContainer[direction] = -((bounds.height - this.explicitHeight) * pct);
         }
         this._Position[direction] = this._targetPosition[direction] = this._innerContainer.position[direction];
     }
@@ -284,8 +284,8 @@ export class ScrollingContainer extends Container {
         let dif;
         if (this.scrollX) {
             const x = Math.max(0, (Math.min(bounds.width, pos.x)));
-            if (x + this._innerContainer.x > this._width) {
-                dif = x - this._width;
+            if (x + this._innerContainer.x > this.explicitWidth) {
+                dif = x - this.explicitWidth;
                 this._innerContainer.x = -dif;
             }
             else if (x + this._innerContainer.x < 0) {
@@ -297,8 +297,8 @@ export class ScrollingContainer extends Container {
         if (this.scrollY) {
             const y = Math.max(0, (Math.min(bounds.height, pos.y)));
 
-            if (y + this._innerContainer.y > this._height) {
-                dif = y - this._height;
+            if (y + this._innerContainer.y > this.explicitHeight) {
+                dif = y - this.explicitHeight;
                 this._innerContainer.y = -dif;
             }
             else if (y + this._innerContainer.y < 0) {
@@ -330,9 +330,9 @@ export class ScrollingContainer extends Container {
 
         let min: number;
         if (direction == "y")
-            min = Math.round(Math.min(0, this._height - bounds.height));
+            min = Math.round(Math.min(0, this.explicitHeight - bounds.height));
         else
-            min = Math.round(Math.min(0, this._width - bounds.width));
+            min = Math.round(Math.min(0, this.explicitWidth - bounds.width));
 
         if (!this.scrolling && Math.round(this._Speed[direction]) !== 0) {
 

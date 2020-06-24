@@ -201,7 +201,7 @@ export class DisplayObjectAbstract extends vf.utils.EventEmitter implements Life
      * 标记全部失效，子类实现
      */
     public allInvalidate(){
-
+        //
     }
 
     private _enabled = true;

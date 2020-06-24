@@ -166,8 +166,8 @@ export class TextInput extends InputBase {
         this.setInputStyle("fontSize", this.style.fontSize);
         this.setInputStyle("color", this.style.color);
 
-        this.setInputStyle("width", this._width + "px");
-        this.setInputStyle("height", this._height + "px");
+        this.setInputStyle("width", this.explicitWidth + "px");
+        this.setInputStyle("height", this.explicitHeight + "px");
        
         this.render(renderer);
 
