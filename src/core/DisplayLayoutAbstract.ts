@@ -58,8 +58,8 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
             [UIKeys.measuredHeight]: 0,
             [UIKeys.oldPreferWidth]: NaN,
             [UIKeys.oldPreferHeight]: NaN,
-            [UIKeys.scaleX]: 1,
-            [UIKeys.scaleY]: 1,
+            // [UIKeys.scaleX]: 1,
+            // [UIKeys.scaleY]: 1,
             [UIKeys.backgroundColor]:undefined,
             [UIKeys.oldBackgroundColor]:undefined,
         };
@@ -771,7 +771,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     }
 
     public get scaleX() {
-        return this.$values[UIKeys.scaleX];
+        return  this.container.scale.x;
     }
 
     public set scaleX(value: number) {
@@ -781,7 +781,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     }
 
     public get scaleY() {
-        return this.$values[UIKeys.scaleY];
+        return  this.container.scale.y;
     }
 
     public set scaleY(value: number) {
