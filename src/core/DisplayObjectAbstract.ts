@@ -156,17 +156,6 @@ export class DisplayObjectAbstract extends vf.utils.EventEmitter implements Life
         return this.container.renderable;
     }
 
-    /**
-     * 缓存当前的显示对象，如果移除缓存，设置false即可
-     * 在设置这个值时，请确保你的纹理位图已经加载
-     */
-    public set cacheAsBitmap(value: boolean) {
-        this.container.cacheAsBitmap = value;
-    }
-    public get cacheAsBitmap() {
-        return this.container.cacheAsBitmap;
-    }
-
     private _interactive = true;
     private _interactiveChildren = true;
     /**
@@ -198,9 +187,9 @@ export class DisplayObjectAbstract extends vf.utils.EventEmitter implements Life
     }
 
     /**
-     * 标记全部失效，子类实现
+     * 子类实现
      */
-    public allInvalidate(){
+    public validateNow(){
         //
     }
 
@@ -230,7 +219,7 @@ export class DisplayObjectAbstract extends vf.utils.EventEmitter implements Life
         }
         this._visible = value;
         if (value === true) {
-            this.allInvalidate();
+            this.validateNow();
         }
         this.container.visible = value;
     }

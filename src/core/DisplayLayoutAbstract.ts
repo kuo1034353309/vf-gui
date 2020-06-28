@@ -859,6 +859,9 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     }
     public set zIndex(value) {
         // this.invalidateParentLayout();
+        if(this.parent && this.parent.isContainer && !this.parent.container.sortableChildren){
+            this.parent.container.sortableChildren = true;
+        }
         this.container.zIndex = value;
     }
 
