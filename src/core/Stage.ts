@@ -19,6 +19,7 @@ export class Stage extends DisplayLayoutAbstract{
         super(); 
         this.width = width;
         this.height = height;
+        this.setActualSize(width,height);
         this.container.name = "Stage";
         this.container.hitArea = new vf.Rectangle(0, 0, width, height);
         this.container.interactive = true;
@@ -31,38 +32,27 @@ export class Stage extends DisplayLayoutAbstract{
             TickerShared.start();
         }
         TickerShared.add(tween.update,this);
+
         if (!this.container.parent) {
             this.app.stage.addChild(this.container);
         }
+        
     }
 
-    public app: vf.Application | any;
+    public app: vf.Application;
     public syncManager: SyncManager | undefined; 
+
     /**
      * 是否组织原始数据继续传递
      */
     public originalEventPreventDefault = false;
-    /**
-     * 是否同步交互事件
-     */
-    private _syncInteractiveFlag = false; //TODO:默认false
-    public set syncInteractiveFlag(value: boolean){
-        this._syncInteractiveFlag = value;
-        if(!this.syncManager){
-            this.syncManager = new SyncManager(this);
-        }
-    }
-
-    public get syncInteractiveFlag(){
-        return this._syncInteractiveFlag;
-    }
 
     public get stageWidth(){
-        return this.container.width;
+        return this.app.view.width;
     }
 
     public get stageHeight(){
-        return this.container.height;
+        return this.app.view.height;
     }
 
     public get scaleX() {
@@ -85,6 +75,22 @@ export class Stage extends DisplayLayoutAbstract{
         this.container.scale.copyFrom(value);
     }
 
+        /**
+     * 是否同步交互事件
+     */
+    private _syncInteractiveFlag = false; //TODO:默认false
+    public set syncInteractiveFlag(value: boolean){
+        this._syncInteractiveFlag = value;
+        if(!this.syncManager){
+            this.syncManager = new SyncManager(this);
+        }
+    }
+
+    public get syncInteractiveFlag(){
+        return this._syncInteractiveFlag;
+    }
+
+
     public release(){
         super.release();
         TickerShared.remove(tween.update,this);
@@ -94,7 +100,7 @@ export class Stage extends DisplayLayoutAbstract{
     public releaseAll(){
         TickerShared.remove(tween.update,this);
         this.syncManager && this.syncManager.release();
-        
+
         for(let i=0;i<this.uiChildren.length;i++){
             const ui = this.uiChildren[i] as DisplayObject;
             ui.releaseAll();
@@ -105,7 +111,7 @@ export class Stage extends DisplayLayoutAbstract{
         validatorShared.removeAllListeners();
         validatorShared.removeDepthQueueAll();
 
-        this.app = null;
+        this.app = undefined as any;
     }
 
  
@@ -115,25 +121,11 @@ export class Stage extends DisplayLayoutAbstract{
     }
 
     /**
-     * 接收来自player的消息
-     * @param msg 
+     * 虚接口，子类可以扩充
      */
-    public receiveFromPlayer(msg: any){
-        if(msg.code == 'syncEvent'){
-            let data = msg.data; //{data: eventData, type: 'live/history'}
-            this.syncManager && this.syncManager.receiveEvent(data.data, data.type);
-        }
-    }
-
-    /**
-     * 虚接口，子类可以扩充,往player发消息
-     */
-    public sendToPlayer(msg: any){
+    public inputLog(msg: any){
         //
         //console.log(msg);
     }
 
-    public getSystemEvent(): vf.utils.EventEmitter{
-        return null as any;
-    }
 }
