@@ -18,7 +18,7 @@ export class SyncManager {
         }
         this._stage = stage;
         if(stage.syncInteractiveFlag){
-            let systemEvent = stage.getSystemEvent();
+            const systemEvent = stage.getSystemEvent();
             if(systemEvent){
                 this.sendCustomEvent = this.sendCustomEvent.bind(this);
                 systemEvent.on('sendCustomEvent', this.sendCustomEvent);
@@ -37,15 +37,15 @@ export class SyncManager {
     }
 
     public resumeStatusFlag = false;  //是否正在恢复状态
-    public offsetTime: number = 0; //本地Date.now()与中心服务器的差值
-    private _resetTimeFlag: boolean = false; //是否对齐过时间
-    private _crossTime: number = 0; //穿越的时间
-    private _initTime: number = 0; //初始化成功时的时间
+    public offsetTime = 0; //本地Date.now()与中心服务器的差值
+    private _resetTimeFlag = false; //是否对齐过时间
+    private _crossTime = 0; //穿越的时间
+    private _initTime = 0; //初始化成功时的时间
     private _interactionEvent: InteractionEvent; //交互event对象
     private _obj: DisplayObjectAbstract | undefined; //相应交互的obj
     private _stage: Stage; //当前stage
     private _lostEvent: any[] = []; //节流中的event
-    private _throttleFlag: boolean = false; //节流状态
+    private _throttleFlag = false; //节流状态
     private _throttleTimer: any = null; //节流时间函数
     private _evtDataList: any[] = []; //历史信令整理后的数组
     private _lastMoveEvent: any[] = []; //上一个move事件，用于稀疏，如果是连续的move操作，则使用相同的code，这样信令服务器会merge掉之前的move操作，在恢复时会拿到更少的数据量
@@ -59,7 +59,7 @@ export class SyncManager {
     public release(){
         const stage = this._stage;
         if(stage.syncInteractiveFlag){
-            let systemEvent = stage.getSystemEvent();
+            const systemEvent = stage.getSystemEvent();
             if(systemEvent){
                 systemEvent.off('sendCustomEvent', this.sendCustomEvent);
             }
@@ -71,7 +71,7 @@ export class SyncManager {
      */
     public collectEvent(e: InteractionEvent, obj: DisplayObjectAbstract) {
         if (!this._stage.syncInteractiveFlag || e.signalling) return; //不需要同步，或者已经是信令同步过来的，不再做处理
-        let eventData: any = this.createEventData(e, obj);
+        const eventData: any = this.createEventData(e, obj);
 
         if (e.type === TouchMouseEventEnum.mousemove || e.type === TouchMouseEventEnum.touchmove) {
             this.throttle(eventData);
@@ -92,8 +92,8 @@ export class SyncManager {
      * data
      */
     public sendCustomEvent(customData: any) {
-        let eventData: any = {};
-        let time = this.currentTime();
+        const eventData: any = {};
+        const time = this.currentTime();
         eventData.code = "syncCustomEvent_" + vf.utils.uid() + time;
         eventData.time = time;
         eventData.data = JSON.stringify(customData);
@@ -104,7 +104,7 @@ export class SyncManager {
      * 接收操作
      * @signalType 信令类型  live-实时信令   history-历史信令
      */
-    public receiveEvent(eventData: any, signalType: string = "live") {
+    public receiveEvent(eventData: any, signalType = "live") {
         if (signalType == "history") {
             this.dealHistoryEvent(eventData);
         } else {
@@ -123,7 +123,7 @@ export class SyncManager {
      * 获取当前时间
      */
     private currentTime() {
-        let time = performance.now() - this._initTime - this.offsetTime + this._crossTime;
+        const time = performance.now() - this._initTime - this.offsetTime + this._crossTime;
         return Math.floor(time);
     }
 
@@ -131,16 +131,16 @@ export class SyncManager {
      * 构造一个新的e，用于同步，数据要尽量精简
      */
     private createEventData(e: InteractionEvent, obj: DisplayObjectAbstract) {
-        let event: any = {};
+        const event: any = {};
         event.type = e.type;
         event.path = getDisplayPathById(obj);
-        let data: any = {};
+        const data: any = {};
         event.data = data;
         data.identifier = e.data.identifier;
         data.global = { x: Math.floor(e.data.global.x), y: Math.floor(e.data.global.y) };
         //!!!important: e.data.originalEvent  不支持事件继续传递
-        let time = this.currentTime();
-        let eventData = {
+        const time = this.currentTime();
+        const eventData = {
             code: "syncInteraction_" + vf.utils.uid() + time,
             time: time,
             data: JSON.stringify(event),
@@ -148,7 +148,7 @@ export class SyncManager {
         //稀疏move，将相同的一组move使用相同的code
         if(e.type === TouchMouseEventEnum.mousemove || e.type === TouchMouseEventEnum.touchmove){
             if(this._lastMoveEvent.length > 0){
-                let lastEvent = this._lastMoveEvent[0];
+                const lastEvent = this._lastMoveEvent[0];
                 if(lastEvent.type == event.type && lastEvent.obj == obj){
                     //使用相同的code
                     eventData.code = lastEvent.code;
@@ -174,7 +174,7 @@ export class SyncManager {
         //派发至uistage
         stage.emit("sendSyncEvent", eventData);
         //派发至player
-        let msg = {
+        const msg = {
             level: 'command',
             code: 'syncEvent',
             data: eventData
@@ -225,26 +225,26 @@ export class SyncManager {
      */
     private parseEventData(eventData: any) {
         const stage = this._stage;
-        let time = eventData.time;
+        const time = eventData.time;
         //判断信令时间，是否需要向后穿越
-        let currentTime = this.currentTime();
+        const currentTime = this.currentTime();
         if (currentTime < time) {
-            let druation = time - currentTime;
+            const druation = time - currentTime;
             this.crossTime(druation);
         }
         if (eventData.code.indexOf("syncInteraction_") == 0) {
-            let event = JSON.parse(eventData.data);
+            const event = JSON.parse(eventData.data);
             this._interactionEvent.signalling = true;
             this._interactionEvent.type = event.type;
-            let data = event.data;
+            const data = event.data;
             this._interactionEvent.data.identifier = data.identifier;
             this._interactionEvent.data.global.set(data.global.x, data.global.y);
             this._obj = stage.getChildByPath(event.path) as DisplayObjectAbstract;
             this._obj.container.emit(this._interactionEvent.type, this._interactionEvent);
         } else if (eventData.code.indexOf("syncCustomEvent_") == 0) {
             //自定义事件
-            let data = JSON.parse(eventData.data);
-            let systemEvent = stage.getSystemEvent();
+            const data = JSON.parse(eventData.data);
+            const systemEvent = stage.getSystemEvent();
             if(systemEvent){
                 systemEvent.emit('receiveCustomEvent', data);
             }
@@ -277,7 +277,7 @@ export class SyncManager {
     private dealHistoryEvent(eventData: any) {
         if (!eventData) return;
         this._evtDataList = [];
-        for (let key in eventData) {
+        for (const key in eventData) {
             if(key.indexOf('syncInteraction_') == 0 || key.indexOf('syncCustomEvent_') == 0){
                 this._evtDataList.push(eventData[key]);
             }
@@ -295,9 +295,9 @@ export class SyncManager {
     private resumeStatus() {
         //恢复过程只需要计算状态，不需要渲染
         if (this._evtDataList.length == 0) return;
-        let start = performance.now();
+        const start = performance.now();
         this.resetStage();
-        let resetTime = performance.now();
+        const resetTime = performance.now();
         this.resumeStatusFlag = true;
         this._stage.renderable = false;
         for (let i = 0; i < this._evtDataList.length; ++i) {
@@ -306,7 +306,7 @@ export class SyncManager {
         }
         this._stage.renderable = true;
         this.resumeStatusFlag = false;
-        let now = performance.now();
+        const now = performance.now();
         if(debug){
             console.log(`恢复总耗时：${now - start}, reset耗时: ${resetTime - start}, 执行操作耗时：${now - resetTime}}`);
         }

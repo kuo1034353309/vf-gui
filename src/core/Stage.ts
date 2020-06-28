@@ -90,6 +90,14 @@ export class Stage extends DisplayLayoutAbstract{
         return this._syncInteractiveFlag;
     }
 
+    public getSystemEvent(): vf.utils.EventEmitter {
+        //
+        return this;
+    }
+
+    public sendToPlayer(e: any): void{
+        //
+    }
 
     public release(){
         super.release();
@@ -114,7 +122,7 @@ export class Stage extends DisplayLayoutAbstract{
         this.app = undefined as any;
     }
 
- 
+    
     public resize(): void {
         this.container.hitArea = new vf.Rectangle(0, 0, this.width, this.height);
         //this.updateChildren();
