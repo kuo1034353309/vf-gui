@@ -477,8 +477,8 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
             _a[UIKeys.measuredHeight] = 0,
             _a[UIKeys.oldPreferWidth] = NaN,
             _a[UIKeys.oldPreferHeight] = NaN,
-            _a[UIKeys.scaleX] = 1,
-            _a[UIKeys.scaleY] = 1,
+            // [UIKeys.scaleX]: 1,
+            // [UIKeys.scaleY]: 1,
             _a[UIKeys.backgroundColor] = undefined,
             _a[UIKeys.oldBackgroundColor] = undefined,
             _a);
@@ -1194,7 +1194,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "scaleX", {
         get: function () {
-            return this.$values[UIKeys.scaleX];
+            return this.container.scale.x;
         },
         set: function (value) {
             // this.invalidateSize();
@@ -1206,7 +1206,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "scaleY", {
         get: function () {
-            return this.$values[UIKeys.scaleY];
+            return this.container.scale.y;
         },
         set: function (value) {
             // this.invalidateSize();
@@ -1304,6 +1304,9 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         },
         set: function (value) {
             // this.invalidateParentLayout();
+            if (this.parent && this.parent.isContainer && !this.parent.container.sortableChildren) {
+                this.parent.container.sortableChildren = true;
+            }
             this.container.zIndex = value;
         },
         enumerable: true,
@@ -1353,8 +1356,8 @@ exports.minHeight = getSymbol("minHeight");
 exports.maxHeight = getSymbol("maxHeight");
 exports.percentWidth = getSymbol("percentWidth");
 exports.percentHeight = getSymbol("percentHeight");
-exports.scaleX = getSymbol("scaleX");
-exports.scaleY = getSymbol("scaleY");
+// export const scaleX = getSymbol("scaleX");
+// export const scaleY = getSymbol("scaleY");
 exports.measuredWidth = getSymbol("measuredWidth");
 exports.measuredHeight = getSymbol("measuredHeight");
 exports.oldPreferWidth = getSymbol("oldPreferWidth");
@@ -2434,20 +2437,6 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DisplayObjectAbstract.prototype, "cacheAsBitmap", {
-        get: function () {
-            return this.container.cacheAsBitmap;
-        },
-        /**
-         * 缓存当前的显示对象，如果移除缓存，设置false即可
-         * 在设置这个值时，请确保你的纹理位图已经加载
-         */
-        set: function (value) {
-            this.container.cacheAsBitmap = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(DisplayObjectAbstract.prototype, "interactive", {
         get: function () {
             return this.container.interactive;
@@ -2483,9 +2472,10 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
         configurable: true
     });
     /**
-     * 标记全部失效，子类实现
+     * 子类实现
      */
-    DisplayObjectAbstract.prototype.allInvalidate = function () {
+    DisplayObjectAbstract.prototype.validateNow = function () {
+        //
     };
     Object.defineProperty(DisplayObjectAbstract.prototype, "enabled", {
         get: function () {
@@ -2512,7 +2502,7 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
             }
             this._visible = value;
             if (value === true) {
-                this.allInvalidate();
+                this.validateNow();
             }
             this.container.visible = value;
         },
@@ -3990,7 +3980,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/core/DisplayObject.ts");
+var GraphBase_1 = __webpack_require__(/*! ./private/GraphBase */ "./src/display/private/GraphBase.ts");
 /**
  * 绘制圆形
  *
@@ -4007,113 +3997,64 @@ var Circle = /** @class */ (function (_super) {
     function Circle() {
         var _this = _super.call(this) || this;
         /**
-         * 半径
+         * 开始绘制角度
          */
-        _this._radius = 0;
+        _this._startAngle = 0;
         /**
-         * 线条颜色
+         * 结束角度
          */
-        _this._lineColor = 0;
+        _this._endAngle = 360;
         /**
-         * 线条粗细
+         * 逆时针绘制
          */
-        _this._lineWidth = 0;
-        _this.graphics = new vf.Graphics();
-        _this.container.addChild(_this.graphics);
+        _this._anticlockwise = false;
         return _this;
     }
-    /** 可以支持遮罩的组件 */
-    Circle.prototype.maskSprite = function () {
-        return this.graphics;
-    };
-    Object.defineProperty(Circle.prototype, "radius", {
+    Object.defineProperty(Circle.prototype, "startAngle", {
         get: function () {
-            return this._radius;
+            return this._startAngle;
         },
         set: function (value) {
-            this._radius = value;
+            this._startAngle = value;
             this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Circle.prototype, "lineColor", {
+    Object.defineProperty(Circle.prototype, "endAngle", {
         get: function () {
-            return this._lineColor;
+            return this._endAngle;
         },
         set: function (value) {
-            this._lineColor = value;
+            this._endAngle = value;
             this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Circle.prototype, "lineWidth", {
+    Object.defineProperty(Circle.prototype, "anticlockwise", {
         get: function () {
-            return this._lineWidth;
+            return this._anticlockwise;
         },
         set: function (value) {
-            this._lineWidth = value;
+            this._anticlockwise = value;
             this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Circle.prototype, "color", {
-        get: function () {
-            return this._color;
-        },
-        set: function (value) {
-            this._color = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Circle.prototype, "anchorX", {
-        get: function () {
-            return this._anchorX;
-        },
-        set: function (value) {
-            this._anchorX = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Circle.prototype, "anchorY", {
-        get: function () {
-            return this._anchorY;
-        },
-        set: function (value) {
-            this._anchorY = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Circle.prototype.drawCircle = function () {
+    Circle.prototype.drawGraph = function () {
         var graphics = this.graphics;
         graphics.clear();
-        graphics.lineStyle(this._lineWidth, this._lineColor);
+        graphics.lineStyle(this._lineWidth, this._lineColor, this._lineAlpha);
         if (this._color !== undefined)
             graphics.beginFill(this._color);
         var diam = this._radius * 2;
-        graphics.drawCircle(this._anchorX ? this._anchorX * diam : 0, this._anchorY ? diam * this._anchorY : 0, this._radius);
+        graphics.arc(this._anchorX ? this._anchorX * diam : 0, this._anchorY ? diam * this._anchorY : 0, this._radius, this._startAngle * Math.PI / 180, this._endAngle * Math.PI / 180, this._anticlockwise);
         graphics.endFill();
     };
-    Circle.prototype.release = function () {
-        _super.prototype.release.call(this);
-        if (this.graphics.parent) {
-            this.graphics.parent.removeChild(this.graphics).destroy();
-        }
-    };
-    Circle.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
-        this.drawCircle();
-        _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
-    };
     return Circle;
-}(DisplayObject_1.DisplayObject));
+}(GraphBase_1.GraphBase));
 exports.Circle = Circle;
 
 
@@ -5462,7 +5403,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/core/DisplayObject.ts");
+var GraphBase_1 = __webpack_require__(/*! ./private/GraphBase */ "./src/display/private/GraphBase.ts");
 /**
  * 绘制矩形或圆角矩形
  *
@@ -5476,114 +5417,19 @@ var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/co
 var Rect = /** @class */ (function (_super) {
     __extends(Rect, _super);
     function Rect() {
-        var _this = _super.call(this) || this;
-        /**
-         * 圆角
-         */
-        _this._radius = 0;
-        /**
-         * 线条颜色
-         */
-        _this._lineColor = 0;
-        /**
-         * 线条粗细
-         */
-        _this._lineWidth = 0;
-        _this.graphics = new vf.Graphics();
-        _this.container.addChild(_this.graphics);
-        return _this;
+        return _super.call(this) || this;
     }
-    /** 可以支持遮罩的组件 */
-    Rect.prototype.maskSprite = function () {
-        return this.graphics;
-    };
-    Object.defineProperty(Rect.prototype, "radius", {
-        get: function () {
-            return this._radius;
-        },
-        set: function (value) {
-            this._radius = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "lineColor", {
-        get: function () {
-            return this._lineColor;
-        },
-        set: function (value) {
-            this._lineColor = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "lineWidth", {
-        get: function () {
-            return this._lineWidth;
-        },
-        set: function (value) {
-            this._lineWidth = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "color", {
-        get: function () {
-            return this._color;
-        },
-        set: function (value) {
-            this._color = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "anchorX", {
-        get: function () {
-            return this._anchorX;
-        },
-        set: function (value) {
-            this._anchorX = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "anchorY", {
-        get: function () {
-            return this._anchorY;
-        },
-        set: function (value) {
-            this._anchorY = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Rect.prototype.drawRoundedRect = function () {
+    Rect.prototype.drawGraph = function () {
         var graphics = this.graphics;
         graphics.clear();
-        graphics.lineStyle(this._lineWidth, this._lineColor);
+        graphics.lineStyle(this._lineWidth, this._lineColor, this._lineAlpha);
         if (this._color !== undefined)
             graphics.beginFill(this._color);
         graphics.drawRoundedRect(this._anchorX ? -this._anchorX * this.width : 0, this._anchorY ? -this._anchorY * this.height : 0, this.width, this.height, Math.min(15, this._radius));
         graphics.endFill();
     };
-    Rect.prototype.release = function () {
-        _super.prototype.release.call(this);
-        if (this.graphics.parent) {
-            this.graphics.parent.removeChild(this.graphics).destroy();
-        }
-    };
-    Rect.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
-        this.drawRoundedRect();
-        _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
-    };
     return Rect;
-}(DisplayObject_1.DisplayObject));
+}(GraphBase_1.GraphBase));
 exports.Rect = Rect;
 
 
@@ -8222,6 +8068,161 @@ var Tracing = /** @class */ (function (_super) {
     return Tracing;
 }(DisplayObject_1.DisplayObject));
 exports.Tracing = Tracing;
+
+
+/***/ }),
+
+/***/ "./src/display/private/GraphBase.ts":
+/*!******************************************!*\
+  !*** ./src/display/private/GraphBase.ts ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var DisplayObject_1 = __webpack_require__(/*! ../../core/DisplayObject */ "./src/core/DisplayObject.ts");
+/**
+ * 绘制图形基类
+ */
+var GraphBase = /** @class */ (function (_super) {
+    __extends(GraphBase, _super);
+    function GraphBase() {
+        var _this = _super.call(this) || this;
+        /**
+         * 半径
+         */
+        _this._radius = 0;
+        /**
+         * 线条颜色
+         */
+        _this._lineColor = 0;
+        /**
+         * 线条粗细
+         */
+        _this._lineWidth = 0;
+        /**
+         * 线条透明度
+         */
+        _this._lineAlpha = 1;
+        _this.graphics = new vf.Graphics();
+        _this.container.addChild(_this.graphics);
+        return _this;
+    }
+    /** 可以支持遮罩的组件 */
+    GraphBase.prototype.maskSprite = function () {
+        return this.graphics;
+    };
+    Object.defineProperty(GraphBase.prototype, "radius", {
+        get: function () {
+            return this._radius;
+        },
+        set: function (value) {
+            this._radius = value;
+            this.invalidateSize();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "lineColor", {
+        get: function () {
+            return this._lineColor;
+        },
+        set: function (value) {
+            this._lineColor = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "lineWidth", {
+        get: function () {
+            return this._lineWidth;
+        },
+        set: function (value) {
+            this._lineWidth = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "lineAlpha", {
+        get: function () {
+            return this._lineAlpha;
+        },
+        set: function (value) {
+            this._lineAlpha = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "color", {
+        get: function () {
+            return this._color;
+        },
+        set: function (value) {
+            this._color = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "anchorX", {
+        get: function () {
+            return this._anchorX;
+        },
+        set: function (value) {
+            this._anchorX = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "anchorY", {
+        get: function () {
+            return this._anchorY;
+        },
+        set: function (value) {
+            this._anchorY = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * 子类重写
+     */
+    GraphBase.prototype.drawGraph = function () {
+        //
+    };
+    GraphBase.prototype.release = function () {
+        _super.prototype.release.call(this);
+        if (this.graphics.parent) {
+            this.graphics.parent.removeChild(this.graphics).destroy();
+        }
+    };
+    GraphBase.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
+        this.drawGraph();
+        _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
+    };
+    return GraphBase;
+}(DisplayObject_1.DisplayObject));
+exports.GraphBase = GraphBase;
 
 
 /***/ }),
@@ -13855,13 +13856,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.6.3.1.6.3.1.6.3) ==1.6.3.1.6.3.1.6.3;
+//     return this.lastIndexOf(word, pos1.6.5.1.6.5.1.6.5) ==1.6.5.1.6.5.1.6.5;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.6.3";
+window.vf.gui.version = "1.6.5";
 
 
 /***/ })

@@ -17,8 +17,6 @@ declare module 'src/core/DisplayLayoutKeys' {
 	export const maxHeight: symbol;
 	export const percentWidth: symbol;
 	export const percentHeight: symbol;
-	export const scaleX: symbol;
-	export const scaleY: symbol;
 	export const measuredWidth: symbol;
 	export const measuredHeight: symbol;
 	export const oldPreferWidth: symbol;
@@ -1563,11 +1561,6 @@ declare module 'src/core/DisplayObjectAbstract' {
 	     * 只影响父级的递归调用。
 	     */
 	    renderable: boolean;
-	    /**
-	     * 缓存当前的显示对象，如果移除缓存，设置false即可
-	     * 在设置这个值时，请确保你的纹理位图已经加载
-	     */
-	    cacheAsBitmap: boolean;
 	    private _interactive;
 	    private _interactiveChildren;
 	    /**
@@ -1579,9 +1572,9 @@ declare module 'src/core/DisplayObjectAbstract' {
 	     */
 	    interactiveChildren: boolean;
 	    /**
-	     * 标记全部失效，子类实现
+	     * 子类实现
 	     */
-	    allInvalidate(): void;
+	    validateNow(): void;
 	    private _enabled;
 	    enabled: boolean;
 	    /**
@@ -3297,10 +3290,64 @@ declare module 'src/display/TextInput' {
 	}
 
 }
-declare module 'src/display/Rect' {
+declare module 'src/display/private/GraphBase' {
 	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { MaskSprite } from 'src/core/MaskSprite';
+	/**
+	 * 绘制图形基类
+	 */
+	export class GraphBase extends DisplayObject implements MaskSprite {
+	    constructor();
+	    readonly graphics: vf.Graphics;
+	    /** 可以支持遮罩的组件 */
+	    maskSprite(): vf.Graphics;
+	    /**
+	     * 半径
+	     */
+	    protected _radius: number;
+	    radius: number;
+	    /**
+	     * 线条颜色
+	     */
+	    protected _lineColor: number;
+	    lineColor: number;
+	    /**
+	     * 线条粗细
+	     */
+	    protected _lineWidth: number;
+	    lineWidth: number;
+	    /**
+	     * 线条透明度
+	     */
+	    protected _lineAlpha: number;
+	    lineAlpha: number;
+	    /**
+	     * 颜色
+	     */
+	    protected _color?: number;
+	    color: number | undefined;
+	    /**
+	     * 锚点，调整位图的坐标中点 0-1
+	     */
+	    protected _anchorX?: number;
+	    anchorX: number | undefined;
+	    /**
+	     * 锚点，调整位图的坐标中点 0-1
+	     */
+	    protected _anchorY?: number;
+	    anchorY: number | undefined;
+	    /**
+	     * 子类重写
+	     */
+	    drawGraph(): void;
+	    release(): void;
+	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	}
+
+}
+declare module 'src/display/Rect' {
+	import { GraphBase } from 'src/display/private/GraphBase';
 	/**
 	 * 绘制矩形或圆角矩形
 	 *
@@ -3311,51 +3358,14 @@ declare module 'src/display/Rect' {
 	 *
 	 * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestRect
 	 */
-	export class Rect extends DisplayObject implements MaskSprite {
+	export class Rect extends GraphBase {
 	    constructor();
-	    readonly graphics: vf.Graphics;
-	    /** 可以支持遮罩的组件 */
-	    maskSprite(): vf.Graphics;
-	    /**
-	     * 圆角
-	     */
-	    private _radius;
-	    radius: number;
-	    /**
-	     * 线条颜色
-	     */
-	    private _lineColor;
-	    lineColor: number;
-	    /**
-	     * 线条粗细
-	     */
-	    private _lineWidth;
-	    lineWidth: number;
-	    /**
-	     * 颜色
-	     */
-	    private _color?;
-	    color: number | undefined;
-	    /**
-	     * 锚点，调整位图的坐标中点 0-1
-	     */
-	    private _anchorX?;
-	    anchorX: number | undefined;
-	    /**
-	     * 锚点，调整位图的坐标中点 0-1
-	     */
-	    private _anchorY?;
-	    anchorY: number | undefined;
-	    drawRoundedRect(): void;
-	    release(): void;
-	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	    drawGraph(): void;
 	}
 
 }
 declare module 'src/display/Circle' {
-	///   types="@vf.js/vf" />
-	import { DisplayObject } from 'src/core/DisplayObject';
-	import { MaskSprite } from 'src/core/MaskSprite';
+	import { GraphBase } from 'src/display/private/GraphBase';
 	/**
 	 * 绘制圆形
 	 *
@@ -3367,44 +3377,24 @@ declare module 'src/display/Circle' {
 	 *
 	 * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestCircle
 	 */
-	export class Circle extends DisplayObject implements MaskSprite {
+	export class Circle extends GraphBase {
 	    constructor();
-	    readonly graphics: vf.Graphics;
-	    /** 可以支持遮罩的组件 */
-	    maskSprite(): vf.Graphics;
 	    /**
-	     * 半径
+	     * 开始绘制角度
 	     */
-	    private _radius;
-	    radius: number;
+	    protected _startAngle: number;
+	    startAngle: number;
 	    /**
-	     * 线条颜色
+	     * 结束角度
 	     */
-	    private _lineColor;
-	    lineColor: number;
+	    protected _endAngle: number;
+	    endAngle: number;
 	    /**
-	     * 线条粗细
+	     * 逆时针绘制
 	     */
-	    private _lineWidth;
-	    lineWidth: number;
-	    /**
-	     * 颜色
-	     */
-	    private _color?;
-	    color: number | undefined;
-	    /**
-	     * 锚点，调整位图的坐标中点 0-1
-	     */
-	    private _anchorX?;
-	    anchorX: number | undefined;
-	    /**
-	     * 锚点，调整位图的坐标中点 0-1
-	     */
-	    private _anchorY?;
-	    anchorY: number | undefined;
-	    drawCircle(): void;
-	    release(): void;
-	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	    protected _anticlockwise: boolean;
+	    anticlockwise: boolean;
+	    drawGraph(): void;
 	}
 
 }
