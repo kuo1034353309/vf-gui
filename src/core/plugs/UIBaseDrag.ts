@@ -482,6 +482,7 @@ export class UIBaseDrag implements Lifecycle {
             e.data.tiltX = dragPosition.x;
             e.data.tiltY = dragPosition.y;
             item.dragOption._actionData = {type:ComponentEvent.DRAG_TARGET,data: e.data,path:getDisplayPathById(parent)};
+            item.invalidateParentLayout();
             item.emit(ComponentEvent.DRAG_TARGET, item, e);
             
         }

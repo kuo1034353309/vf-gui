@@ -8,11 +8,11 @@ import * as gui from "./UI";
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.5.10.1.5.10.1.5.10) ==1.5.10.1.5.10.1.5.10;
+//     return this.lastIndexOf(word, pos1.6.5.1.6.5.1.6.5) ==1.6.5.1.6.5.1.6.5;
 // });
 if((window as any).vf === undefined){
     (window as any).vf = {};
 }
 (window as any).vf.gui = gui;
-(window as any).vf.gui.version = "1.5.10";
+(window as any).vf.gui.version = "1.6.5";
 export {gui};

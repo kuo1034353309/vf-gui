@@ -32,7 +32,7 @@ export default class TestImage {
 
         /** 样式宽高为0时，适配原始图片宽高 */
         const img3 = new vf.gui.Image();
-        img3.x = 15;
+        img3.x = 25;
         img3.y = 200;
         img3.src = "assets/dino.png";
         img3.tint = 0xffcc00;//填充颜色

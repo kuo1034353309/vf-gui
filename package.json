@@ -1,13 +1,13 @@
 {
   "name": "@vf.js/gui",
-  "version": "1.5.10",
+  "version": "1.6.5",
   "description": "[https://vipkid-edu.github.io/vf-gui/](https://vipkid-edu.github.io/vf-gui/)",
   "main": "dist/gui.js",
   "types": "dist/gui.d.ts",
   "scripts": {
-    "test": "webpack --config ./webpack_config/test-webpack.config.js --watch",
+    "test": "webpack --config ./webpack_config/test-webpack.config.js --watch && npm run watch",
     "build": "webpack --config ./webpack_config/webpack.config.js",
-    "watch": "webpack --config ./webpack_config/webpack.config.js --watch",
+    "watch": "webpack --watch --config ./webpack_config/webpack.config.js",
     "start": "webpack-dev-server --open --config ./webpack_config/webpack.config.js",
     "prod": "webpack --config ./webpack_config/publish-webpack.config",
     "lint": "eslint ./src/*.* ./src/**/*.*  --fix",

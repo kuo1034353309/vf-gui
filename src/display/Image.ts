@@ -97,14 +97,6 @@ export class Image extends DisplayObject implements MaskSprite{
         }
     }
 
-    /**
-     * @private
-     * 测量组件尺寸
-     */
-    protected measure(): void {
-        //
-    }
-
     protected updateDisplayList(unscaledWidth: number, unscaledHeight: number) {
         if(unscaledWidth === 0 && unscaledHeight ===0){
             return;
@@ -115,6 +107,20 @@ export class Image extends DisplayObject implements MaskSprite{
             this._sprite.width = unscaledWidth;
             this._sprite.height = unscaledHeight;
             this.anchorSystem();
+        }
+
+    }
+
+    protected measure(): void {
+        
+        if(this._sprite){
+            const texture = this._sprite.texture;
+            if (texture) {
+                this.setMeasuredSize(texture.frame.width, texture.frame.height);
+            }
+            else {
+                this.setMeasuredSize(0, 0);
+            }
         }
 
     }
@@ -139,15 +145,13 @@ export class Image extends DisplayObject implements MaskSprite{
                 return;
             }
             if (texture.frame.width > 1 && texture.frame.height > 1) {
-                this.setMeasuredSize(texture.frame.width, texture.frame.height);
+                this.invalidateSize();
             }
             let invalidateDisplayList = false;
             texture.once("update", () => {
                 invalidateDisplayList = true;
-                this.setMeasuredSize(texture.frame.width, texture.frame.height);
                 this.invalidateSize();
                 this.emit(ComponentEvent.COMPLETE, this);
-
             }, this);
 
             let sprite: vf.Sprite | vf.TilingSprite | vf.NineSlicePlane | undefined = this._sprite;
