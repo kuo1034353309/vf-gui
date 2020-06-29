@@ -60,7 +60,7 @@ import { getSound } from "../utils/Utils";
         this.audio.on("canplay", (e: any) => {
             this.emit("canplay", e)
         },this);
-        this.audio.on("canplaythrough", (e: any) => {
+        this.audio.on("canplaythrough", (e: any ) => {
             this.emit("canplaythrough", e)
         },this);
         this.audio.on("play", (e: any) => {
@@ -72,8 +72,8 @@ import { getSound } from "../utils/Utils";
         this.audio.on("error", (e: any) => {
             this.emit("error", e)
         }),this;
-        this.audio.on("timeupdate", (e: any) => {
-            this.emit("timeupdate", e)
+        this.audio.on("timeupdate", (e: any, f:any) => {
+            this.emit("timeupdate", e,f)
         });
         this.audio.on("ended", (e: any) => {
             this.emit("ended", e)
