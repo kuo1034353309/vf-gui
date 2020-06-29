@@ -133,7 +133,7 @@ export default class TestContainer {
         uiStage.addChild(containerBottom);
 
 
-        vf.gui.TickerShared.addUpdateEvent(() => {
+        vf.gui.TickerShared.add(() => {
             container6.style.rotation += 1;
             //container6.rotation += 1;
         }, this);

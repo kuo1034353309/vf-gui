@@ -30,7 +30,7 @@ export default class TestContainer {
         container2.style.height = 100;
         container2.style.backgroundRepeat = "no-repeat";
         container2.style.backgroundColor = 0xffffff;
-        container2.style.backgroundImage = "assets/pc.png";
+        container2.style.backgroundImage = "assets/btnbg.png";
         container2.style.backgroundPositionX = 20;
         container2.style.backgroundPositionY = 50;
         container2.style.backgroundSize = [50, 50];
@@ -57,8 +57,7 @@ export default class TestContainer {
         container4.style.top = 250 / (uiStage.height / 100) + "%";
         container4.style.width = 100 / (uiStage.width / 100) + "%";
         container4.style.height = 100 / (uiStage.height / 100) + "%";
-        container4.style.backgroundColor = 0xffffff;
-        console.log(container4.style.left, container4.style.top);
+        container4.style.backgroundColor = 0xffffcc;
         uiStage.addChild(container4);
 
 
@@ -67,8 +66,8 @@ export default class TestContainer {
         container5.name = "5";
         container5.style.left = 240;
         container5.style.top = 250;
-        container5.style.width = 1000;
-        container5.style.height = 1000;
+        container5.style.width = 1006;
+        container5.style.height = 1006;
         container5.style.maxWidth = 100;
         container5.style.maxHeight = 100;
         container5.style.backgroundColor = 0xffffff;
@@ -77,8 +76,8 @@ export default class TestContainer {
         /** 百分比设置最小高度与宽度,设置抽点 */
         const container6 = new vf.gui.Container();
         container6.name = "6";
-        container6.style.left = 380;
-        container6.style.top = 250;
+        container6.style.left = 430;
+        container6.style.top = 300;
         container6.style.width = 10;
         container6.style.height = 10;
         container6.style.minWidth = 100;
@@ -133,10 +132,16 @@ export default class TestContainer {
         uiStage.addChild(containerBottom);
 
 
-        vf.gui.TickerShared.addUpdateEvent(() => {
-            container6.style.rotation += 1;
-            //container6.rotation += 1;
+        vf.gui.TickerShared.add(() => {
+            container6.rotation += 1;
+            //container6.style.rotation += .1;
+            //console.log(container6.rotation);
         }, this);
+
+        setTimeout(() => {
+            console.log('setTimeout');
+            container2.style.width = 200;
+        }, 5000);
 
     }
 }

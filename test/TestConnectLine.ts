@@ -60,10 +60,12 @@ export default class TestConnectLine {
 
         e4Rect1.on(vf.gui.Interaction.TouchMouseEvent.onClick, () => {
             e4Line1.isClear = true;
+            e4Line1.lineColor = 0xffcc00;
             e4Line1.play = 2;
         });
         e4Rect2.on(vf.gui.Interaction.TouchMouseEvent.onClick, () => {
             e4Line1.isClear = true;
+            e4Line1.lineColor = 0xffffff;
             e4Line1.play = 1;
         });
     }

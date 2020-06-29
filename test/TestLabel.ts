@@ -39,8 +39,11 @@ export default class TestLabel {
         wText.style.top = 400;
         wText.style.color = [0xffffff, 0xffcc00];
         wText.style.width = 300;
-        wText.style.textAlign = "right";
-        wText.text = "我限定了宽度与位置"
+        wText.style.height = 100;
+        wText.style.textAlign = "center";
+        wText.style.verticalAlign = "middle";
+        wText.text = "我限定了宽度与位置";
+        wText.style.backgroundColor = 0xfff;
         uiStage.addChild(wText);
     }
 

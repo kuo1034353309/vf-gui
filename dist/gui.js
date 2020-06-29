@@ -117,7 +117,7 @@ var DisplayObject_1 = __webpack_require__(/*! ./core/DisplayObject */ "./src/cor
 exports.DisplayObject = DisplayObject_1.DisplayObject;
 /** 心跳，需要在初始化完成后，启动心跳更新 */
 var Ticker_1 = __webpack_require__(/*! ./core/Ticker */ "./src/core/Ticker.ts");
-exports.TickerShared = Ticker_1.shared;
+exports.TickerShared = Ticker_1.TickerShared;
 /** 滤镜的基础类 */
 var Filter_1 = __webpack_require__(/*! ./core/Filter */ "./src/core/Filter.ts");
 exports.Filter = Filter_1.Filter;
@@ -443,7 +443,6 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
          * @private
          */
         _this.$values = {};
-        _this.includeInLayout = true;
         _this.initializeUIValues();
         return _this;
     }
@@ -457,6 +456,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
             _a[UIKeys.invalidatePropertiesFlag] = true,
             _a[UIKeys.invalidateSizeFlag] = true,
             _a[UIKeys.invalidateDisplayListFlag] = true,
+            _a[UIKeys.includeInLayout] = true,
             _a[UIKeys.left] = NaN,
             _a[UIKeys.right] = NaN,
             _a[UIKeys.top] = NaN,
@@ -465,10 +465,10 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
             _a[UIKeys.verticalCenter] = NaN,
             _a[UIKeys.percentWidth] = NaN,
             _a[UIKeys.percentHeight] = NaN,
+            _a[UIKeys.width] = NaN,
+            _a[UIKeys.height] = NaN,
             _a[UIKeys.explicitWidth] = NaN,
             _a[UIKeys.explicitHeight] = NaN,
-            _a[UIKeys.width] = 0,
-            _a[UIKeys.height] = 0,
             _a[UIKeys.minWidth] = 0,
             _a[UIKeys.maxWidth] = 100000,
             _a[UIKeys.minHeight] = 0,
@@ -477,20 +477,10 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
             _a[UIKeys.measuredHeight] = 0,
             _a[UIKeys.oldPreferWidth] = NaN,
             _a[UIKeys.oldPreferHeight] = NaN,
-            _a[UIKeys.x] = 0,
-            _a[UIKeys.y] = 0,
-            _a[UIKeys.oldX] = 0,
-            _a[UIKeys.oldY] = 0,
-            _a[UIKeys.oldWidth] = 0,
-            _a[UIKeys.oldHeight] = 0,
-            _a[UIKeys.scaleX] = 1,
-            _a[UIKeys.scaleY] = 1,
-            _a[UIKeys.pivotX] = 0,
-            _a[UIKeys.pivotY] = 0,
-            _a[UIKeys.rotation] = 0,
-            _a[UIKeys.skewX] = 0,
-            _a[UIKeys.skewY] = 0,
-            _a[UIKeys.zIndex] = NaN,
+            // [UIKeys.scaleX]: 1,
+            // [UIKeys.scaleY]: 1,
+            _a[UIKeys.backgroundColor] = undefined,
+            _a[UIKeys.oldBackgroundColor] = undefined,
             _a);
     };
     /**
@@ -526,6 +516,9 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      * 验证组件的尺寸
      */
     DisplayLayoutAbstract.prototype.validateSize = function (recursive) {
+        if (this.parent === undefined) {
+            return;
+        }
         if (recursive) {
             var children = this.uiChildren;
             if (children) {
@@ -543,9 +536,6 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
                 this.invalidateDisplayList();
                 this.invalidateParentLayout();
             }
-            if (this.parent == undefined) {
-                return;
-            }
             values[UIKeys.invalidateSizeFlag] = false;
         }
     };
@@ -560,7 +550,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         var values = this.$values;
         if (values[UIKeys.invalidateDisplayListFlag]) {
             this.updateSize();
-            this.updateDisplayList(values[UIKeys.width], values[UIKeys.height]);
+            this.updateDisplayList(this.width, this.height);
             values[UIKeys.invalidateDisplayListFlag] = false;
         }
     };
@@ -572,12 +562,12 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         //
     };
     /**
-     * @private
-     * 测量组件尺寸
+     * 测量显示对象宽高，如果子类没有重写，默认是this.container.width..
      */
     DisplayLayoutAbstract.prototype.measure = function () {
-        this.container.getLocalBounds(exports.$tempLocalBounds);
-        this.setMeasuredSize(exports.$tempLocalBounds.width, exports.$tempLocalBounds.height);
+        var values = this.$values;
+        values[UIKeys.measuredWidth] = this.container.width;
+        values[UIKeys.measuredHeight] = this.container.height;
     };
     /**
      * @private
@@ -586,17 +576,21 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
     DisplayLayoutAbstract.prototype.measureSizes = function () {
         var changed = false;
         var values = this.$values;
-        if (!values[UIKeys.invalidateSizeFlag])
+        if (!values[UIKeys.invalidateSizeFlag]) {
             return changed;
-        this.measure();
-        var parentWidth = this.parent ? this.parent.width : 1;
-        var parentHeight = this.parent ? this.parent.height : 1;
+        }
+        var parent = this.parent;
+        var parentWidth = parent ? parent.width : 1;
+        var parentHeight = parent ? parent.height : 1;
         var maxWidth = Utils_1.formatRelative(values[UIKeys.maxWidth], parentWidth);
         var maxHeight = Utils_1.formatRelative(values[UIKeys.maxHeight], parentHeight);
         var minWidth = Utils_1.formatRelative(values[UIKeys.minWidth], parentWidth);
         var minHeight = Utils_1.formatRelative(values[UIKeys.minHeight], parentHeight);
-        //显示设置宽高，会忽略最大与最小值
+        //显示设置宽高，会忽略最大与最小值  
         if (isNaN(values[UIKeys.explicitWidth]) || isNaN(values[UIKeys.explicitHeight])) {
+            if (isNaN(values[UIKeys.percentWidth]) && isNaN(values[UIKeys.percentHeight])) {
+                this.measure();
+            }
             if (!isNaN(values[UIKeys.percentWidth])) {
                 values[UIKeys.measuredWidth] = Math.ceil(values[UIKeys.percentWidth] * parentWidth);
             }
@@ -640,16 +634,13 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         }
         return changed;
     };
-    /**
-     * @private
-     * 设置测量结果。
-     * @param width 测量宽度
-     * @param height 测量高度
-     */
-    DisplayLayoutAbstract.prototype.setMeasuredSize = function (width, height) {
+    DisplayLayoutAbstract.prototype.checkMeasureSizes = function () {
         var values = this.$values;
-        values[UIKeys.measuredWidth] = Math.ceil(+width || 0);
-        values[UIKeys.measuredHeight] = Math.ceil(+height || 0);
+        if (values[UIKeys.invalidateSizeFlag]) {
+            this.measureSizes();
+            values[UIKeys.width] = this.getPreferredUWidth();
+            values[UIKeys.height] = this.getPreferredUHeight();
+        }
     };
     /**
      * @private
@@ -658,16 +649,20 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      */
     DisplayLayoutAbstract.prototype.getPreferredUWidth = function () {
         var values = this.$values;
-        return isNaN(values[UIKeys.explicitWidth]) ?
-            values[UIKeys.measuredWidth] : values[UIKeys.explicitWidth];
+        if (isNaN(values[UIKeys.explicitWidth])) {
+            return values[UIKeys.measuredWidth];
+        }
+        return values[UIKeys.explicitWidth];
     };
     /**
      * @private
      */
     DisplayLayoutAbstract.prototype.getPreferredUHeight = function () {
         var values = this.$values;
-        return isNaN(values[UIKeys.explicitHeight]) ?
-            values[UIKeys.measuredHeight] : values[UIKeys.explicitHeight];
+        if (isNaN(values[UIKeys.explicitHeight])) {
+            return values[UIKeys.measuredHeight];
+        }
+        return values[UIKeys.explicitHeight];
     };
     /**
      * @private
@@ -675,11 +670,10 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      * 按照：外部显式设置尺寸>测量尺寸 的优先级顺序返回尺寸，
      */
     DisplayLayoutAbstract.prototype.getPreferredBounds = function (bounds) {
-        this.measureSizes();
         bounds.width = this.getPreferredUWidth();
         bounds.height = this.getPreferredUHeight();
-        bounds.x = this.$values[UIKeys.x];
-        bounds.y = this.$values[UIKeys.y];
+        bounds.x = this.container.x;
+        bounds.y = this.container.y;
         return bounds;
     };
     /**
@@ -726,7 +720,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      */
     DisplayLayoutAbstract.prototype.invalidateParentLayout = function () {
         var parent = this.parent;
-        if (!parent) {
+        if (!parent || !this.$values[UIKeys.includeInLayout]) {
             return;
         }
         if (parent instanceof DisplayLayoutAbstract) {
@@ -739,11 +733,19 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      * 设置组件的布局位置
      */
     DisplayLayoutAbstract.prototype.setPosition = function (x, y) {
-        var values = this.$values;
-        values[UIKeys.x] = x;
-        values[UIKeys.y] = y;
-        this.updateTransform();
+        this.container.position.set(x, y);
         this.emit(Index_1.ComponentEvent.MOVE, this);
+    };
+    /**
+     * @private
+     * 设置测量结果。
+     * @param width 测量宽度
+     * @param height 测量高度
+     */
+    DisplayLayoutAbstract.prototype.setMeasuredSize = function (width, height) {
+        var values = this.$values;
+        values[UIKeys.measuredWidth] = Math.ceil(+width || 0);
+        values[UIKeys.measuredHeight] = Math.ceil(+height || 0);
     };
     /**
      * @private
@@ -754,12 +756,10 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         var change = false;
         var values = this.$values;
         if (values[UIKeys.width] !== w) {
-            values[UIKeys.oldWidth] = values[UIKeys.width];
             values[UIKeys.width] = w;
             change = true;
         }
         if (values[UIKeys.height] !== h) {
-            values[UIKeys.oldHeight] = values[UIKeys.height];
             values[UIKeys.height] = h;
             change = true;
         }
@@ -773,22 +773,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      * 更新最终的组件宽高
      */
     DisplayLayoutAbstract.prototype.updateSize = function () {
-        var unscaledWidth = 0;
-        var unscaledHeight = 0;
-        var values = this.$values;
-        if (!isNaN(values[UIKeys.explicitWidth])) {
-            unscaledWidth = values[UIKeys.explicitWidth];
-        }
-        else if (!isNaN(values[UIKeys.measuredWidth])) {
-            unscaledWidth = values[UIKeys.measuredWidth];
-        }
-        if (!isNaN(values[UIKeys.explicitHeight])) {
-            unscaledHeight = values[UIKeys.explicitHeight];
-        }
-        else if (!isNaN(values[UIKeys.measuredHeight])) {
-            unscaledHeight = values[UIKeys.measuredHeight];
-        }
-        this.setActualSize(unscaledWidth, unscaledHeight);
+        this.setActualSize(this.getPreferredUWidth(), this.getPreferredUHeight());
     };
     DisplayLayoutAbstract.prototype.updateTransform = function () {
         this.container.setTransform(this.x + this.pivotX, this.y + this.pivotY, this.scaleX, this.scaleY, this.rotation * (Math.PI / 180), this.skewX, this.skewY, this.pivotX, this.pivotY);
@@ -820,6 +805,26 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         this.validateSize(true);
         this.updateSize();
     };
+    Object.defineProperty(DisplayLayoutAbstract.prototype, "includeInLayout", {
+        /**
+         * 指定此组件是否包含在父容器的布局中。若为false，则父级容器在测量和布局阶段都忽略此组件。默认值为true。
+         * 注意，visible属性与此属性不同，设置visible为false，父级容器仍会对其布局。
+         */
+        get: function () {
+            return this.$values[UIKeys.includeInLayout];
+        },
+        set: function (value) {
+            var values = this.$values;
+            value = !!value;
+            if (values[UIKeys.includeInLayout] === value)
+                return;
+            values[UIKeys.includeInLayout] = true;
+            this.invalidateParentLayout();
+            values[UIKeys.includeInLayout] = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "left", {
         /**
          * @private
@@ -1024,86 +1029,6 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DisplayLayoutAbstract.prototype, "_width", {
-        get: function () {
-            return this.$values[UIKeys.explicitWidth];
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(DisplayLayoutAbstract.prototype, "_height", {
-        get: function () {
-            return this.$values[UIKeys.explicitHeight];
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(DisplayLayoutAbstract.prototype, "width", {
-        /**
-         * @private
-         * 组件宽度设置为undefined将使用组件的measure()方法自动计算尺寸
-         */
-        get: function () {
-            //this.measureSizes();//不可以调用测量，有性能消耗，后期优化
-            return this.getPreferredUWidth();
-        },
-        /**
-         * @private
-         *
-         * @param value
-         */
-        set: function (value) {
-            value = +value;
-            var values = this.$values;
-            if (value < 0 || values[UIKeys.width] === value && values[UIKeys.explicitWidth] === value)
-                return;
-            values[UIKeys.explicitWidth] = value;
-            if (isNaN(value))
-                this.invalidateSize();
-            this.invalidateProperties();
-            this.invalidateDisplayList();
-            this.invalidateParentLayout();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    DisplayLayoutAbstract.prototype.allInvalidate = function () {
-        this.invalidateSize();
-        this.measureSizes();
-        this.invalidateProperties();
-        this.invalidateDisplayList();
-        this.invalidateParentLayout();
-    };
-    Object.defineProperty(DisplayLayoutAbstract.prototype, "height", {
-        /**
-         * @private
-         * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
-         */
-        get: function () {
-            //this.validateSizeNow();
-            //this.measureSizes();//不可以调用测量，有性能消耗，后期优化
-            return this.getPreferredUHeight();
-        },
-        /**
-         * @private
-         *
-         * @param value
-         */
-        set: function (value) {
-            value = +value;
-            var values = this.$values;
-            if (value < 0 || values[UIKeys.height] === value && values[UIKeys.explicitHeight] === value)
-                return;
-            values[UIKeys.explicitHeight] = value;
-            if (isNaN(value))
-                this.invalidateSize();
-            this.invalidateProperties();
-            this.invalidateDisplayList();
-            this.invalidateParentLayout();
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "minWidth", {
         /**
          * @private
@@ -1188,162 +1113,184 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DisplayLayoutAbstract.prototype, "scaleX", {
+    DisplayLayoutAbstract.prototype.allInvalidate = function () {
+        this.invalidateSize();
+        this.invalidateProperties();
+        this.invalidateDisplayList();
+        this.invalidateParentLayout();
+    };
+    Object.defineProperty(DisplayLayoutAbstract.prototype, "backgroundColor", {
         get: function () {
-            return this.$values[UIKeys.scaleX];
+            return this.$values[UIKeys.backgroundColor];
         },
         set: function (value) {
-            value = +value || 0;
             var values = this.$values;
-            if (values[UIKeys.scaleX] === value) {
+            if (values[UIKeys.backgroundColor] === value) {
                 return;
             }
-            if (value !== this.container.scale.x) {
-                values[UIKeys.scaleX] = value;
-                this.invalidateProperties();
-                this.invalidateSize();
-                this.invalidateDisplayList();
-                this.invalidateParentLayout();
-            }
+            values[UIKeys.backgroundColor] = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DisplayLayoutAbstract.prototype, "width", {
+        /**
+         * @private
+         * 组件宽度设置为undefined将使用组件的measure()方法自动计算尺寸
+         */
+        get: function () {
+            this.checkMeasureSizes();
+            // if(isNaN(this.$values[UIKeys.width])){
+            //     return this.getPreferredUWidth();
+            // }
+            return this.$values[UIKeys.width];
+        },
+        /**
+         * @private
+         *
+         * @param value
+         */
+        set: function (value) {
+            value = +value;
+            var values = this.$values;
+            if (value < 0 || values[UIKeys.explicitWidth] === value)
+                return;
+            values[UIKeys.explicitWidth] = value;
+            this.invalidateSize();
+            this.invalidateParentLayout();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DisplayLayoutAbstract.prototype, "height", {
+        /**
+         * @private
+         * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
+         */
+        get: function () {
+            this.checkMeasureSizes();
+            // if(isNaN(this.$values[UIKeys.height])){
+            //     return this.getPreferredUHeight();
+            // }
+            return this.$values[UIKeys.height];
+        },
+        /**
+         * @private
+         *
+         * @param value
+         */
+        set: function (value) {
+            value = +value;
+            var values = this.$values;
+            if (value < 0 || values[UIKeys.explicitHeight] === value)
+                return;
+            values[UIKeys.explicitHeight] = value;
+            this.invalidateSize();
+            this.invalidateParentLayout();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(DisplayLayoutAbstract.prototype, "scaleX", {
+        get: function () {
+            return this.container.scale.x;
+        },
+        set: function (value) {
+            // this.invalidateSize();
+            // this.invalidateParentLayout();
+            this.container.scale.x = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "scaleY", {
         get: function () {
-            return this.$values[UIKeys.scaleY];
+            return this.container.scale.y;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.scaleY] === value) {
-                return;
-            }
-            if (value !== this.container.scale.y) {
-                values[UIKeys.scaleY] = value;
-                this.invalidateProperties();
-                this.invalidateSize();
-                this.invalidateDisplayList();
-                this.invalidateParentLayout();
-            }
+            // this.invalidateSize();
+            // this.invalidateParentLayout();
+            this.container.scale.y = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "x", {
         get: function () {
-            return this.$values[UIKeys.x];
+            return this.container.x;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.x] === value) {
-                return;
-            }
-            values[UIKeys.x] = value;
-            if (this.container.x !== value) {
-                this.container.x = value;
-                this.invalidateParentLayout();
-            }
+            // this.invalidateDisplayList();
+            // this.invalidateParentLayout();
+            this.container.position.x = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "y", {
         get: function () {
-            return this.$values[UIKeys.y];
+            return this.container.y;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.y] === value) {
-                return;
-            }
-            values[UIKeys.y] = value;
-            if (value !== this.container.y) {
-                this.container.y = value;
-                this.invalidateParentLayout();
-            }
+            // this.invalidateDisplayList();
+            // this.invalidateParentLayout();
+            this.container.position.y = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "skewX", {
         get: function () {
-            return this.$values[UIKeys.skewX];
+            return this.container.skew.x;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.skewX] === value) {
-                return;
-            }
-            values[UIKeys.skewX] = value;
-            this.invalidateDisplayList();
+            // this.invalidateDisplayList();
+            this.container.skew.x = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "skewY", {
         get: function () {
-            return this.$values[UIKeys.skewY];
+            return this.container.skew.y;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.skewY] === value) {
-                return;
-            }
-            values[UIKeys.skewY] = value;
-            this.invalidateDisplayList();
+            // this.invalidateDisplayList();
+            this.container.skew.y = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "pivotX", {
         get: function () {
-            return this.$values[UIKeys.pivotX];
+            return this.container.pivot.x;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.pivotX] === value) {
-                return;
-            }
-            values[UIKeys.pivotX] = value;
-            this.invalidateDisplayList();
+            // this.invalidateDisplayList();
+            this.container.pivot.x = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "pivotY", {
         get: function () {
-            return this.$values[UIKeys.pivotY];
+            return this.container.pivot.y;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.pivotY] === value) {
-                return;
-            }
-            values[UIKeys.pivotY] = value;
-            this.invalidateDisplayList();
+            // this.invalidateDisplayList();
+            this.container.pivot.y = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(DisplayLayoutAbstract.prototype, "rotation", {
         get: function () {
-            return this.$values[UIKeys.rotation];
+            return this.container.angle;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.rotation] === value) {
-                return;
-            }
-            values[UIKeys.rotation] = value;
-            this.invalidateDisplayList();
+            // this.invalidateDisplayList();
+            this.container.angle = value;
         },
         enumerable: true,
         configurable: true
@@ -1353,16 +1300,14 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
          *  =不可用= 设置索引层级，每次父级变化时，会排序 （未实现）
          */
         get: function () {
-            return this.$values[UIKeys.zIndex];
+            return this.container.zIndex;
         },
         set: function (value) {
-            value = +value || 0;
-            var values = this.$values;
-            if (values[UIKeys.zIndex] === value) {
-                return;
+            // this.invalidateParentLayout();
+            if (this.parent && this.parent.isContainer && !this.parent.container.sortableChildren) {
+                this.parent.container.sortableChildren = true;
             }
-            values[UIKeys.zIndex] = value;
-            this.invalidateParentLayout();
+            this.container.zIndex = value;
         },
         enumerable: true,
         configurable: true
@@ -1385,48 +1330,47 @@ exports.DisplayLayoutAbstract = DisplayLayoutAbstract;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 //states
+/**
+ * 兼容处理，不支持的浏览器，使用description
+ * @param description
+ */
+function getSymbol(description) {
+    return Symbol(description) || description;
+}
 /** 标记属性失效 */
-exports.invalidatePropertiesFlag = Symbol("invalidatePropertiesFlag");
+exports.invalidatePropertiesFlag = getSymbol("invalidatePropertiesFlag");
 /** 标记大小失效 */
-exports.invalidateSizeFlag = Symbol("invalidateSizeFlag");
+exports.invalidateSizeFlag = getSymbol("invalidateSizeFlag");
 /** 标记显示失效 */
-exports.invalidateDisplayListFlag = Symbol("invalidateDisplayListFlag");
+exports.invalidateDisplayListFlag = getSymbol("invalidateDisplayListFlag");
+/** 是否参与布局 */
+exports.includeInLayout = getSymbol("includeInLayout");
 //Properties
-exports.explicitWidth = Symbol("explicitWidth");
-exports.explicitHeight = Symbol("explicitHeight");
-exports.width = Symbol("width");
-exports.height = Symbol("height");
-exports.minWidth = Symbol("minWidth");
-exports.maxWidth = Symbol("maxWidth");
-exports.minHeight = Symbol("minHeight");
-exports.maxHeight = Symbol("maxHeight");
-exports.percentWidth = Symbol("percentWidth");
-exports.percentHeight = Symbol("percentHeight");
-exports.scaleX = Symbol("scaleX");
-exports.scaleY = Symbol("scaleY");
-exports.x = Symbol("x");
-exports.y = Symbol("y");
-exports.skewX = Symbol("skewX");
-exports.skewY = Symbol("skewY");
-exports.pivotX = Symbol("pivotX");
-exports.pivotY = Symbol("pivotY");
-exports.rotation = Symbol("rotation");
-exports.zIndex = Symbol("zIndex");
-exports.measuredWidth = Symbol("measuredWidth");
-exports.measuredHeight = Symbol("measuredHeight");
-exports.oldPreferWidth = Symbol("oldPreferWidth");
-exports.oldPreferHeight = Symbol("oldPreferHeight");
-exports.oldX = Symbol("oldX");
-exports.oldY = Symbol("oldY");
-exports.oldWidth = Symbol("oldWidth");
-exports.oldHeight = Symbol("oldHeight");
+exports.width = getSymbol("width");
+exports.height = getSymbol("height");
+exports.explicitWidth = getSymbol("explicitWidth");
+exports.explicitHeight = getSymbol("explicitHeight");
+exports.minWidth = getSymbol("minWidth");
+exports.maxWidth = getSymbol("maxWidth");
+exports.minHeight = getSymbol("minHeight");
+exports.maxHeight = getSymbol("maxHeight");
+exports.percentWidth = getSymbol("percentWidth");
+exports.percentHeight = getSymbol("percentHeight");
+// export const scaleX = getSymbol("scaleX");
+// export const scaleY = getSymbol("scaleY");
+exports.measuredWidth = getSymbol("measuredWidth");
+exports.measuredHeight = getSymbol("measuredHeight");
+exports.oldPreferWidth = getSymbol("oldPreferWidth");
+exports.oldPreferHeight = getSymbol("oldPreferHeight");
+exports.backgroundColor = getSymbol("backgroundColor");
+exports.oldBackgroundColor = getSymbol("oldBackgroundColor");
 //Styles
-exports.left = Symbol("left");
-exports.right = Symbol("right");
-exports.top = Symbol("top");
-exports.bottom = Symbol("bottom");
-exports.horizontalCenter = Symbol("horizontalCenter");
-exports.verticalCenter = Symbol("verticalCenter");
+exports.left = getSymbol("left");
+exports.right = getSymbol("right");
+exports.top = getSymbol("top");
+exports.bottom = getSymbol("bottom");
+exports.horizontalCenter = getSymbol("horizontalCenter");
+exports.verticalCenter = getSymbol("verticalCenter");
 
 
 /***/ }),
@@ -1846,7 +1790,7 @@ var UIValidator = /** @class */ (function (_super) {
      * 添加事件监听
      */
     UIValidator.prototype.attachListeners = function () {
-        Ticker_1.default.addUpdateEvent(this.doPhasedInstantiationCallBack, this);
+        Ticker_1.TickerShared.addOnce(this.doPhasedInstantiationCallBack, this);
         this.listenersAttached = true;
     };
     /**
@@ -1854,7 +1798,6 @@ var UIValidator = /** @class */ (function (_super) {
      * 执行属性应用
      */
     UIValidator.prototype.doPhasedInstantiationCallBack = function () {
-        Ticker_1.default.removeUpdateEvent(this.doPhasedInstantiationCallBack, this);
         this.doPhasedInstantiation();
     };
     /**
@@ -1994,10 +1937,12 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var UIKeys = __webpack_require__(/*! ./DisplayLayoutKeys */ "./src/core/DisplayLayoutKeys.ts");
 var Index_1 = __webpack_require__(/*! ../interaction/Index */ "./src/interaction/Index.ts");
 var DisplayLayoutAbstract_1 = __webpack_require__(/*! ./DisplayLayoutAbstract */ "./src/core/DisplayLayoutAbstract.ts");
 var CSSStyle_1 = __webpack_require__(/*! ../layout/CSSStyle */ "./src/layout/CSSStyle.ts");
 var CSSLayout_1 = __webpack_require__(/*! ../layout/CSSLayout */ "./src/layout/CSSLayout.ts");
+var CSSSSystem_1 = __webpack_require__(/*! ../layout/CSSSSystem */ "./src/layout/CSSSSystem.ts");
 var UIBaseDrag_1 = __webpack_require__(/*! ./plugs/UIBaseDrag */ "./src/core/plugs/UIBaseDrag.ts");
 var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
 var UIClick_1 = __webpack_require__(/*! ./plugs/UIClick */ "./src/core/plugs/UIClick.ts");
@@ -2261,13 +2206,22 @@ var DisplayObject = /** @class */ (function (_super) {
      * 更新显示列表,子类重写，实现布局
      */
     DisplayObject.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
-        if (this._style && this._style.display !== "none") {
+        if (!this.visible || this.alpha <= 0) { // 隐藏元素后，布局失效
+            return;
+        }
+        if (this._style) {
             //console.log("displayStyle",unscaledWidth,unscaledHeight,this.left,this.right,this.x,this.y);
             CSSLayout_1.updateDisplayLayout(this, unscaledWidth, unscaledHeight);
         }
         else {
             //console.log("display",this.x + this.pivotX,this.y + this.pivotY,this.scaleX,this.scaleY,this.rotation*(Math.PI/180),this.skewX,this.skewY,this.pivotX,this.pivotY);
             this.updateTransform();
+        }
+        //
+        var values = this.$values;
+        if (values[UIKeys.backgroundColor] !== values[UIKeys.oldBackgroundColor]) {
+            values[UIKeys.oldBackgroundColor] = values[UIKeys.backgroundColor];
+            CSSSSystem_1.drawBackgroundColor(this);
         }
     };
     DisplayObject.prototype.load = function () {
@@ -2483,20 +2437,6 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(DisplayObjectAbstract.prototype, "cacheAsBitmap", {
-        get: function () {
-            return this.container.cacheAsBitmap;
-        },
-        /**
-         * 缓存当前的显示对象，如果移除缓存，设置false即可
-         * 在设置这个值时，请确保你的纹理位图已经加载
-         */
-        set: function (value) {
-            this.container.cacheAsBitmap = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(DisplayObjectAbstract.prototype, "interactive", {
         get: function () {
             return this.container.interactive;
@@ -2531,6 +2471,12 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    /**
+     * 子类实现
+     */
+    DisplayObjectAbstract.prototype.validateNow = function () {
+        //
+    };
     Object.defineProperty(DisplayObjectAbstract.prototype, "enabled", {
         get: function () {
             return this._enabled;
@@ -2555,6 +2501,9 @@ var DisplayObjectAbstract = /** @class */ (function (_super) {
                 return;
             }
             this._visible = value;
+            if (value === true) {
+                this.validateNow();
+            }
             this.container.visible = value;
         },
         enumerable: true,
@@ -2724,12 +2673,12 @@ var Scheduler = /** @class */ (function (_super) {
         this.start = Scheduler.clock();
         this._lastExecuted = this.start;
         this._running = true;
-        Scheduler.ticker.addUpdateEvent(this.run, this);
+        UI_1.TickerShared.add(this.run, this);
     };
     Scheduler.prototype.stop = function () {
         this.elapsedTimeAtPause = 0;
         this._running = false;
-        Scheduler.ticker.removeUpdateEvent(this.run, this);
+        UI_1.TickerShared.remove(this.run, this);
     };
     Scheduler.prototype.pause = function () {
         if (this._running) {
@@ -2793,7 +2742,6 @@ var Scheduler = /** @class */ (function (_super) {
         return false;
     };
     Scheduler.clock = Date.now;
-    Scheduler.ticker = UI_1.TickerShared;
     return Scheduler;
 }(vf.utils.EventEmitter));
 exports.Scheduler = Scheduler;
@@ -2824,6 +2772,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var tween = __webpack_require__(/*! ../tween/private/index */ "./src/tween/private/index.ts");
 var Ticker_1 = __webpack_require__(/*! ./Ticker */ "./src/core/Ticker.ts");
 var DisplayLayoutAbstract_1 = __webpack_require__(/*! ./DisplayLayoutAbstract */ "./src/core/DisplayLayoutAbstract.ts");
 var DisplayLayoutValidator_1 = __webpack_require__(/*! ./DisplayLayoutValidator */ "./src/core/DisplayLayoutValidator.ts");
@@ -2838,36 +2787,39 @@ var Stage = /** @class */ (function (_super) {
     __extends(Stage, _super);
     function Stage(width, height, app) {
         var _this = _super.call(this) || this;
-        _this._stageWidth = 0; //调整缩放后的值
-        _this._stageHeight = 0; //调整缩放后的值
         /**
          * 是否组织原始数据继续传递
          */
         _this.originalEventPreventDefault = false;
         _this.width = width;
         _this.height = height;
-        _this._stageWidth = width;
-        _this._stageWidth = height;
         _this.setActualSize(width, height);
         _this.container.name = "Stage";
         _this.container.hitArea = new vf.Rectangle(0, 0, width, height);
         _this.container.interactive = true;
         _this.container.interactiveChildren = true;
-        _this.initialized = true;
         _this.$nestLevel = 1;
         _this.app = app;
+        _this.initialized = true;
+        if (!Ticker_1.TickerShared.started) {
+            Ticker_1.TickerShared.start();
+        }
+        Ticker_1.TickerShared.add(tween.update, _this);
+        if (!_this.container.parent) {
+            _this.app.stage.addChild(_this.container);
+        }
         return _this;
     }
     Object.defineProperty(Stage.prototype, "stageWidth", {
         get: function () {
-            return this._stageWidth;
+            return this.app.view.width;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Stage.prototype, "stageHeight", {
         get: function () {
-            return this._stageHeight;
+            return this.app.view.height;
         },
         enumerable: true,
         configurable: true
@@ -2878,7 +2830,6 @@ var Stage = /** @class */ (function (_super) {
         },
         set: function (value) {
             this.container.scale.x = value;
-            this._stageWidth = value * this.width;
         },
         enumerable: true,
         configurable: true
@@ -2889,7 +2840,6 @@ var Stage = /** @class */ (function (_super) {
         },
         set: function (value) {
             this.container.scale.y = value;
-            this._stageHeight = value * this.height;
         },
         enumerable: true,
         configurable: true
@@ -2897,16 +2847,16 @@ var Stage = /** @class */ (function (_super) {
     Object.defineProperty(Stage.prototype, "Scale", {
         set: function (value) {
             this.container.scale.copyFrom(value);
-            this._stageWidth = value.x * this.width;
-            this._stageHeight = value.y * this.height;
         },
         enumerable: true,
         configurable: true
     });
     Stage.prototype.release = function () {
         _super.prototype.release.call(this);
+        Ticker_1.TickerShared.remove(tween.update, this);
     };
     Stage.prototype.releaseAll = function () {
+        Ticker_1.TickerShared.remove(tween.update, this);
         for (var i = 0; i < this.uiChildren.length; i++) {
             var ui = this.uiChildren[i];
             ui.releaseAll();
@@ -2914,9 +2864,9 @@ var Stage = /** @class */ (function (_super) {
         this.uiChildren = [];
         this.container.removeAllListeners();
         this.container.removeChildren();
-        Ticker_1.shared.removeAllListeners();
         DisplayLayoutValidator_1.default.removeAllListeners();
         DisplayLayoutValidator_1.default.removeDepthQueueAll();
+        this.app = undefined;
     };
     Stage.prototype.resize = function () {
         this.container.hitArea = new vf.Rectangle(0, 0, this.width, this.height);
@@ -2945,83 +2895,10 @@ exports.Stage = Stage;
 
 "use strict";
 
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-var tween = __webpack_require__(/*! ../tween/private/index */ "./src/tween/private/index.ts");
-/**
- * 心跳，需要UI库初始化后，进行实例调用注册
- */
-var Ticker = /** @class */ (function (_super) {
-    __extends(Ticker, _super);
-    /**
-     * 心跳构造函数
-     * @param autoStart 是否自动开启心跳，默认false
-     */
-    function Ticker(autoStart) {
-        var _this = _super.call(this) || this;
-        _this._disabled = true;
-        if (autoStart) {
-            _this.disabled = false;
-        }
-        return _this;
-    }
-    Object.defineProperty(Ticker.prototype, "disabled", {
-        /** 是否关闭心跳.默认false不关闭,关闭后，缓动等组件也将关闭 */
-        get: function () {
-            return this._disabled;
-        },
-        set: function (value) {
-            if (value == this._disabled) {
-                return;
-            }
-            this._disabled = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Ticker.prototype.update = function (deltaTime, lastTime, elapsedMS) {
-        if (this._disabled) {
-            return;
-        }
-        tween.update(elapsedMS);
-        this.emit("update", deltaTime, lastTime, elapsedMS);
-    };
-    /**
-     * 增加更新监听器
-     * @param fn 被调用的函数
-     * @param context 当前域
-     */
-    Ticker.prototype.addUpdateEvent = function (fn, context) {
-        return this.on("update", fn, context);
-    };
-    /**
-     * 移除更新监听器
-     * @param fn 被调用的函数
-     * @param context 当前域
-     */
-    Ticker.prototype.removeUpdateEvent = function (fn, context) {
-        return this.removeListener("update", fn, context);
-    };
-    return Ticker;
-}(vf.utils.EventEmitter));
-/**
- * Ticker 的实例
- */
-exports.shared = new Ticker(true);
-exports.tickerShared = exports.shared;
-exports.default = exports.tickerShared;
+exports.TickerShared = new vf.Ticker();
+exports.TickerShared.autoStart = false;
+exports.TickerShared.maxFPS = 30;
 
 
 /***/ }),
@@ -3479,6 +3356,7 @@ var UIBaseDrag = /** @class */ (function () {
             e.data.tiltX = dragPosition.x;
             e.data.tiltY = dragPosition.y;
             item.dragOption._actionData = { type: Index_1.ComponentEvent.DRAG_TARGET, data: e.data, path: Utils_1.getDisplayPathById(parent_1) };
+            item.invalidateParentLayout();
             item.emit(Index_1.ComponentEvent.DRAG_TARGET, item, e);
         }
     };
@@ -3611,7 +3489,6 @@ var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
  *
  * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestLabel
  */
-var audioLib = new Array();
 var Audio = /** @class */ (function (_super) {
     __extends(Audio, _super);
     function Audio() {
@@ -3642,7 +3519,6 @@ var Audio = /** @class */ (function (_super) {
             _this.emit("canplaythrough", e);
         }, this);
         this.audio.on("play", function (e) {
-            console.log("i'm", e);
             _this.emit("play", e);
         }, this);
         this.audio.on("pause", function (e) {
@@ -3772,7 +3648,6 @@ var Audio = /** @class */ (function (_super) {
      * @param {number} [length] - 声音持续时间（以秒为单位）
      */
     Audio.prototype.play = function (time, offset, length) {
-        //自动找到自己本体;
         if (this.audio) {
             this.audio.play(time, offset, length);
         }
@@ -3827,6 +3702,7 @@ var Audio = /** @class */ (function (_super) {
         configurable: true
     });
     Audio.prototype.commitProperties = function () {
+        //
     };
     return Audio;
 }(DisplayObject_1.DisplayObject));
@@ -4104,7 +3980,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/core/DisplayObject.ts");
+var GraphBase_1 = __webpack_require__(/*! ./private/GraphBase */ "./src/display/private/GraphBase.ts");
 /**
  * 绘制圆形
  *
@@ -4121,113 +3997,64 @@ var Circle = /** @class */ (function (_super) {
     function Circle() {
         var _this = _super.call(this) || this;
         /**
-         * 半径
+         * 开始绘制角度
          */
-        _this._radius = 0;
+        _this._startAngle = 0;
         /**
-         * 线条颜色
+         * 结束角度
          */
-        _this._lineColor = 0;
+        _this._endAngle = 360;
         /**
-         * 线条粗细
+         * 逆时针绘制
          */
-        _this._lineWidth = 0;
-        _this.graphics = new vf.Graphics();
-        _this.container.addChild(_this.graphics);
+        _this._anticlockwise = false;
         return _this;
     }
-    /** 可以支持遮罩的组件 */
-    Circle.prototype.maskSprite = function () {
-        return this.graphics;
-    };
-    Object.defineProperty(Circle.prototype, "radius", {
+    Object.defineProperty(Circle.prototype, "startAngle", {
         get: function () {
-            return this._radius;
+            return this._startAngle;
         },
         set: function (value) {
-            this._radius = value;
+            this._startAngle = value;
             this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Circle.prototype, "lineColor", {
+    Object.defineProperty(Circle.prototype, "endAngle", {
         get: function () {
-            return this._lineColor;
+            return this._endAngle;
         },
         set: function (value) {
-            this._lineColor = value;
+            this._endAngle = value;
             this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Circle.prototype, "lineWidth", {
+    Object.defineProperty(Circle.prototype, "anticlockwise", {
         get: function () {
-            return this._lineWidth;
+            return this._anticlockwise;
         },
         set: function (value) {
-            this._lineWidth = value;
+            this._anticlockwise = value;
             this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Circle.prototype, "color", {
-        get: function () {
-            return this._color;
-        },
-        set: function (value) {
-            this._color = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Circle.prototype, "anchorX", {
-        get: function () {
-            return this._anchorX;
-        },
-        set: function (value) {
-            this._anchorX = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Circle.prototype, "anchorY", {
-        get: function () {
-            return this._anchorY;
-        },
-        set: function (value) {
-            this._anchorY = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Circle.prototype.drawCircle = function () {
+    Circle.prototype.drawGraph = function () {
         var graphics = this.graphics;
         graphics.clear();
-        graphics.lineStyle(this._lineWidth, this._lineColor);
+        graphics.lineStyle(this._lineWidth, this._lineColor, this._lineAlpha);
         if (this._color !== undefined)
             graphics.beginFill(this._color);
         var diam = this._radius * 2;
-        graphics.drawCircle(this._anchorX ? this._anchorX * diam : 0, this._anchorY ? diam * this._anchorY : 0, this._radius);
+        graphics.arc(this._anchorX ? this._anchorX * diam : 0, this._anchorY ? diam * this._anchorY : 0, this._radius, this._startAngle * Math.PI / 180, this._endAngle * Math.PI / 180, this._anticlockwise);
         graphics.endFill();
     };
-    Circle.prototype.release = function () {
-        _super.prototype.release.call(this);
-        if (this.graphics.parent) {
-            this.graphics.parent.removeChild(this.graphics).destroy();
-        }
-    };
-    Circle.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
-        this.drawCircle();
-        _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
-    };
     return Circle;
-}(DisplayObject_1.DisplayObject));
+}(GraphBase_1.GraphBase));
 exports.Circle = Circle;
 
 
@@ -4406,6 +4233,7 @@ var ConnectLine = /** @class */ (function (_super) {
             }
             this._lineColor = value;
             this.invalidateProperties();
+            this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -5282,13 +5110,6 @@ var Image = /** @class */ (function (_super) {
             this._sprite.parent.removeChild(this._sprite).destroy();
         }
     };
-    /**
-     * @private
-     * 测量组件尺寸
-     */
-    Image.prototype.measure = function () {
-        //
-    };
     Image.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
         if (unscaledWidth === 0 && unscaledHeight === 0) {
             return;
@@ -5301,6 +5122,17 @@ var Image = /** @class */ (function (_super) {
             this.anchorSystem();
         }
     };
+    Image.prototype.measure = function () {
+        if (this._sprite) {
+            var texture = this._sprite.texture;
+            if (texture) {
+                this.setMeasuredSize(texture.frame.width, texture.frame.height);
+            }
+            else {
+                this.setMeasuredSize(0, 0);
+            }
+        }
+    };
     Image.prototype.srcSystem = function () {
         var _this = this;
         var _a = this, container = _a.container, src = _a.src;
@@ -5311,19 +5143,21 @@ var Image = /** @class */ (function (_super) {
         if (this._texture) {
             this._texture.removeAllListeners();
         }
+        if (src === undefined && this._source === undefined) {
+            return;
+        }
         if (src !== this._source) {
             this._source = src;
-            var texture_1 = this._texture = Utils_1.getTexture(src);
-            if (texture_1 === undefined) {
+            var texture = this._texture = Utils_1.getTexture(src);
+            if (texture === undefined) {
                 return;
             }
-            if (texture_1.frame.width > 1 && texture_1.frame.height > 1) {
-                this.setMeasuredSize(texture_1.frame.width, texture_1.frame.height);
+            if (texture.frame.width > 1 && texture.frame.height > 1) {
+                this.invalidateSize();
             }
             var invalidateDisplayList_1 = false;
-            texture_1.once("update", function () {
+            texture.once("update", function () {
                 invalidateDisplayList_1 = true;
-                _this.setMeasuredSize(texture_1.frame.width, texture_1.frame.height);
                 _this.invalidateSize();
                 _this.emit(Index_1.ComponentEvent.COMPLETE, _this);
             }, this);
@@ -5331,31 +5165,31 @@ var Image = /** @class */ (function (_super) {
             try {
                 if (this.fillMode === "no-repeat") {
                     if (sprite instanceof vf.Sprite) {
-                        sprite.texture = texture_1;
+                        sprite.texture = texture;
                     }
                     else {
-                        sprite = new vf.Sprite(texture_1);
+                        sprite = new vf.Sprite(texture);
                     }
                 }
                 else if (this.fillMode === "repeat") {
                     if (sprite instanceof vf.TilingSprite) {
-                        sprite.texture = texture_1;
+                        sprite.texture = texture;
                     }
                     else {
-                        sprite = new vf.TilingSprite(texture_1);
+                        sprite = new vf.TilingSprite(texture);
                     }
                 }
                 else if (this.fillMode === "scale") {
                     if (sprite instanceof vf.NineSlicePlane) {
-                        sprite.texture = texture_1;
+                        sprite.texture = texture;
                     }
                     else {
-                        sprite = new vf.NineSlicePlane(texture_1);
+                        sprite = new vf.NineSlicePlane(texture);
                     }
                 }
             }
             catch (e) {
-                sprite = vf.Sprite.from(texture_1);
+                sprite = vf.Sprite.from(texture);
             }
             if (sprite && sprite.parent == undefined) {
                 this._sprite = container.addChild(sprite);
@@ -5481,8 +5315,8 @@ var Label = /** @class */ (function (_super) {
         },
         set: function (value) {
             this.sprite.text = value;
+            this.setActualSize(this.sprite.width, this.sprite.height);
             this.invalidateSize();
-            this.invalidateDisplayList();
             this.emit(Index_1.ComponentEvent.CHANGE, this);
         },
         enumerable: true,
@@ -5495,8 +5329,8 @@ var Label = /** @class */ (function (_super) {
             }
             value.breakWords = true;
             this.sprite.style = value;
+            this.setActualSize(this.sprite.width, this.sprite.height);
             this.invalidateSize();
-            this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -5569,7 +5403,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/core/DisplayObject.ts");
+var GraphBase_1 = __webpack_require__(/*! ./private/GraphBase */ "./src/display/private/GraphBase.ts");
 /**
  * 绘制矩形或圆角矩形
  *
@@ -5583,119 +5417,19 @@ var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/co
 var Rect = /** @class */ (function (_super) {
     __extends(Rect, _super);
     function Rect() {
-        var _this = _super.call(this) || this;
-        /**
-         * 圆角
-         */
-        _this._radius = 0;
-        /**
-         * 线条颜色
-         */
-        _this._lineColor = 0;
-        /**
-         * 线条粗细
-         */
-        _this._lineWidth = 0;
-        _this.graphics = new vf.Graphics();
-        _this.container.addChild(_this.graphics);
-        return _this;
+        return _super.call(this) || this;
     }
-    /** 可以支持遮罩的组件 */
-    Rect.prototype.maskSprite = function () {
-        return this.graphics;
-    };
-    Object.defineProperty(Rect.prototype, "radius", {
-        get: function () {
-            return this._radius;
-        },
-        set: function (value) {
-            this._radius = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "lineColor", {
-        get: function () {
-            return this._lineColor;
-        },
-        set: function (value) {
-            this._lineColor = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "lineWidth", {
-        get: function () {
-            return this._lineWidth;
-        },
-        set: function (value) {
-            this._lineWidth = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "color", {
-        get: function () {
-            return this._color;
-        },
-        set: function (value) {
-            this._color = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "anchorX", {
-        get: function () {
-            return this._anchorX;
-        },
-        set: function (value) {
-            this._anchorX = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Rect.prototype, "anchorY", {
-        get: function () {
-            return this._anchorY;
-        },
-        set: function (value) {
-            this._anchorY = value;
-            this.invalidateDisplayList();
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Rect.prototype.drawRoundedRect = function () {
+    Rect.prototype.drawGraph = function () {
         var graphics = this.graphics;
         graphics.clear();
-        if (this._radius >= (this.width / 2)) {
-            graphics.lineStyle(this._lineWidth, this._lineColor, 1, 1, true);
-        }
-        else {
-            graphics.lineStyle(this._lineWidth, this._lineColor);
-        }
+        graphics.lineStyle(this._lineWidth, this._lineColor, this._lineAlpha);
         if (this._color !== undefined)
             graphics.beginFill(this._color);
-        graphics.drawRoundedRect(this._anchorX ? -this._anchorX * this.width : 0, this._anchorY ? -this._anchorY * this.height : 0, this.width, this.height, this._radius);
+        graphics.drawRoundedRect(this._anchorX ? -this._anchorX * this.width : 0, this._anchorY ? -this._anchorY * this.height : 0, this.width, this.height, Math.min(15, this._radius));
         graphics.endFill();
     };
-    Rect.prototype.release = function () {
-        _super.prototype.release.call(this);
-        if (this.graphics.parent) {
-            this.graphics.parent.removeChild(this.graphics).destroy();
-        }
-    };
-    Rect.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
-        this.drawRoundedRect();
-        _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
-    };
     return Rect;
-}(DisplayObject_1.DisplayObject));
+}(GraphBase_1.GraphBase));
 exports.Rect = Rect;
 
 
@@ -5764,7 +5498,7 @@ var ScrollBar = /** @class */ (function (_super) {
         _super.prototype.triggerValueChanging.call(this);
         var scrollingContainer = this._scrollingContainer;
         if (scrollingContainer) {
-            var sizeAmt = scrollingContainer._height / scrollingContainer.innerContainer.height || 0.001;
+            var sizeAmt = scrollingContainer.explicitHeight / scrollingContainer.innerContainer.height || 0.001;
             if (sizeAmt < 1)
                 scrollingContainer.forcePctPosition(this.vertical ? "y" : "x", this._amt);
         }
@@ -5814,9 +5548,13 @@ var ScrollBar = /** @class */ (function (_super) {
             scrollingContainer.dragScrolling = this._dragScrolling;
             if (this.vertical) {
                 scrollingContainer.scrollY = true;
+                if (this.parent)
+                    this.height = this.parent.height;
             }
             else {
                 scrollingContainer.scrollX = true;
+                if (this.parent)
+                    this.width = this.parent.width;
             }
             this.alignToContainer();
         }
@@ -5838,23 +5576,23 @@ var ScrollBar = /** @class */ (function (_super) {
             var scrollingContainer = this._scrollingContainer;
             var innerContainer = scrollingContainer.innerContainer;
             var _posAmt = !innerContainer[widthORheight] ? 0 : -(innerContainer[xORy] / innerContainer[widthORheight]);
-            var sizeAmt = !innerContainer[widthORheight] ? 1 : scrollingContainer["_" + widthORheight] / innerContainer[widthORheight];
+            var sizeAmt = !innerContainer[widthORheight] ? 1 : scrollingContainer[widthORheight] / innerContainer[widthORheight];
             //update amt
-            var diff = innerContainer[widthORheight] - scrollingContainer["_" + widthORheight];
-            this._amt = !scrollingContainer["_" + widthORheight] || !diff ? 0 : -(innerContainer[xORy] / diff);
+            var diff = innerContainer[widthORheight] - scrollingContainer[widthORheight];
+            this._amt = !scrollingContainer[widthORheight] || !diff ? 0 : -(innerContainer[xORy] / diff);
             var self_1 = this;
             if (sizeAmt >= 1) {
-                size = self_1["_" + widthORheight];
+                size = self_1[widthORheight];
                 //_thumb[topORleft] = size * 0.5;
                 this.toggleHidden(true);
             }
             else {
-                size = self_1["_" + widthORheight] * sizeAmt;
+                size = self_1[widthORheight] * sizeAmt;
                 if (this._amt > 1) {
-                    size -= (self_1["_" + widthORheight] - size) * (this._amt - 1);
+                    size -= (self_1[widthORheight] - size) * (this._amt - 1);
                 }
                 else if (this._amt < 0) {
-                    size -= (self_1["_" + widthORheight] - size) * -this._amt;
+                    size -= (self_1[widthORheight] - size) * -this._amt;
                 }
                 // if (this._amt < 0) {
                 //     newPos = size * 0.5;
@@ -5869,7 +5607,9 @@ var ScrollBar = /** @class */ (function (_super) {
                 this.toggleHidden(false);
             }
             _thumb[widthORheight] = size;
-            this.updatePosition();
+            if (size == _thumb[widthORheight]) {
+                this.updatePosition();
+            }
         }
     };
     ScrollBar.prototype.onDragMove = function (event, offset) {
@@ -5894,7 +5634,7 @@ var ScrollBar = /** @class */ (function (_super) {
         var thumbImg = this.thumbImg;
         var tracklightImg = this.tracklightImg;
         if (this.vertical) {
-            val = this._height * this._amt;
+            val = this.explicitHeight * this._amt;
             var minheight = thumbImg.height / 2;
             var maxheight = this.height - minheight;
             if (val < minheight) {
@@ -5906,7 +5646,7 @@ var ScrollBar = /** @class */ (function (_super) {
             thumbImg.y = val;
         }
         else {
-            val = this._width * this._amt;
+            val = this.explicitWidth * this._amt;
             var thumbImgWidth = thumbImg.width / 2;
             var maxwidth = this.width - thumbImgWidth;
             if (val < thumbImgWidth) {
@@ -5956,7 +5696,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var Container_1 = __webpack_require__(/*! ./Container */ "./src/display/Container.ts");
-var Ticker = __webpack_require__(/*! ../core/Ticker */ "./src/core/Ticker.ts");
+var Ticker_1 = __webpack_require__(/*! ../core/Ticker */ "./src/core/Ticker.ts");
 var Utils = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
 var DragEvent_1 = __webpack_require__(/*! ../interaction/DragEvent */ "./src/interaction/DragEvent.ts");
 var MouseScrollEvent_1 = __webpack_require__(/*! ../interaction/MouseScrollEvent */ "./src/interaction/MouseScrollEvent.ts");
@@ -6084,7 +5824,7 @@ var ScrollingContainer = /** @class */ (function (_super) {
                 _this._Position.copyFrom(_this._innerContainer.position);
                 _this.scrolling = true;
                 _this.setScrollPosition();
-                Ticker.shared.addUpdateEvent(_this.updateScrollPosition, _this);
+                Ticker_1.TickerShared.add(_this.updateScrollPosition, _this);
             }
         };
         this.dragEvent.onDragMove = function (e, offset) {
@@ -6096,7 +5836,7 @@ var ScrollingContainer = /** @class */ (function (_super) {
         this.dragEvent.onDragEnd = function () {
             if (_this.scrolling) {
                 _this.scrolling = false;
-                Ticker.shared.removeUpdateEvent(_this.updateScrollPosition, _this);
+                Ticker_1.TickerShared.remove(_this.updateScrollPosition, _this);
             }
         };
         var scrollSpeed = new vf.Point();
@@ -6198,10 +5938,10 @@ var ScrollingContainer = /** @class */ (function (_super) {
     ScrollingContainer.prototype.forcePctPosition = function (direction, pct) {
         var bounds = this.getInnerBounds();
         if (this.scrollX && direction == "x") {
-            this._innerContainer.position[direction] = -((bounds.width - this._width) * pct);
+            this._innerContainer.position[direction] = -((bounds.width - this.explicitWidth) * pct);
         }
         if (this.scrollY && direction == "y") {
-            this._innerContainer[direction] = -((bounds.height - this._height) * pct);
+            this._innerContainer[direction] = -((bounds.height - this.explicitHeight) * pct);
         }
         this._Position[direction] = this._targetPosition[direction] = this._innerContainer.position[direction];
     };
@@ -6211,8 +5951,8 @@ var ScrollingContainer = /** @class */ (function (_super) {
         var dif;
         if (this.scrollX) {
             var x = Math.max(0, (Math.min(bounds.width, pos.x)));
-            if (x + this._innerContainer.x > this._width) {
-                dif = x - this._width;
+            if (x + this._innerContainer.x > this.explicitWidth) {
+                dif = x - this.explicitWidth;
                 this._innerContainer.x = -dif;
             }
             else if (x + this._innerContainer.x < 0) {
@@ -6222,8 +5962,8 @@ var ScrollingContainer = /** @class */ (function (_super) {
         }
         if (this.scrollY) {
             var y = Math.max(0, (Math.min(bounds.height, pos.y)));
-            if (y + this._innerContainer.y > this._height) {
-                dif = y - this._height;
+            if (y + this._innerContainer.y > this.explicitHeight) {
+                dif = y - this.explicitHeight;
                 this._innerContainer.y = -dif;
             }
             else if (y + this._innerContainer.y < 0) {
@@ -6251,9 +5991,9 @@ var ScrollingContainer = /** @class */ (function (_super) {
         var bounds = this.getInnerBounds();
         var min;
         if (direction == "y")
-            min = Math.round(Math.min(0, this._height - bounds.height));
+            min = Math.round(Math.min(0, this.explicitHeight - bounds.height));
         else
-            min = Math.round(Math.min(0, this._width - bounds.width));
+            min = Math.round(Math.min(0, this.explicitWidth - bounds.width));
         if (!this.scrolling && Math.round(this._Speed[direction]) !== 0) {
             this._targetPosition[direction] += this._Speed[direction];
             this._Speed[direction] = Utils.Lerp(this._Speed[direction], 0, (5 + 2.5 / Math.max(this.softness, 0.01)) * delta);
@@ -6293,6 +6033,7 @@ var ScrollingContainer = /** @class */ (function (_super) {
     ScrollingContainer.prototype.release = function () {
         _super.prototype.release.call(this);
         //this.offAll();
+        Ticker_1.TickerShared.remove(this.updateScrollPosition, this);
         this.dragEvent && this.dragEvent.remove();
         this.mouseScrollEvent && this.mouseScrollEvent.remove();
     };
@@ -6534,14 +6275,14 @@ var Slider = /** @class */ (function (_super) {
         var tracklightImg = this.tracklightImg;
         if (this.vertical) {
             //thumbImg.style.top =this._amt; 
-            thumbImg.x = this._width >> 1;
-            tracklightImg.width = this._width;
+            thumbImg.x = this.explicitWidth >> 1;
+            tracklightImg.width = this.explicitWidth;
             //tracklightImg.style.height = this._amt * this.height;
         }
         else {
-            thumbImg.y = this._height >> 1;
+            thumbImg.y = this.explicitHeight >> 1;
             //thumbImg.style.left = this._amt; 
-            tracklightImg.height = this._height;
+            tracklightImg.height = this.explicitHeight;
             //tracklightImg.style.width =  this._amt * this.width;
         }
     };
@@ -6551,7 +6292,7 @@ var Slider = /** @class */ (function (_super) {
         var thumbImg = this.thumbImg;
         var tracklightImg = this.tracklightImg;
         if (this.vertical) {
-            val = this._height * this._amt;
+            val = this.explicitHeight * this._amt;
             if (soft) {
                 Tween_1.Tween.to({ y: thumbImg.y, height: tracklightImg.height }, { y: val, height: val }, 300).easing(Easing_1.Easing.Linear.None)
                     .on(Tween_1.Tween.Event.update, function (obj) {
@@ -6565,7 +6306,7 @@ var Slider = /** @class */ (function (_super) {
             }
         }
         else {
-            val = this._width * this._amt;
+            val = this.explicitWidth * this._amt;
             if (soft) {
                 Tween_1.Tween.to({ x: thumbImg.x, width: tracklightImg.width }, { x: val, width: val }, 300).easing(Easing_1.Easing.Linear.None)
                     .on(Tween_1.Tween.Event.update, function (obj) {
@@ -6590,7 +6331,7 @@ var Slider = /** @class */ (function (_super) {
     Slider.prototype.onDragStart = function (event) {
         if (this._thumbDrag.id == event.data.identifier) {
             this._startValue = this._amt;
-            this._maxPosition = this.vertical ? this._height : this._width;
+            this._maxPosition = this.vertical ? this.explicitHeight : this.explicitWidth;
         }
     };
     Slider.prototype.onDragMove = function (event, offset) {
@@ -6615,7 +6356,7 @@ var Slider = /** @class */ (function (_super) {
     Slider.prototype.updatePositionToMouse = function (mousePosition, soft) {
         this.trackImg.container.toLocal(mousePosition, undefined, this._localMousePosition, true);
         var newPos = this.vertical ? this._localMousePosition.y : this._localMousePosition.x;
-        var maxPos = this.vertical ? this._height : this._width;
+        var maxPos = this.vertical ? this.explicitHeight : this.explicitWidth;
         this._amt = !maxPos ? 0 : Math.max(0, Math.min(1, newPos / maxPos));
         this.updatePosition(soft);
         this.triggerValueChanging();
@@ -7137,8 +6878,8 @@ var TextInput = /** @class */ (function (_super) {
         this.setInputStyle("fontFamily", this.style.fontFamily);
         this.setInputStyle("fontSize", this.style.fontSize);
         this.setInputStyle("color", this.style.color);
-        this.setInputStyle("width", this._width + "px");
-        this.setInputStyle("height", this._height + "px");
+        this.setInputStyle("width", this.explicitWidth + "px");
+        this.setInputStyle("height", this.explicitHeight + "px");
         this.render(renderer);
         this.onStateChange(this, this.currentState);
         this.container.isEmitRender = false;
@@ -8327,6 +8068,161 @@ var Tracing = /** @class */ (function (_super) {
     return Tracing;
 }(DisplayObject_1.DisplayObject));
 exports.Tracing = Tracing;
+
+
+/***/ }),
+
+/***/ "./src/display/private/GraphBase.ts":
+/*!******************************************!*\
+  !*** ./src/display/private/GraphBase.ts ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var DisplayObject_1 = __webpack_require__(/*! ../../core/DisplayObject */ "./src/core/DisplayObject.ts");
+/**
+ * 绘制图形基类
+ */
+var GraphBase = /** @class */ (function (_super) {
+    __extends(GraphBase, _super);
+    function GraphBase() {
+        var _this = _super.call(this) || this;
+        /**
+         * 半径
+         */
+        _this._radius = 0;
+        /**
+         * 线条颜色
+         */
+        _this._lineColor = 0;
+        /**
+         * 线条粗细
+         */
+        _this._lineWidth = 0;
+        /**
+         * 线条透明度
+         */
+        _this._lineAlpha = 1;
+        _this.graphics = new vf.Graphics();
+        _this.container.addChild(_this.graphics);
+        return _this;
+    }
+    /** 可以支持遮罩的组件 */
+    GraphBase.prototype.maskSprite = function () {
+        return this.graphics;
+    };
+    Object.defineProperty(GraphBase.prototype, "radius", {
+        get: function () {
+            return this._radius;
+        },
+        set: function (value) {
+            this._radius = value;
+            this.invalidateSize();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "lineColor", {
+        get: function () {
+            return this._lineColor;
+        },
+        set: function (value) {
+            this._lineColor = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "lineWidth", {
+        get: function () {
+            return this._lineWidth;
+        },
+        set: function (value) {
+            this._lineWidth = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "lineAlpha", {
+        get: function () {
+            return this._lineAlpha;
+        },
+        set: function (value) {
+            this._lineAlpha = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "color", {
+        get: function () {
+            return this._color;
+        },
+        set: function (value) {
+            this._color = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "anchorX", {
+        get: function () {
+            return this._anchorX;
+        },
+        set: function (value) {
+            this._anchorX = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(GraphBase.prototype, "anchorY", {
+        get: function () {
+            return this._anchorY;
+        },
+        set: function (value) {
+            this._anchorY = value;
+            this.invalidateDisplayList();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * 子类重写
+     */
+    GraphBase.prototype.drawGraph = function () {
+        //
+    };
+    GraphBase.prototype.release = function () {
+        _super.prototype.release.call(this);
+        if (this.graphics.parent) {
+            this.graphics.parent.removeChild(this.graphics).destroy();
+        }
+    };
+    GraphBase.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
+        this.drawGraph();
+        _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
+    };
+    return GraphBase;
+}(DisplayObject_1.DisplayObject));
+exports.GraphBase = GraphBase;
 
 
 /***/ }),
@@ -10040,12 +9936,12 @@ function updateBasicDisplayList(target, unscaledWidth, unscaledHeight) {
         return;
     //console.log(target.container.name);
     var values = target.$values;
-    var parentValues = target.parent ? target.parent.$values : undefined;
+    var parent = target.parent;
     var parentWidth = 1;
     var parentHeight = 1;
-    if (parentValues) {
-        parentWidth = parentValues[UIKeys.width] || parentValues[UIKeys.explicitWidth] || 1;
-        parentHeight = parentValues[UIKeys.height] || parentValues[UIKeys.explicitHeight] || 1;
+    if (parent) {
+        parentWidth = parent.width || 1;
+        parentHeight = parent.height || 1;
     }
     var hCenter = formatRelative(values[UIKeys.horizontalCenter], parentWidth * 0.5);
     var vCenter = formatRelative(values[UIKeys.verticalCenter], parentHeight * 0.5);
@@ -10232,8 +10128,10 @@ exports.updateGridLayout = updateGridLayout;
 Object.defineProperty(exports, "__esModule", { value: true });
 var CSSGridLayout_1 = __webpack_require__(/*! ./CSSGridLayout */ "./src/layout/CSSGridLayout.ts");
 var CSSBasicLayout_1 = __webpack_require__(/*! ./CSSBasicLayout */ "./src/layout/CSSBasicLayout.ts");
+var UIKeys = __webpack_require__(/*! ../core/DisplayLayoutKeys */ "./src/core/DisplayLayoutKeys.ts");
 exports.$TempyAlignRectangle = new vf.Rectangle();
 exports.$TempLayoutRectangle = new vf.Rectangle();
+exports.$TempMeasureRectangle = new vf.Rectangle();
 function updateDisplayAlign(target, parentWidth, parentHeight, marginTop, marginLeft) {
     if (marginTop === void 0) { marginTop = 0; }
     if (marginLeft === void 0) { marginLeft = 0; }
@@ -10280,12 +10178,76 @@ function updateDisplayAlign(target, parentWidth, parentHeight, marginTop, margin
     return false;
 }
 /**
+ * @private
+ * 一个工具方法，使用BasicLayout规则测量目标对象。
+ */
+function measure(target) {
+    if (!target) {
+        return;
+    }
+    var width = 0;
+    var height = 0;
+    var bounds = exports.$TempMeasureRectangle;
+    var count = target.uiChildren.length;
+    for (var i = 0; i < count; i++) {
+        var layoutElement = target.uiChildren[i];
+        if (!layoutElement.includeInLayout) {
+            continue;
+        }
+        var values = layoutElement.$values;
+        var hCenter = +values[UIKeys.horizontalCenter];
+        var vCenter = +values[UIKeys.verticalCenter];
+        var left = +values[UIKeys.left];
+        var right = +values[UIKeys.right];
+        var top_1 = +values[UIKeys.top];
+        var bottom = +values[UIKeys.bottom];
+        var extX = void 0;
+        var extY = void 0;
+        layoutElement.getPreferredBounds(bounds);
+        if (!isNaN(left) && !isNaN(right)) {
+            extX = left + right;
+        }
+        else if (!isNaN(hCenter)) {
+            extX = Math.abs(hCenter) * 2;
+        }
+        else if (!isNaN(left) || !isNaN(right)) {
+            extX = isNaN(left) ? 0 : left;
+            extX += isNaN(right) ? 0 : right;
+        }
+        else {
+            extX = bounds.x;
+        }
+        if (!isNaN(top_1) && !isNaN(bottom)) {
+            extY = top_1 + bottom;
+        }
+        else if (!isNaN(vCenter)) {
+            extY = Math.abs(vCenter) * 2;
+        }
+        else if (!isNaN(top_1) || !isNaN(bottom)) {
+            extY = isNaN(top_1) ? 0 : top_1;
+            extY += isNaN(bottom) ? 0 : bottom;
+        }
+        else {
+            extY = bounds.y;
+        }
+        var preferredWidth = bounds.width;
+        var preferredHeight = bounds.height;
+        width = Math.ceil(Math.max(width, extX + preferredWidth));
+        height = Math.ceil(Math.max(height, extY + preferredHeight));
+    }
+    target.setMeasuredSize(width, height);
+}
+exports.measure = measure;
+/**
  * 调整目标的元素的大小并定位这些元素。
  */
 function updateDisplayLayout(target, unscaledWidth, unscaledHeight) {
     if (target.style == undefined) {
         return;
     }
+    // if(target.parent){
+    //     target.parent.validateNow();
+    // }
     if (target.style.display === "block") {
         var pos = CSSBasicLayout_1.updateBasicDisplayList(target, unscaledWidth, unscaledHeight);
         //console.log(pos);
@@ -10328,18 +10290,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
 var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/core/DisplayObject.ts");
 /** ===================== background  ===================== */
-function drawBackgroundColor(background, color, w, h) {
-    background.clear();
-    background.beginFill(color);
-    background.drawRoundedRect(0, 0, w, h, 0);
-    background.endFill();
-}
-exports.drawBackgroundColor = drawBackgroundColor;
-function backgroundColor(target) {
-    if (target.style == undefined) {
-        return;
-    }
-    if (target.style.backgroundColor == undefined && target.$background == undefined) {
+function drawBackgroundColor(target) {
+    if (target.backgroundColor === undefined) {
         return;
     }
     if (target.$background === undefined) {
@@ -10347,9 +10299,17 @@ function backgroundColor(target) {
         target.$background.name = "background";
         target.container.addChildAt(target.$background, 0);
     }
-    drawBackgroundColor(target.$background, target.style.backgroundColor, target.width, target.height);
+    if (target.backgroundColor === '') {
+        target.$background.clear();
+    }
+    else {
+        target.$background.clear();
+        target.$background.beginFill(target.backgroundColor);
+        target.$background.drawRoundedRect(0, 0, target.width, target.height, 0);
+        target.$background.endFill();
+    }
 }
-exports.backgroundColor = backgroundColor;
+exports.drawBackgroundColor = drawBackgroundColor;
 function backgroundPositionSize(target) {
     if (target.style == undefined) {
         return;
@@ -10540,21 +10500,7 @@ exports.color = color;
 Object.defineProperty(exports, "__esModule", { value: true });
 var CSSFunction = __webpack_require__(/*! ./CSSSSystem */ "./src/layout/CSSSSystem.ts");
 var Index_1 = __webpack_require__(/*! ../interaction/Index */ "./src/interaction/Index.ts");
-function formatRelative(value) {
-    if (value == undefined) {
-        return { percent: NaN, value: NaN };
-    }
-    if (typeof value === "number") {
-        return { percent: NaN, value: value };
-    }
-    var str = value;
-    var index = str.indexOf("%");
-    if (index == -1) {
-        return { percent: NaN, value: +str };
-    }
-    var percent = +str.substring(0, index);
-    return { percent: Math.min(percent * 0.01, 1), value: NaN };
-}
+var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
 /**
  * 组件样式表
  */
@@ -10712,9 +10658,13 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.width;
         },
         set: function (value) {
-            var relative = formatRelative(value);
-            this.parent.width = relative.value;
-            this.parent.percentWidth = relative.percent;
+            if (typeof value === 'number') {
+                this.parent.width = value;
+                this.parent.percentWidth = NaN;
+            }
+            else {
+                this.parent.percentWidth = Utils_1.formatRelative(value, 1);
+            }
         },
         enumerable: true,
         configurable: true
@@ -10727,9 +10677,13 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.height;
         },
         set: function (value) {
-            var relative = formatRelative(value);
-            this.parent.height = relative.value;
-            this.parent.percentHeight = relative.percent;
+            if (typeof value === 'number') {
+                this.parent.height = value;
+                this.parent.percentWidth = NaN;
+            }
+            else {
+                this.parent.percentHeight = Utils_1.formatRelative(value, 1);
+            }
         },
         enumerable: true,
         configurable: true
@@ -10846,7 +10800,10 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.scaleX;
         },
         set: function (value) {
-            this.parent.scaleX = value;
+            var parent = this.parent;
+            parent.scaleX = value;
+            parent.invalidateSize();
+            parent.invalidateParentLayout();
         },
         enumerable: true,
         configurable: true
@@ -10859,7 +10816,10 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.scaleY;
         },
         set: function (value) {
-            this.parent.scaleY = value;
+            var parent = this.parent;
+            parent.scaleY = value;
+            parent.invalidateSize();
+            parent.invalidateParentLayout();
         },
         enumerable: true,
         configurable: true
@@ -10872,7 +10832,9 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.skewX;
         },
         set: function (value) {
-            this.parent.skewX = value;
+            var parent = this.parent;
+            parent.skewX = value;
+            parent.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -10885,7 +10847,9 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.skewY;
         },
         set: function (value) {
-            this.parent.skewY = value;
+            var parent = this.parent;
+            parent.skewY = value;
+            parent.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -10898,7 +10862,7 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.rotation;
         },
         set: function (value) {
-            this.parent.rotation = value;
+            this.rotation = value;
         },
         enumerable: true,
         configurable: true
@@ -10911,7 +10875,9 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.rotation;
         },
         set: function (value) {
-            this.parent.rotation = value;
+            var parent = this.parent;
+            parent.rotation = value;
+            parent.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -10924,7 +10890,9 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.pivotX;
         },
         set: function (value) {
-            this.parent.pivotX = value;
+            var parent = this.parent;
+            parent.pivotX = value;
+            parent.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -10937,7 +10905,9 @@ var CSSStyle = /** @class */ (function () {
             return this.parent.pivotY;
         },
         set: function (value) {
-            this.parent.pivotY = value;
+            var parent = this.parent;
+            parent.pivotY = value;
+            parent.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -10992,15 +10962,16 @@ var CSSStyle = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(CSSStyle.prototype, "backgroundColor", {
+        /**
+         * 设置元件的背景颜色。（16进制数字0xffffff
+         * */
         get: function () {
-            return this._backgroundColor;
+            return this.parent.backgroundColor;
         },
         set: function (value) {
-            if (value === this.backgroundColor) {
-                return;
-            }
-            this._backgroundColor = value;
-            CSSFunction.backgroundColor(this.parent);
+            var parent = this.parent;
+            parent.backgroundColor = value;
+            parent.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -11369,19 +11340,17 @@ var CSSStyle = /** @class */ (function () {
         if (target.width == 0 || target.height == 0) {
             return;
         }
-        if (this.backgroundColor && target.$background) {
+        if (target.backgroundColor && target.$background) {
             var background = target.$background;
-            //console.log("onResize backgroundColor",background.width , target.width ,background.height ,target.height)
             background.clear();
-            background.beginFill(this.backgroundColor);
+            background.beginFill(target.backgroundColor);
             background.drawRoundedRect(0, 0, target.width, target.height, 0);
             background.endFill();
         }
         if (target.$background && target.$background.mask) {
-            //console.log("onResize backgroundColor mask",this.backgroundColor)
             var mask = target.$background.mask;
             mask.clear();
-            mask.beginFill(this.backgroundColor);
+            mask.beginFill(target.backgroundColor);
             mask.drawRoundedRect(0, 0, target.width, target.height, 0);
             mask.endFill();
         }
@@ -12159,11 +12128,11 @@ var Timeline = /** @class */ (function (_super) {
         if (!this._isSetDefault) {
             throw "Error Timeline.load undefined default";
         }
-        Ticker_1.shared.removeUpdateEvent(this.update, this);
-        Ticker_1.shared.addUpdateEvent(this.update, this);
+        Ticker_1.TickerShared.remove(this.update, this);
+        Ticker_1.TickerShared.add(this.update, this);
     };
     Timeline.prototype.release = function () {
-        Ticker_1.shared.removeUpdateEvent(this.update, this);
+        Ticker_1.TickerShared.remove(this.update, this);
         this._frames.forEach(function (map) {
             map.forEach(function (value) {
                 ObjectPool_1.objectPoolShared.push(Node, value);
@@ -12432,12 +12401,10 @@ var Tween = /** @class */ (function (_super) {
     };
     /**
      * 开始执行缓动
-     * @param {number|string} time 要开始的时间，延迟值
      * @example tween.start()
      * @memberof vf.gui.Tween
      */
-    Tween.prototype.start = function (time) {
-        this._startTime = time !== undefined ? time : 0;
+    Tween.prototype.start = function () {
         this._startTime += this._delayTime;
         this._prevTime = 0;
         this._onStartCallbackFired = false;
@@ -12570,16 +12537,16 @@ var Tween = /** @class */ (function (_super) {
     };
     /**
      * 更新函数，通过给定的 `time` 设置目标属性变化
-    * @param {number=} elapsedMS 帧间隔
+    * @param {number=} deltaTime 帧间隔
     * @param {Boolean=} preserve 完成后，防止删除动画对象
      * @param {boolean=} forceTime 强制进行更新渲染，不关心时间是否匹配
      * @example tween.update(100)
      * @memberof vf.gui.Tween
      */
-    Tween.prototype.update = function (elapsedMS, preserve, forceTime) {
+    Tween.prototype.update = function (deltaTime, preserve, forceTime) {
         var _a = this, _onStartCallbackFired = _a._onStartCallbackFired, _easingFunction = _a._easingFunction, _easingReverse = _a._easingReverse, _delayTime = _a._delayTime, _reverseDelayTime = _a._reverseDelayTime, _yoyo = _a._yoyo, _reversed = _a._reversed, _startTime = _a._startTime, _duration = _a._duration, _valuesStart = _a._valuesStart, _valuesEnd = _a._valuesEnd, object = _a.object, _isFinite = _a._isFinite, _isPlaying = _a._isPlaying;
         if (!_isPlaying || (_startTime > 0 && !forceTime)) {
-            this._startTime -= elapsedMS;
+            this._startTime -= deltaTime;
             this._startTime = Math.max(0, this._startTime);
             return true;
         }
@@ -12591,8 +12558,8 @@ var Tween = /** @class */ (function (_super) {
             _repeat = 0;
         }
         else {
-            this._prevTime += elapsedMS;
-            if (elapsedMS > constants_1.TOO_LONG_FRAME_MS && core_1.isRunning() && core_1.isLagSmoothing()) {
+            this._prevTime += deltaTime;
+            if (deltaTime > constants_1.TOO_LONG_FRAME_MS && core_1.isRunning() && core_1.isLagSmoothing()) {
                 this._prevTime -= constants_1.FRAME_MS;
             }
             elapsed = (this._prevTime) / _duration;
@@ -12628,7 +12595,7 @@ var Tween = /** @class */ (function (_super) {
             //     object[property] = _interpolationFunctionCall(end, value, object[property]);
             // } 
         }
-        this.emit(TweenEvent_1.TweenEvent.update, object, elapsed, elapsedMS);
+        this.emit(TweenEvent_1.TweenEvent.update, object, elapsed);
         if (elapsed === 1 || (_reversed && elapsed === 0)) {
             this._prevTime = 0;
             if (_repeat > 0 && _duration > 0) {
@@ -13197,6 +13164,7 @@ exports.SET_NESTED = function (nested) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var Ticker_1 = __webpack_require__(/*! ../../core/Ticker */ "./src/core/Ticker.ts");
 /**
  * 缓动列表
  * @private
@@ -13344,8 +13312,7 @@ exports.removeDisplay = removeDisplay;
  * @example
  * vf.gui.tween.update(500)
  */
-function update(time, preserve) {
-    if (preserve === void 0) { preserve = false; }
+function update(deltaTime) {
     if (!isStarted) {
         return false;
     }
@@ -13361,7 +13328,7 @@ function update(time, preserve) {
     var i = 0;
     var length = _tweens.length;
     while (i < length) {
-        _tweens[i++].update(time, preserve);
+        _tweens[i++].update(Ticker_1.TickerShared.deltaMS, false);
         if (length > _tweens.length) {
             // The tween has been removed, keep same index
             i--;
@@ -13889,13 +13856,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.3.19.1.3.19.1.3.19) ==1.3.19.1.3.19.1.3.19;
+//     return this.lastIndexOf(word, pos1.6.5.1.6.5.1.6.5) ==1.6.5.1.6.5.1.6.5;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.3.19";
+window.vf.gui.version = "1.6.5";
 
 
 /***/ })

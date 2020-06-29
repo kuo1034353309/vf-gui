@@ -1,3 +1,36 @@
+declare module 'src/core/DisplayLayoutKeys' {
+	/** 标记属性失效 */
+	export const invalidatePropertiesFlag: symbol;
+	/** 标记大小失效 */
+	export const invalidateSizeFlag: symbol;
+	/** 标记显示失效 */
+	export const invalidateDisplayListFlag: symbol;
+	/** 是否参与布局 */
+	export const includeInLayout: symbol;
+	export const width: symbol;
+	export const height: symbol;
+	export const explicitWidth: symbol;
+	export const explicitHeight: symbol;
+	export const minWidth: symbol;
+	export const maxWidth: symbol;
+	export const minHeight: symbol;
+	export const maxHeight: symbol;
+	export const percentWidth: symbol;
+	export const percentHeight: symbol;
+	export const measuredWidth: symbol;
+	export const measuredHeight: symbol;
+	export const oldPreferWidth: symbol;
+	export const oldPreferHeight: symbol;
+	export const backgroundColor: symbol;
+	export const oldBackgroundColor: symbol;
+	export const left: symbol;
+	export const right: symbol;
+	export const top: symbol;
+	export const bottom: symbol;
+	export const horizontalCenter: symbol;
+	export const verticalCenter: symbol;
+
+}
 declare module 'src/interaction/TouchMouseEventEnum' {
 	/**
 	 * 鼠标点击与触摸事件枚举,内部DisplayObject使用
@@ -246,49 +279,6 @@ declare module 'src/interaction/DragEvent' {
 	}
 
 }
-declare module 'src/core/DisplayLayoutKeys' {
-	/** 标记属性失效 */
-	export const invalidatePropertiesFlag: unique symbol;
-	/** 标记大小失效 */
-	export const invalidateSizeFlag: unique symbol;
-	/** 标记显示失效 */
-	export const invalidateDisplayListFlag: unique symbol;
-	export const explicitWidth: unique symbol;
-	export const explicitHeight: unique symbol;
-	export const width: unique symbol;
-	export const height: unique symbol;
-	export const minWidth: unique symbol;
-	export const maxWidth: unique symbol;
-	export const minHeight: unique symbol;
-	export const maxHeight: unique symbol;
-	export const percentWidth: unique symbol;
-	export const percentHeight: unique symbol;
-	export const scaleX: unique symbol;
-	export const scaleY: unique symbol;
-	export const x: unique symbol;
-	export const y: unique symbol;
-	export const skewX: unique symbol;
-	export const skewY: unique symbol;
-	export const pivotX: unique symbol;
-	export const pivotY: unique symbol;
-	export const rotation: unique symbol;
-	export const zIndex: unique symbol;
-	export const measuredWidth: unique symbol;
-	export const measuredHeight: unique symbol;
-	export const oldPreferWidth: unique symbol;
-	export const oldPreferHeight: unique symbol;
-	export const oldX: unique symbol;
-	export const oldY: unique symbol;
-	export const oldWidth: unique symbol;
-	export const oldHeight: unique symbol;
-	export const left: unique symbol;
-	export const right: unique symbol;
-	export const top: unique symbol;
-	export const bottom: unique symbol;
-	export const horizontalCenter: unique symbol;
-	export const verticalCenter: unique symbol;
-
-}
 declare module 'src/display/Label' {
 	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
@@ -381,12 +371,8 @@ declare module 'src/display/Image' {
 	    private _anchorY?;
 	    anchorY: number | undefined;
 	    release(): void;
-	    /**
-	     * @private
-	     * 测量组件尺寸
-	     */
-	    protected measure(): void;
 	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	    protected measure(): void;
 	    protected srcSystem(): void;
 	    protected scale9GridSystem(): void;
 	    protected anchorSystem(): void;
@@ -784,6 +770,125 @@ declare module 'src/interaction/Index' {
 	export { ClickEvent, DragDropController, DragEvent, InputController, MouseScrollEvent, InteractionEvent, TouchMouseEvent, ComponentEvent, GroupController };
 
 }
+declare module 'src/core/Ticker' {
+	///   types="@vf.js/vf" />
+	export const TickerShared: vf.Ticker;
+
+}
+declare module 'src/core/DisplayLayoutValidator' {
+	///   types="@vf.js/vf" />
+	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract'; class UIValidator extends vf.utils.EventEmitter {
+	    /**
+	     * @private
+	     * 创建一个Validator对象
+	     */
+	    constructor();
+	    /**
+	     * @private
+	     */
+	    private targetLevel;
+	    /**
+	     * @private
+	     */
+	    private invalidatePropertiesFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidateClientPropertiesFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidatePropertiesQueue;
+	    /**
+	     * @private
+	     * 标记组件属性失效
+	     */
+	    invalidateProperties(target: DisplayLayoutAbstract): void;
+	    /**
+	     * @private
+	     * 验证失效的属性
+	     */
+	    private validateProperties;
+	    /**
+	     * @private
+	     */
+	    private invalidateSizeFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidateClientSizeFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidateSizeQueue;
+	    /**
+	     * @private
+	     * 标记需要重新测量尺寸
+	     */
+	    invalidateSize(target: DisplayLayoutAbstract): void;
+	    /**
+	     * @private
+	     * 测量尺寸
+	     */
+	    private validateSize;
+	    /**
+	     * @private
+	     */
+	    private invalidateDisplayListFlag;
+	    /**
+	     * @private
+	     */
+	    private invalidateDisplayListQueue;
+	    /**
+	     * @private
+	     * 标记需要重新布局
+	     */
+	    invalidateDisplayList(client: DisplayLayoutAbstract): void;
+	    /**
+	     * @private
+	     * 重新布局
+	     */
+	    private validateDisplayList;
+	    /**
+	     * @private
+	     * 是否已经添加了事件监听
+	     */
+	    private listenersAttached;
+	    /**
+	     * @private
+	     * 添加事件监听
+	     */
+	    private attachListeners;
+	    /**
+	     * @private
+	     * 执行属性应用
+	     */
+	    private doPhasedInstantiationCallBack;
+	    /**
+	     * @private
+	     */
+	    private doPhasedInstantiation;
+	    /**
+	     * @private
+	     * 使大于等于指定组件层级的元素立即应用属性
+	     * @param target 要立即应用属性的组件
+	     */
+	    validateClient(target: DisplayLayoutAbstract): void;
+	    removeDepthQueueAll(): void;
+	} const validatorShared: UIValidator;
+	export default validatorShared;
+
+}
+declare module 'src/core/ContainerBase' {
+	///   types="@vf.js/vf" />
+	/** 容器扩展类，后续便于做延时渲染 */
+	export class ContainerBase extends vf.Container {
+	    constructor();
+	    isEmitRender: boolean;
+	    render(renderer: vf.Renderer): void;
+	}
+
+}
 declare module 'src/tween/Easing' {
 	/**
 	 * 完整的缓动曲线列表
@@ -1104,11 +1209,10 @@ declare module 'src/tween/Tween' {
 	    private render;
 	    /**
 	     * 开始执行缓动
-	     * @param {number|string} time 要开始的时间，延迟值
 	     * @example tween.start()
 	     * @memberof vf.gui.Tween
 	     */
-	    start(time?: number): this;
+	    start(): this;
 	    /**
 	     * 停止缓动
 	     * @example tween.stop()
@@ -1175,13 +1279,13 @@ declare module 'src/tween/Tween' {
 	    gotoAndEnd(): void;
 	    /**
 	     * 更新函数，通过给定的 `time` 设置目标属性变化
-	    * @param {number=} elapsedMS 帧间隔
+	    * @param {number=} deltaTime 帧间隔
 	    * @param {Boolean=} preserve 完成后，防止删除动画对象
 	     * @param {boolean=} forceTime 强制进行更新渲染，不关心时间是否匹配
 	     * @example tween.update(100)
 	     * @memberof vf.gui.Tween
 	     */
-	    update(elapsedMS: number, preserve?: boolean, forceTime?: boolean): boolean;
+	    update(deltaTime: number, preserve?: boolean, forceTime?: boolean): boolean;
 	    release(): void;
 	}
 
@@ -1263,7 +1367,7 @@ declare module 'src/tween/private/core' {
 	 * @example
 	 * vf.gui.tween.update(500)
 	 */
-	export function update(time: number, preserve?: boolean): boolean;
+	export function update(deltaTime: number): boolean;
 	/**
 	 * 是否正在运行中
 	 * @return {Boolean} 只要还有缓动在运行，返回true
@@ -1366,152 +1470,6 @@ declare module 'src/tween/private/index' {
 	export { Plugins, get, getAll, removeAll, remove, removeDisplay, add, update, isRunning, FrameThrottle, ToggleLagSmoothing, Interpolation, TweenEvent, Timeline, utils };
 
 }
-declare module 'src/core/Ticker' {
-	 class Ticker extends vf.utils.EventEmitter {
-	    /**
-	     * 心跳构造函数
-	     * @param autoStart 是否自动开启心跳，默认false
-	     */
-	    constructor(autoStart: boolean);
-	    private _disabled;
-	    /** 是否关闭心跳.默认false不关闭,关闭后，缓动等组件也将关闭 */
-	    disabled: boolean;
-	    update(deltaTime: number, lastTime: number, elapsedMS: number): void;
-	    /**
-	     * 增加更新监听器
-	     * @param fn 被调用的函数
-	     * @param context 当前域
-	     */
-	    addUpdateEvent<T>(fn: (deltaTime: number, lastTime?: number, elapsedMS?: number) => void, context: T): this;
-	    /**
-	     * 移除更新监听器
-	     * @param fn 被调用的函数
-	     * @param context 当前域
-	     */
-	    removeUpdateEvent<T>(fn: (deltaTime: number, lastTime?: number, elapsedMS?: number) => void, context: T): this;
-	}
-	/**
-	 * Ticker 的实例
-	 */
-	export const shared: Ticker;
-	export const tickerShared: Ticker;
-	export default tickerShared;
-
-}
-declare module 'src/core/DisplayLayoutValidator' {
-	///   types="@vf.js/vf" />
-	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract'; class UIValidator extends vf.utils.EventEmitter {
-	    /**
-	     * @private
-	     * 创建一个Validator对象
-	     */
-	    constructor();
-	    /**
-	     * @private
-	     */
-	    private targetLevel;
-	    /**
-	     * @private
-	     */
-	    private invalidatePropertiesFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidateClientPropertiesFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidatePropertiesQueue;
-	    /**
-	     * @private
-	     * 标记组件属性失效
-	     */
-	    invalidateProperties(target: DisplayLayoutAbstract): void;
-	    /**
-	     * @private
-	     * 验证失效的属性
-	     */
-	    private validateProperties;
-	    /**
-	     * @private
-	     */
-	    private invalidateSizeFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidateClientSizeFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidateSizeQueue;
-	    /**
-	     * @private
-	     * 标记需要重新测量尺寸
-	     */
-	    invalidateSize(target: DisplayLayoutAbstract): void;
-	    /**
-	     * @private
-	     * 测量尺寸
-	     */
-	    private validateSize;
-	    /**
-	     * @private
-	     */
-	    private invalidateDisplayListFlag;
-	    /**
-	     * @private
-	     */
-	    private invalidateDisplayListQueue;
-	    /**
-	     * @private
-	     * 标记需要重新布局
-	     */
-	    invalidateDisplayList(client: DisplayLayoutAbstract): void;
-	    /**
-	     * @private
-	     * 重新布局
-	     */
-	    private validateDisplayList;
-	    /**
-	     * @private
-	     * 是否已经添加了事件监听
-	     */
-	    private listenersAttached;
-	    /**
-	     * @private
-	     * 添加事件监听
-	     */
-	    private attachListeners;
-	    /**
-	     * @private
-	     * 执行属性应用
-	     */
-	    private doPhasedInstantiationCallBack;
-	    /**
-	     * @private
-	     */
-	    private doPhasedInstantiation;
-	    /**
-	     * @private
-	     * 使大于等于指定组件层级的元素立即应用属性
-	     * @param target 要立即应用属性的组件
-	     */
-	    validateClient(target: DisplayLayoutAbstract): void;
-	    removeDepthQueueAll(): void;
-	} const validatorShared: UIValidator;
-	export default validatorShared;
-
-}
-declare module 'src/core/ContainerBase' {
-	///   types="@vf.js/vf" />
-	/** 容器扩展类，后续便于做延时渲染 */
-	export class ContainerBase extends vf.Container {
-	    constructor();
-	    isEmitRender: boolean;
-	    render(renderer: vf.Renderer): void;
-	}
-
-}
 declare module 'src/core/Stage' {
 	///   types="@vf.js/vf" />
 	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract';
@@ -1523,10 +1481,8 @@ declare module 'src/core/Stage' {
 	 * @param height {Number} 舞台高度
 	 */
 	export class Stage extends DisplayLayoutAbstract {
-	    constructor(width: number, height: number, app?: vf.Application);
-	    app?: vf.Application;
-	    _stageWidth: number;
-	    _stageHeight: number;
+	    constructor(width: number, height: number, app: vf.Application);
+	    app: vf.Application;
 	    /**
 	     * 是否组织原始数据继续传递
 	     */
@@ -1605,11 +1561,6 @@ declare module 'src/core/DisplayObjectAbstract' {
 	     * 只影响父级的递归调用。
 	     */
 	    renderable: boolean;
-	    /**
-	     * 缓存当前的显示对象，如果移除缓存，设置false即可
-	     * 在设置这个值时，请确保你的纹理位图已经加载
-	     */
-	    cacheAsBitmap: boolean;
 	    private _interactive;
 	    private _interactiveChildren;
 	    /**
@@ -1620,6 +1571,10 @@ declare module 'src/core/DisplayObjectAbstract' {
 	     * 子对象是否可以接收事件，设置false后，会绕过HitTest方法的递归
 	     */
 	    interactiveChildren: boolean;
+	    /**
+	     * 子类实现
+	     */
+	    validateNow(): void;
 	    private _enabled;
 	    enabled: boolean;
 	    /**
@@ -1641,6 +1596,70 @@ declare module 'src/core/DisplayObjectAbstract' {
 	}
 
 }
+declare module 'src/layout/CSSBasicLayout' {
+	///   types="@vf.js/vf" />
+	import { DisplayObject } from 'src/core/DisplayObject';
+	export const $tempRectangle: vf.Rectangle;
+	/**
+	 * 布局尺寸>外部显式设置尺寸>测量尺寸 的优先级顺序返回尺寸
+	 */
+	export function formatRelative(value: number | string | undefined, total: number): number;
+	/**
+	 * @private
+	 * 一个工具方法，使用BasicLayout规则布局目标对象。
+	 */
+	export function updateBasicDisplayList(target: DisplayObject | undefined, unscaledWidth: number, unscaledHeight: number): void;
+
+}
+declare module 'src/layout/CSSGridLayout' {
+	///   types="@vf.js/vf" />
+	import { DisplayObject } from 'src/core/DisplayObject';
+	/**
+	 *  更新网格布局
+	 *
+	 * 单位目前只支持数值或百分比：100 ，”100%“
+	 *
+	 *  网格布局中，子容器的位置与宽高可能失效
+	 *
+	 * 关于grid布局的词汇表
+	 *
+	 * 格网 https://developer.mozilla.org/zh-CN/docs/Glossary/Grid
+	 *
+	 * 网格行 gridTemplateRows https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-template-columns
+	 *
+	 * 网格列 gridTemplateColumns https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-template-rows
+	 *
+	 * 网格行间距 gridRowGap   https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-row-gap
+	 *
+	 * 网格列间距 gridColumnGap  https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-column-gap
+	 *
+	 * 网格轴 （未实现） 支持居中方式为：justifyContent，alignContent
+	 *
+	 * 网格线（未实现） https://developer.mozilla.org/en-US/docs/Glossary/Grid_Lines
+	 *
+	 * 网格面积（未实现）https://developer.mozilla.org/zh-CN/docs/Glossary/Grid_Areas
+	 */
+	export function updateGridLayout(target: DisplayObject): vf.Rectangle;
+
+}
+declare module 'src/layout/CSSLayout' {
+	///   types="@vf.js/vf" />
+	import { DisplayObject } from 'src/core/DisplayObject';
+	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract';
+	export const $TempyAlignRectangle: vf.Rectangle;
+	export const $TempLayoutRectangle: vf.Rectangle;
+	export const $TempMeasureRectangle: vf.Rectangle;
+	/**
+	 * @private
+	 * 一个工具方法，使用BasicLayout规则测量目标对象。
+	 */
+	export function measure(target: DisplayLayoutAbstract): void;
+	/**
+	 * 调整目标的元素的大小并定位这些元素。
+	 */
+	export function updateDisplayLayout(target: DisplayObject, unscaledWidth: number, unscaledHeight: number): void;
+
+}
 declare module 'src/core/DisplayLayoutAbstract' {
 	///   types="@vf.js/vf" />
 	import { DisplayObjectAbstract } from 'src/core/DisplayObjectAbstract';
@@ -1655,7 +1674,10 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	     * @private
 	     */
 	    $values: any;
-	    includeInLayout: boolean;
+	    /**
+	     * 背景(内部使用)
+	     */
+	    $background?: vf.Graphics;
 	    /**
 	     * @private
 	     * 定义的所有变量请不要添加任何初始值，必须统一在此处初始化。
@@ -1687,22 +1709,15 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	     */
 	    protected commitProperties(): void;
 	    /**
-	     * @private
-	     * 测量组件尺寸
+	     * 测量显示对象宽高，如果子类没有重写，默认是this.container.width..
 	     */
 	    protected measure(): void;
 	    /**
 	     * @private
 	     * 测量组件尺寸，返回尺寸是否发生变化
 	     */
-	    private measureSizes;
-	    /**
-	     * @private
-	     * 设置测量结果。
-	     * @param width 测量宽度
-	     * @param height 测量高度
-	     */
-	    setMeasuredSize(width: number, height: number): void;
+	    protected measureSizes(): boolean;
+	    private checkMeasureSizes;
 	    /**
 	     * @private
 	     *
@@ -1743,12 +1758,19 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	     * @private
 	     * 标记父级容器的尺寸和显示列表为失效
 	     */
-	    protected invalidateParentLayout(): void;
+	    invalidateParentLayout(): void;
 	    /**
 	     * @private
 	     * 设置组件的布局位置
 	     */
-	    setPosition(x: number, y: number): void;
+	    setPosition(x?: number | undefined, y?: number | undefined): void;
+	    /**
+	     * @private
+	     * 设置测量结果。
+	     * @param width 测量宽度
+	     * @param height 测量高度
+	     */
+	    setMeasuredSize(width: number, height: number): void;
 	    /**
 	     * @private
 	     * 设置组件的宽高。此方法不同于直接设置width,height属性，
@@ -1780,6 +1802,11 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	    * 如果脚本多次设置了 width 属性，则延迟处理可防止进行多次处理。此方法允许您手动覆盖此行为。
 	     */
 	    validateSizeNow(): void;
+	    /**
+	     * 指定此组件是否包含在父容器的布局中。若为false，则父级容器在测量和布局阶段都忽略此组件。默认值为true。
+	     * 注意，visible属性与此属性不同，设置visible为false，父级容器仍会对其布局。
+	     */
+	    includeInLayout: boolean;
 	    /**
 	     * @private
 	     * 距父级容器离左边距离
@@ -1830,29 +1857,6 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	     * 外部显式指定的高度
 	     */
 	    readonly explicitHeight: number;
-	    readonly _width: number;
-	    readonly _height: number;
-	    /**
-	     * @private
-	     * 组件宽度设置为undefined将使用组件的measure()方法自动计算尺寸
-	     */
-	    /**
-	    * @private
-	    *
-	    * @param value
-	    */
-	    width: number;
-	    allInvalidate(): void;
-	    /**
-	     * @private
-	     * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
-	     */
-	    /**
-	    * @private
-	    *
-	    * @param value
-	    */
-	    height: number;
 	    /**
 	     * @private
 	     * 组件的最小宽度,此属性设置为大于maxWidth的值时无效。同时影响测量和自动布局的尺寸。
@@ -1873,28 +1877,48 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	     * 组件的最大高度,同时影响测量和自动布局的尺寸。
 	     */
 	    maxHeight: number;
+	    allInvalidate(): void;
+	    backgroundColor: any;
+	    /**
+	     * @private
+	     * 组件宽度设置为undefined将使用组件的measure()方法自动计算尺寸
+	     */
+	    /**
+	    * @private
+	    *
+	    * @param value
+	    */
+	    width: number;
+	    /**
+	     * @private
+	     * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
+	     */
+	    /**
+	    * @private
+	    *
+	    * @param value
+	    */
+	    height: number;
 	    scaleX: number;
 	    scaleY: number;
 	    x: number;
 	    y: number;
-	    skewX: any;
-	    skewY: any;
-	    pivotX: any;
-	    pivotY: any;
-	    rotation: any;
+	    skewX: number;
+	    skewY: number;
+	    pivotX: number;
+	    pivotY: number;
+	    rotation: number;
 	    /**
 	     *  =不可用= 设置索引层级，每次父级变化时，会排序 （未实现）
 	     */
-	    zIndex: any;
+	    zIndex: number;
 	}
 
 }
 declare module 'src/layout/CSSSSystem' {
-	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/** ===================== background  ===================== */
-	export function drawBackgroundColor(background: vf.Graphics, color: number, w: number, h: number): void;
-	export function backgroundColor(target: DisplayObject): void;
+	export function drawBackgroundColor(target: DisplayObject): void;
 	export function backgroundPositionSize(target: DisplayObject): void;
 	export function backgroundRepeat(target: DisplayObject): void;
 	export function backgroundImage(target: DisplayObject): void;
@@ -2036,15 +2060,15 @@ declare module 'src/layout/CSSStyle' {
 	    /**
 	     * 设置元素水平拉伸扭曲（角度）。
 	     * */
-	    skewX: any;
+	    skewX: number;
 	    /**
 	     * 设置元素垂直拉伸扭曲（角度）。
 	     * */
-	    skewY: any;
+	    skewY: number;
 	    /**
 	     * 设置元素旋转 （角度）
 	    */
-	    rotate: any;
+	    rotate: number;
 	    /**
 	     * 设置元素旋转 （角度）
 	    */
@@ -2052,11 +2076,11 @@ declare module 'src/layout/CSSStyle' {
 	    /**
 	     * 轴点 像素值
 	     */
-	    pivotX: any;
+	    pivotX: number;
 	    /**
 	     * 轴点 像素值
 	     */
-	    pivotY: any;
+	    pivotY: number;
 	    /**
 	      * 调整元素的色调，取消设置0xFFFFFF
 	      */
@@ -2073,8 +2097,7 @@ declare module 'src/layout/CSSStyle' {
 	    /**
 	     * 设置元件的背景颜色。（16进制数字0xffffff
 	     * */
-	    private _backgroundColor?;
-	    backgroundColor: number | undefined;
+	    backgroundColor: any;
 	    /**
 	     * 设置元素的背景图像。backgroundImage = "./xxx.png"
 	     * */
@@ -2205,63 +2228,6 @@ declare module 'src/layout/CSSStyle' {
 	    breakWords: boolean;
 	    private onResize;
 	}
-
-}
-declare module 'src/layout/CSSBasicLayout' {
-	///   types="@vf.js/vf" />
-	import { DisplayObject } from 'src/core/DisplayObject';
-	export const $tempRectangle: vf.Rectangle;
-	/**
-	 * 布局尺寸>外部显式设置尺寸>测量尺寸 的优先级顺序返回尺寸
-	 */
-	export function formatRelative(value: number | string | undefined, total: number): number;
-	/**
-	 * @private
-	 * 一个工具方法，使用BasicLayout规则布局目标对象。
-	 */
-	export function updateBasicDisplayList(target: DisplayObject | undefined, unscaledWidth: number, unscaledHeight: number): void;
-
-}
-declare module 'src/layout/CSSGridLayout' {
-	///   types="@vf.js/vf" />
-	import { DisplayObject } from 'src/core/DisplayObject';
-	/**
-	 *  更新网格布局
-	 *
-	 * 单位目前只支持数值或百分比：100 ，”100%“
-	 *
-	 *  网格布局中，子容器的位置与宽高可能失效
-	 *
-	 * 关于grid布局的词汇表
-	 *
-	 * 格网 https://developer.mozilla.org/zh-CN/docs/Glossary/Grid
-	 *
-	 * 网格行 gridTemplateRows https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-template-columns
-	 *
-	 * 网格列 gridTemplateColumns https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-template-rows
-	 *
-	 * 网格行间距 gridRowGap   https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-row-gap
-	 *
-	 * 网格列间距 gridColumnGap  https://developer.mozilla.org/zh-CN/docs/Web/CSS/grid-column-gap
-	 *
-	 * 网格轴 （未实现） 支持居中方式为：justifyContent，alignContent
-	 *
-	 * 网格线（未实现） https://developer.mozilla.org/en-US/docs/Glossary/Grid_Lines
-	 *
-	 * 网格面积（未实现）https://developer.mozilla.org/zh-CN/docs/Glossary/Grid_Areas
-	 */
-	export function updateGridLayout(target: DisplayObject): vf.Rectangle;
-
-}
-declare module 'src/layout/CSSLayout' {
-	///   types="@vf.js/vf" />
-	import { DisplayObject } from 'src/core/DisplayObject';
-	export const $TempyAlignRectangle: vf.Rectangle;
-	export const $TempLayoutRectangle: vf.Rectangle;
-	/**
-	 * 调整目标的元素的大小并定位这些元素。
-	 */
-	export function updateDisplayLayout(target: DisplayObject, unscaledWidth: number, unscaledHeight: number): void;
 
 }
 declare module 'src/core/plugs/UIBaseDrag' {
@@ -2422,10 +2388,6 @@ declare module 'src/core/DisplayObject' {
 	     * 构造函数
 	     */
 	    constructor();
-	    /**
-	     * 背景(内部使用)
-	     */
-	    $background?: vf.Graphics;
 	    /**
 	     * 遮罩，设置遮罩后，组件内部的索引位置可能产生变化
 	     */
@@ -3328,10 +3290,64 @@ declare module 'src/display/TextInput' {
 	}
 
 }
-declare module 'src/display/Rect' {
+declare module 'src/display/private/GraphBase' {
 	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { MaskSprite } from 'src/core/MaskSprite';
+	/**
+	 * 绘制图形基类
+	 */
+	export class GraphBase extends DisplayObject implements MaskSprite {
+	    constructor();
+	    readonly graphics: vf.Graphics;
+	    /** 可以支持遮罩的组件 */
+	    maskSprite(): vf.Graphics;
+	    /**
+	     * 半径
+	     */
+	    protected _radius: number;
+	    radius: number;
+	    /**
+	     * 线条颜色
+	     */
+	    protected _lineColor: number;
+	    lineColor: number;
+	    /**
+	     * 线条粗细
+	     */
+	    protected _lineWidth: number;
+	    lineWidth: number;
+	    /**
+	     * 线条透明度
+	     */
+	    protected _lineAlpha: number;
+	    lineAlpha: number;
+	    /**
+	     * 颜色
+	     */
+	    protected _color?: number;
+	    color: number | undefined;
+	    /**
+	     * 锚点，调整位图的坐标中点 0-1
+	     */
+	    protected _anchorX?: number;
+	    anchorX: number | undefined;
+	    /**
+	     * 锚点，调整位图的坐标中点 0-1
+	     */
+	    protected _anchorY?: number;
+	    anchorY: number | undefined;
+	    /**
+	     * 子类重写
+	     */
+	    drawGraph(): void;
+	    release(): void;
+	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	}
+
+}
+declare module 'src/display/Rect' {
+	import { GraphBase } from 'src/display/private/GraphBase';
 	/**
 	 * 绘制矩形或圆角矩形
 	 *
@@ -3342,51 +3358,14 @@ declare module 'src/display/Rect' {
 	 *
 	 * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestRect
 	 */
-	export class Rect extends DisplayObject implements MaskSprite {
+	export class Rect extends GraphBase {
 	    constructor();
-	    readonly graphics: vf.Graphics;
-	    /** 可以支持遮罩的组件 */
-	    maskSprite(): vf.Graphics;
-	    /**
-	     * 圆角
-	     */
-	    private _radius;
-	    radius: number;
-	    /**
-	     * 线条颜色
-	     */
-	    private _lineColor;
-	    lineColor: number;
-	    /**
-	     * 线条粗细
-	     */
-	    private _lineWidth;
-	    lineWidth: number;
-	    /**
-	     * 颜色
-	     */
-	    private _color?;
-	    color: number | undefined;
-	    /**
-	     * 锚点，调整位图的坐标中点 0-1
-	     */
-	    private _anchorX?;
-	    anchorX: number | undefined;
-	    /**
-	     * 锚点，调整位图的坐标中点 0-1
-	     */
-	    private _anchorY?;
-	    anchorY: number | undefined;
-	    drawRoundedRect(): void;
-	    release(): void;
-	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	    drawGraph(): void;
 	}
 
 }
 declare module 'src/display/Circle' {
-	///   types="@vf.js/vf" />
-	import { DisplayObject } from 'src/core/DisplayObject';
-	import { MaskSprite } from 'src/core/MaskSprite';
+	import { GraphBase } from 'src/display/private/GraphBase';
 	/**
 	 * 绘制圆形
 	 *
@@ -3398,44 +3377,24 @@ declare module 'src/display/Circle' {
 	 *
 	 * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestCircle
 	 */
-	export class Circle extends DisplayObject implements MaskSprite {
+	export class Circle extends GraphBase {
 	    constructor();
-	    readonly graphics: vf.Graphics;
-	    /** 可以支持遮罩的组件 */
-	    maskSprite(): vf.Graphics;
 	    /**
-	     * 半径
+	     * 开始绘制角度
 	     */
-	    private _radius;
-	    radius: number;
+	    protected _startAngle: number;
+	    startAngle: number;
 	    /**
-	     * 线条颜色
+	     * 结束角度
 	     */
-	    private _lineColor;
-	    lineColor: number;
+	    protected _endAngle: number;
+	    endAngle: number;
 	    /**
-	     * 线条粗细
+	     * 逆时针绘制
 	     */
-	    private _lineWidth;
-	    lineWidth: number;
-	    /**
-	     * 颜色
-	     */
-	    private _color?;
-	    color: number | undefined;
-	    /**
-	     * 锚点，调整位图的坐标中点 0-1
-	     */
-	    private _anchorX?;
-	    anchorX: number | undefined;
-	    /**
-	     * 锚点，调整位图的坐标中点 0-1
-	     */
-	    private _anchorY?;
-	    anchorY: number | undefined;
-	    drawCircle(): void;
-	    release(): void;
-	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	    protected _anticlockwise: boolean;
+	    anticlockwise: boolean;
+	    drawGraph(): void;
 	}
 
 }
@@ -3874,6 +3833,7 @@ declare module 'src/display/Audio' {
 	 */
 	export class Audio extends DisplayObject {
 	    private audio?;
+	    private _id;
 	    private _src;
 	    private _autoplay;
 	    private _loop;
@@ -4048,7 +4008,6 @@ declare module 'src/core/Scheduler' {
 	export class Scheduler extends vf.utils.EventEmitter {
 	    readonly id: number;
 	    static clock: () => number;
-	    static ticker: any;
 	    static setInterval(time: number, listener: () => void): Scheduler;
 	    static setTimeout(time: number, listener: () => void): Scheduler;
 	    interval: number;
@@ -4084,7 +4043,7 @@ declare module 'src/UI' {
 	/** UI基础显示对象，一般不会直接使用，只作为类型推断 */
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/** 心跳，需要在初始化完成后，启动心跳更新 */
-	import { shared as TickerShared } from 'src/core/Ticker';
+	import { TickerShared } from 'src/core/Ticker';
 	/** 滤镜的基础类 */
 	import { Filter } from 'src/core/Filter';
 	/**
@@ -4543,28 +4502,11 @@ declare module 'test/TestAlign' {
 	}
 
 }
-declare module 'test/WebPlayerSize' {
-	 type ScaleMode = "noScale" | "showAll" | "noBorder" | "exactFit" | "fixedWidth" | "fixedHeight" | "fixedNarrow" | "fixedWide";
-	/**
-	 * @private
-	 * 更新播放器视口尺寸
-	 */
-	export default function updateViewSize(app: vf.Application, canvasScaleFactor: number | undefined, isWebGl: boolean | undefined, scaleMode: ScaleMode): void;
-	export {};
-
-}
 declare module 'test/TestApplication' {
 	///   path="../gui.d.ts" />
 	///   types="@vf.js/vf" />
 	export default class TestApplication {
 	    constructor(thisObj: any, callback: (app: vf.Application, uiStage: vf.gui.Stage) => void);
-	    private uiStage;
-	    private app;
-	    private thisObj;
-	    private callback;
-	    private initTest;
-	    private resize;
-	    private updata;
 	}
 
 }

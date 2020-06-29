@@ -45,7 +45,7 @@ export class ScrollBar extends Slider {
         super.triggerValueChanging();
         const scrollingContainer = this._scrollingContainer;
         if (scrollingContainer) {
-            const sizeAmt = scrollingContainer._height / scrollingContainer.innerContainer.height || 0.001;
+            const sizeAmt = scrollingContainer.explicitHeight / scrollingContainer.innerContainer.height || 0.001;
             if (sizeAmt < 1)
                 scrollingContainer.forcePctPosition(this.vertical ? "y" : "x", this._amt);
         }
@@ -100,8 +100,12 @@ export class ScrollBar extends Slider {
             scrollingContainer.dragScrolling = this._dragScrolling;
             if(this.vertical) {
                 scrollingContainer.scrollY = true;
+                if(this.parent)
+                this.height = this.parent.height;
             }else{
                 scrollingContainer.scrollX = true;
+                if(this.parent)
+                this.width = this.parent.width;
             }
             this.alignToContainer();
         }
@@ -126,23 +130,23 @@ export class ScrollBar extends Slider {
             const innerContainer = scrollingContainer.innerContainer as any;
 
             const _posAmt = !innerContainer[widthORheight] ? 0 : -(innerContainer[xORy] / innerContainer[widthORheight]);
-            const sizeAmt = !innerContainer[widthORheight] ? 1 : scrollingContainer["_" + widthORheight] / innerContainer[widthORheight];
+            const sizeAmt = !innerContainer[widthORheight] ? 1 : scrollingContainer[widthORheight] / innerContainer[widthORheight];
             //update amt
-            const diff = innerContainer[widthORheight] - scrollingContainer["_" + widthORheight];
-            this._amt = !scrollingContainer["_" + widthORheight] || !diff ? 0 : -(innerContainer[xORy] / diff);
+            const diff = innerContainer[widthORheight] - scrollingContainer[widthORheight];
+            this._amt = !scrollingContainer[widthORheight] || !diff ? 0 : -(innerContainer[xORy] / diff);
             const self = this as any;
             if (sizeAmt >= 1) {
-                size = self["_" + widthORheight];
+                size = self[widthORheight];
                 //_thumb[topORleft] = size * 0.5;
                 this.toggleHidden(true);
             }
             else {
-                size = self["_" + widthORheight] * sizeAmt;
+                size = self[widthORheight] * sizeAmt;
                 if (this._amt > 1) {
-                    size -= (self["_" + widthORheight] - size) * (this._amt - 1);
+                    size -= (self[widthORheight] - size) * (this._amt - 1);
                 }
                 else if (this._amt < 0) {
-                    size -= (self["_" + widthORheight] - size) * -this._amt;
+                    size -= (self[widthORheight] - size) * -this._amt;
                 }
                 // if (this._amt < 0) {
                 //     newPos = size * 0.5;
@@ -157,7 +161,10 @@ export class ScrollBar extends Slider {
                 this.toggleHidden(false);
             }
             _thumb[widthORheight] = size;
-            this.updatePosition();
+            if(size == _thumb[widthORheight]){
+                this.updatePosition();
+            }
+
         }
     }
 
@@ -186,7 +193,7 @@ export class ScrollBar extends Slider {
         const tracklightImg = this.tracklightImg;
 
         if (this.vertical) {
-            val = this._height * this._amt;
+            val = this.explicitHeight * this._amt;
             const minheight = thumbImg.height/2;
             const maxheight = this.height - minheight;
             if(val<minheight){
@@ -198,7 +205,7 @@ export class ScrollBar extends Slider {
             thumbImg.y = val;
         }
         else {
-            val = this._width* this._amt;
+            val = this.explicitWidth* this._amt;
             const thumbImgWidth = thumbImg.width/2;
             const maxwidth = this.width - thumbImgWidth;
             if(val<thumbImgWidth){
