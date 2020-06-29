@@ -3527,8 +3527,8 @@ var Audio = /** @class */ (function (_super) {
         this.audio.on("error", function (e) {
             _this.emit("error", e);
         }), this;
-        this.audio.on("timeupdate", function (e) {
-            _this.emit("timeupdate", e);
+        this.audio.on("timeupdate", function (e, f) {
+            _this.emit("timeupdate", e, f);
         });
         this.audio.on("ended", function (e) {
             _this.emit("ended", e);
@@ -13856,13 +13856,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.6.5.1.6.5.1.6.5) ==1.6.5.1.6.5.1.6.5;
+//     return this.lastIndexOf(word, pos1.6.6.1.6.6.1.6.6) ==1.6.6.1.6.6.1.6.6;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.6.5";
+window.vf.gui.version = "1.6.6";
 
 
 /***/ })

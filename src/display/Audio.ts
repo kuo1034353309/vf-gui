@@ -58,7 +58,7 @@ import { getSound, now } from "../utils/Utils";
         * 需要上报的事件
         */
         this.audio.on("canplay", (e: any) => {
-            this.emit("canplay", e)
+            this.emit("canplay", e);
         },this);
         this.audio.on("canplaythrough", (e: any ) => {
             this.emit("canplaythrough", e)
@@ -67,16 +67,16 @@ import { getSound, now } from "../utils/Utils";
             this.emit("play", e);
         },this);
         this.audio.on("pause", (e: any) => {
-            this.emit("pause", e)
+            this.emit("pause", e);
         },this);
         this.audio.on("error", (e: any) => {
-            this.emit("error", e)
+            this.emit("error", e);
         }),this;
-        this.audio.on("timeupdate", (e: any, f:any) => {
+        this.audio.on("timeupdate", (e: any, f: number) => {
             this.emit("timeupdate", e,f)
         });
         this.audio.on("ended", (e: any) => {
-            this.emit("ended", e)
+            this.emit("ended", e);
             this.dispose();
         },this);
     }
