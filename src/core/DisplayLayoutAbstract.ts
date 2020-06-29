@@ -4,6 +4,7 @@ import validatorShared from "./DisplayLayoutValidator";
 import { ComponentEvent } from "../interaction/Index";
 import { formatRelative } from "../utils/Utils";
 import { DisplayObjectAbstract } from "./DisplayObjectAbstract";
+import { measure } from "../layout/CSSLayout";
 
 export const $tempLocalBounds = new vf.Rectangle();
 /**
@@ -12,7 +13,7 @@ export const $tempLocalBounds = new vf.Rectangle();
 export class DisplayLayoutAbstract extends DisplayObjectAbstract {
 
     public constructor() {
-        super()
+        super();
         this.initializeUIValues();
     }
 
@@ -23,7 +24,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      */
     public $values: any = {};
 
-    public includeInLayout = true;
+    /**
+     * 背景(内部使用)
+     */
+    public $background?: vf.Graphics;
     /**
      * @private
      * 定义的所有变量请不要添加任何初始值，必须统一在此处初始化。
@@ -33,6 +37,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
             [UIKeys.invalidatePropertiesFlag]: true,
             [UIKeys.invalidateSizeFlag]: true,
             [UIKeys.invalidateDisplayListFlag]: true,
+            [UIKeys.includeInLayout]: true,
             [UIKeys.left]: NaN,
             [UIKeys.right]: NaN,
             [UIKeys.top]: NaN,
@@ -41,10 +46,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
             [UIKeys.verticalCenter]: NaN,
             [UIKeys.percentWidth]: NaN,
             [UIKeys.percentHeight]: NaN,
+            [UIKeys.width]: NaN,
+            [UIKeys.height]: NaN,
             [UIKeys.explicitWidth]: NaN,
             [UIKeys.explicitHeight]: NaN,
-            [UIKeys.width]: 0,
-            [UIKeys.height]: 0,
             [UIKeys.minWidth]: 0,
             [UIKeys.maxWidth]: 100000,
             [UIKeys.minHeight]: 0,
@@ -53,20 +58,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
             [UIKeys.measuredHeight]: 0,
             [UIKeys.oldPreferWidth]: NaN,
             [UIKeys.oldPreferHeight]: NaN,
-            [UIKeys.x]: 0,
-            [UIKeys.y]: 0,
-            [UIKeys.oldX]: 0,
-            [UIKeys.oldY]: 0,
-            [UIKeys.oldWidth]: 0,
-            [UIKeys.oldHeight]: 0,
-            [UIKeys.scaleX]: 1,
-            [UIKeys.scaleY]: 1,
-            [UIKeys.pivotX]: 0,
-            [UIKeys.pivotY]: 0,
-            [UIKeys.rotation]: 0,
-            [UIKeys.skewX]: 0,
-            [UIKeys.skewY]: 0,
-            [UIKeys.zIndex]: NaN, 
+            // [UIKeys.scaleX]: 1,
+            // [UIKeys.scaleY]: 1,
+            [UIKeys.backgroundColor]:undefined,
+            [UIKeys.oldBackgroundColor]:undefined,
         };
     }
 
@@ -106,6 +101,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      */
     public validateSize(recursive?: boolean): void {
 
+        if (this.parent === undefined) {
+            return;
+        }
+
         if (recursive) {
             const children = this.uiChildren;
             if (children) {
@@ -123,9 +122,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
                 this.invalidateDisplayList();
                 this.invalidateParentLayout();
             }
-            if(this.parent == undefined){
-                return;
-            }
+
             values[UIKeys.invalidateSizeFlag] = false;
         }
     }
@@ -134,14 +131,14 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 验证子项的位置和大小，并绘制其他可视内容
      */
     public validateDisplayList(): void {
-        if(this.parent == undefined){
+        if (this.parent == undefined) {
             return;
         }
         const values = this.$values;
 
         if (values[UIKeys.invalidateDisplayListFlag]) {
             this.updateSize();
-            this.updateDisplayList(values[UIKeys.width], values[UIKeys.height]);
+            this.updateDisplayList(this.width, this.height);
             values[UIKeys.invalidateDisplayListFlag] = false;
         }
     }
@@ -152,45 +149,48 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     protected commitProperties(): void {
         //
     }
+
     /**
-     * @private
-     * 测量组件尺寸
+     * 测量显示对象宽高，如果子类没有重写，默认是this.container.width..
      */
     protected measure(): void {
-        this.container.getLocalBounds($tempLocalBounds);
-        this.setMeasuredSize($tempLocalBounds.width,$tempLocalBounds.height);
+        const values = this.$values;
+        values[UIKeys.measuredWidth] = this.container.width; 
+        values[UIKeys.measuredHeight] = this.container.height;
     }
-
     /**
      * @private
      * 测量组件尺寸，返回尺寸是否发生变化
      */
-    private measureSizes(): boolean {
+    protected measureSizes(): boolean {
         let changed = false;
         const values = this.$values;
-        if (!values[UIKeys.invalidateSizeFlag])
+
+        if (!values[UIKeys.invalidateSizeFlag]){
             return changed;
+        }
+            
 
-        this.measure();
-        const parentWidth = this.parent?this.parent.width:1;
-        const parentHeight = this.parent?this.parent.height:1;
-        const maxWidth = formatRelative(values[UIKeys.maxWidth],parentWidth);
-        const maxHeight = formatRelative(values[UIKeys.maxHeight],parentHeight);
-        const minWidth = formatRelative(values[UIKeys.minWidth],parentWidth);
-        const minHeight = formatRelative(values[UIKeys.minHeight],parentHeight);
+        const parent = this.parent;
+        const parentWidth = parent ? parent.width : 1;
+        const parentHeight = parent ? parent.height : 1;
+        const maxWidth = formatRelative(values[UIKeys.maxWidth], parentWidth);
+        const maxHeight = formatRelative(values[UIKeys.maxHeight], parentHeight);
+        const minWidth = formatRelative(values[UIKeys.minWidth], parentWidth);
+        const minHeight = formatRelative(values[UIKeys.minHeight], parentHeight);
 
-        
-
-        //显示设置宽高，会忽略最大与最小值
+        //显示设置宽高，会忽略最大与最小值  
         if (isNaN(values[UIKeys.explicitWidth]) || isNaN(values[UIKeys.explicitHeight])) {
+            if(isNaN(values[UIKeys.percentWidth]) && isNaN(values[UIKeys.percentHeight])){
+                this.measure();
+            }
+            if (!isNaN(values[UIKeys.percentWidth])) {
+                values[UIKeys.measuredWidth] = Math.ceil(values[UIKeys.percentWidth] * parentWidth);
+            }
+            if (!isNaN(values[UIKeys.percentHeight])) {
+                values[UIKeys.measuredHeight] = Math.ceil(values[UIKeys.percentHeight] * parentHeight);
+            }
 
-            if(!isNaN(values[UIKeys.percentWidth])){
-                values[UIKeys.measuredWidth] =Math.ceil(values[UIKeys.percentWidth]*parentWidth);
-            }
-            if(!isNaN(values[UIKeys.percentHeight])){
-                values[UIKeys.measuredHeight] = Math.ceil(values[UIKeys.percentHeight]*parentHeight);
-            }
- 
             if (values[UIKeys.measuredWidth] < minWidth) {
                 values[UIKeys.measuredWidth] = minWidth;
             }
@@ -201,9 +201,9 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
                 values[UIKeys.measuredHeight] = minHeight;
             }
             if (values[UIKeys.measuredHeight] > maxHeight) {
-                values[UIKeys.measuredHeight] = maxHeight
+                values[UIKeys.measuredHeight] = maxHeight;
             }
-        }else{
+        } else {
             if (values[UIKeys.explicitWidth] < minWidth) {
                 values[UIKeys.explicitWidth] = minWidth;
             }
@@ -219,24 +219,25 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         }
         const preferredW = this.getPreferredUWidth();
         const preferredH = this.getPreferredUHeight();
+
         if (preferredW !== values[UIKeys.oldPreferWidth] ||
             preferredH !== values[UIKeys.oldPreferHeight]) {
             values[UIKeys.oldPreferWidth] = preferredW;
             values[UIKeys.oldPreferHeight] = preferredH;
             changed = true;
         }
+
         return changed;
     }
-    /**
-     * @private
-     * 设置测量结果。
-     * @param width 测量宽度
-     * @param height 测量高度
-     */
-    public setMeasuredSize(width: number, height: number): void {
+
+    private checkMeasureSizes(){
         const values = this.$values;
-        values[UIKeys.measuredWidth] = Math.ceil(+width || 0);
-        values[UIKeys.measuredHeight] = Math.ceil(+height || 0);
+
+        if (values[UIKeys.invalidateSizeFlag]) {
+                this.measureSizes();
+                values[UIKeys.width] = this.getPreferredUWidth();
+                values[UIKeys.height] = this.getPreferredUHeight();
+        }
     }
     /**
      * @private
@@ -245,8 +246,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      */
     protected getPreferredUWidth(): number {
         const values = this.$values;
-        return isNaN(values[UIKeys.explicitWidth]) ?
-            values[UIKeys.measuredWidth] : values[UIKeys.explicitWidth];
+        if (isNaN(values[UIKeys.explicitWidth])) {
+            return values[UIKeys.measuredWidth];
+        }
+        return values[UIKeys.explicitWidth];
     }
 
     /**
@@ -254,8 +257,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      */
     protected getPreferredUHeight(): number {
         const values = this.$values;
-        return isNaN(values[UIKeys.explicitHeight]) ?
-            values[UIKeys.measuredHeight] : values[UIKeys.explicitHeight];
+        if (isNaN(values[UIKeys.explicitHeight])) {
+            return values[UIKeys.measuredHeight];
+        }
+        return values[UIKeys.explicitHeight];
     }
     /**
      * @private
@@ -263,11 +268,10 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 按照：外部显式设置尺寸>测量尺寸 的优先级顺序返回尺寸，
      */
     public getPreferredBounds(bounds: vf.Rectangle) {
-        this.measureSizes();
         bounds.width = this.getPreferredUWidth();
         bounds.height = this.getPreferredUHeight();
-        bounds.x = this.$values[UIKeys.x];
-        bounds.y = this.$values[UIKeys.y];
+        bounds.x = this.container.x;
+        bounds.y = this.container.y;
         return bounds;
     }
 
@@ -315,11 +319,11 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * @private
      * 标记父级容器的尺寸和显示列表为失效
      */
-    protected invalidateParentLayout(): void {
+    public invalidateParentLayout(): void {
         const parent = this.parent;
-        if (!parent){
+        if (!parent || !this.$values[UIKeys.includeInLayout]) {
             return;
-        } 
+        }
         if (parent instanceof DisplayLayoutAbstract) {
             parent.invalidateSize();
             parent.invalidateDisplayList();
@@ -329,15 +333,22 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * @private
      * 设置组件的布局位置
      */
-    public setPosition(x: number, y: number): void {
-        const values = this.$values;
-        values[UIKeys.x] = x;
-        values[UIKeys.y] = y;
-        this.updateTransform(); 
-        this.emit(ComponentEvent.MOVE,this);
-        
+    public setPosition(x?: number | undefined, y?: number | undefined): void {
+        this.container.position.set(x,y);
+        this.emit(ComponentEvent.MOVE, this);
+
     }
-    
+    /**
+     * @private
+     * 设置测量结果。
+     * @param width 测量宽度
+     * @param height 测量高度
+     */
+    public setMeasuredSize(width: number, height: number): void {
+        const values = this.$values;
+        values[UIKeys.measuredWidth] = Math.ceil(+width || 0);
+        values[UIKeys.measuredHeight] = Math.ceil(+height || 0);
+    }
     /**
      * @private
      * 设置组件的宽高。此方法不同于直接设置width,height属性，
@@ -346,14 +357,12 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     public setActualSize(w: number, h: number): void {
         let change = false;
         const values = this.$values;
-               
+
         if (values[UIKeys.width] !== w) {
-            values[UIKeys.oldWidth] = values[UIKeys.width] ;
             values[UIKeys.width] = w;
             change = true;
         }
         if (values[UIKeys.height] !== h) {
-            values[UIKeys.oldHeight] = values[UIKeys.height] ;
             values[UIKeys.height] = h;
             change = true;
         }
@@ -369,29 +378,11 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 更新最终的组件宽高
      */
     private updateSize(): void {
-        let unscaledWidth = 0;
-        let unscaledHeight = 0;
-        const values = this.$values;
-
-        if (!isNaN(values[UIKeys.explicitWidth])) {
-            unscaledWidth = values[UIKeys.explicitWidth];
-        }
-        else if(!isNaN(values[UIKeys.measuredWidth])){
-            unscaledWidth = values[UIKeys.measuredWidth];
-        }
-
-        if (!isNaN(values[UIKeys.explicitHeight])) {
-            unscaledHeight = values[UIKeys.explicitHeight];
-        }
-        else if (!isNaN(values[UIKeys.measuredHeight])){
-            unscaledHeight = values[UIKeys.measuredHeight];
-        }
-
-        this.setActualSize(unscaledWidth,unscaledHeight);
+        this.setActualSize(this.getPreferredUWidth(), this.getPreferredUHeight());
     }
 
-    public updateTransform(){
-        this.container.setTransform(this.x + this.pivotX,this.y + this.pivotY,this.scaleX,this.scaleY,this.rotation*(Math.PI/180),this.skewX,this.skewY,this.pivotX,this.pivotY);
+    public updateTransform() {
+        this.container.setTransform(this.x + this.pivotX, this.y + this.pivotY, this.scaleX, this.scaleY, this.rotation * (Math.PI / 180), this.skewX, this.skewY, this.pivotX, this.pivotY);
     }
     /**
      * 更新显示列表,子类重写，实现布局
@@ -422,7 +413,23 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         this.validateSize(true);
         this.updateSize();
     }
+    /**
+     * 指定此组件是否包含在父容器的布局中。若为false，则父级容器在测量和布局阶段都忽略此组件。默认值为true。
+     * 注意，visible属性与此属性不同，设置visible为false，父级容器仍会对其布局。
+     */
+    public get includeInLayout(): boolean {
+        return this.$values[UIKeys.includeInLayout];
+    }
 
+    public set includeInLayout(value: boolean) {
+        const values = this.$values;
+        value = !!value;
+        if (values[UIKeys.includeInLayout] === value)
+            return;
+        values[UIKeys.includeInLayout] = true;
+        this.invalidateParentLayout();
+        values[UIKeys.includeInLayout] = value;
+    }
     /**
      * @private
      * 距父级容器离左边距离
@@ -608,77 +615,6 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         return this.$values[UIKeys.explicitHeight];
     }
 
-    public get _width(): number {
-        return this.$values[UIKeys.explicitWidth];
-    }
-    public get _height(): number {
-        return this.$values[UIKeys.explicitHeight];
-    }
-
-    /**
-     * @private
-     * 组件宽度设置为undefined将使用组件的measure()方法自动计算尺寸
-     */
-    public get width(): number {
-        //this.measureSizes();//不可以调用测量，有性能消耗，后期优化
-        return this.getPreferredUWidth();
-    }
-
-    /**
-     * @private
-     *
-     * @param value
-     */
-    public set width(value: number) {
-        value = +value;
-        const values = this.$values;
-        if (value < 0 || values[UIKeys.width] === value && values[UIKeys.explicitWidth] === value)
-            return;
-        values[UIKeys.explicitWidth] = value;
-        if ( isNaN(value))
-            this.invalidateSize();
-        this.invalidateProperties();
-        this.invalidateDisplayList();
-        this.invalidateParentLayout();
-    }
-
-    public allInvalidate(){
-        this.invalidateSize();
-        this.measureSizes();
-        this.invalidateProperties();
-        this.invalidateDisplayList();
-        this.invalidateParentLayout();
-    }
-
-
-    /**
-     * @private
-     * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
-     */
-    public get height(): number {
-        //this.validateSizeNow();
-        //this.measureSizes();//不可以调用测量，有性能消耗，后期优化
-        return this.getPreferredUHeight();
-    }
-
-    /**
-     * @private
-     *
-     * @param value
-     */
-    public set height(value: number) {
-        value = +value;
-        const values = this.$values;
-        if (value < 0 || values[UIKeys.height] === value && values[UIKeys.explicitHeight] === value)
-            return;
-        values[UIKeys.explicitHeight] = value;
-        if (isNaN(value))
-            this.invalidateSize();
-        this.invalidateProperties();
-        this.invalidateDisplayList();
-        this.invalidateParentLayout();
-    }
-
     /**
      * @private
      * 组件的最小宽度,此属性设置为大于maxWidth的值时无效。同时影响测量和自动布局的尺寸。
@@ -756,158 +692,177 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
         this.invalidateParentLayout();
     }
 
+
+    public allInvalidate() {
+        this.invalidateSize();
+        this.invalidateProperties();
+        this.invalidateDisplayList();
+        this.invalidateParentLayout();
+    }
+
+    public get backgroundColor() {
+        return this.$values[UIKeys.backgroundColor];
+    }
+    public set backgroundColor(value) {
+
+        const values = this.$values;
+        if (values[UIKeys.backgroundColor] === value) {
+            return;
+        }
+        values[UIKeys.backgroundColor] = value;
+        this.invalidateDisplayList();
+    }
+
+    /**
+     * @private
+     * 组件宽度设置为undefined将使用组件的measure()方法自动计算尺寸
+     */
+    public get width(): number {
+        this.checkMeasureSizes();
+        // if(isNaN(this.$values[UIKeys.width])){
+        //     return this.getPreferredUWidth();
+        // }
+        return this.$values[UIKeys.width];
+    }
+
+    /**
+     * @private
+     *
+     * @param value
+     */
+    public set width(value: number) {
+        value = +value;
+        const values = this.$values;
+        if (value < 0 || values[UIKeys.explicitWidth] === value)
+            return;
+        values[UIKeys.explicitWidth] = value;
+        this.invalidateSize();
+        this.invalidateParentLayout();
+    }
+
+
+    /**
+     * @private
+     * 组件高度,默认值为NaN,设置为NaN将使用组件的measure()方法自动计算尺寸
+     */
+    public get height(): number {
+        this.checkMeasureSizes();
+        // if(isNaN(this.$values[UIKeys.height])){
+        //     return this.getPreferredUHeight();
+        // }
+        return this.$values[UIKeys.height];
+    }
+
+    /**
+     * @private
+     *
+     * @param value
+     */
+    public set height(value: number) {
+
+        value = +value;
+        const values = this.$values;
+        if (value < 0 || values[UIKeys.explicitHeight] === value)
+            return;
+        values[UIKeys.explicitHeight] = value;
+
+        this.invalidateSize();
+        this.invalidateParentLayout();
+    }
+
     public get scaleX() {
-        return this.$values[UIKeys.scaleX];
+        return  this.container.scale.x;
     }
 
     public set scaleX(value: number) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.scaleX] === value) {
-            return;
-        }
-        if (value !== this.container.scale.x) {
-            values[UIKeys.scaleX] = value;
-            this.invalidateProperties();
-            this.invalidateSize();
-            this.invalidateDisplayList();
-            this.invalidateParentLayout();
-        }
+        // this.invalidateSize();
+        // this.invalidateParentLayout();
+        this.container.scale.x = value;
     }
 
     public get scaleY() {
-        return this.$values[UIKeys.scaleY];
+        return  this.container.scale.y;
     }
 
     public set scaleY(value: number) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.scaleY] === value) {
-            return;
-        }
-        if (value !== this.container.scale.y) {
-            values[UIKeys.scaleY] = value;
-            this.invalidateProperties();
-            this.invalidateSize();
-            this.invalidateDisplayList();
-            this.invalidateParentLayout();
-        }
+        // this.invalidateSize();
+        // this.invalidateParentLayout();
+        this.container.scale.y = value;
     }
 
 
     public get x() {
-        return this.$values[UIKeys.x];
+        return this.container.x;
     }
     public set x(value: number) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.x] === value) {
-            return;
-        }
-        values[UIKeys.x] = value;
-        if (this.container.x !== value) {
-            this.container.x = value;
-            this.invalidateParentLayout();
-        }
+        // this.invalidateDisplayList();
+        // this.invalidateParentLayout();
+        this.container.position.x = value;
     }
 
     public get y() {
-        return this.$values[UIKeys.y];
+        return this.container.y;
     }
 
     public set y(value: number) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.y] === value) {
-            return;
-        }
-        values[UIKeys.y] = value;
-        if (value !== this.container.y) {
-            this.container.y = value;
-            this.invalidateParentLayout();
-        }
+        // this.invalidateDisplayList();
+        // this.invalidateParentLayout();
+        this.container.position.y = value;
     }
 
 
     public get skewX() {
-        return this.$values[UIKeys.skewX];
+        return this.container.skew.x;
     }
     public set skewX(value) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.skewX] === value) {
-            return;
-        }
-        values[UIKeys.skewX] = value;
-        this.invalidateDisplayList();
+        // this.invalidateDisplayList();
+        this.container.skew.x = value;
     }
 
     public get skewY() {
-        return this.$values[UIKeys.skewY];
+        return this.container.skew.y;
     }
     public set skewY(value) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.skewY] === value) {
-            return;
-        }
-        values[UIKeys.skewY] = value;
-        this.invalidateDisplayList();
+        // this.invalidateDisplayList();
+        this.container.skew.y = value;
     }
 
     public get pivotX() {
-        return this.$values[UIKeys.pivotX];
+        return this.container.pivot.x;
     }
     public set pivotX(value) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.pivotX] === value) {
-            return;
-        }
-        values[UIKeys.pivotX] = value;
-        this.invalidateDisplayList();
+        // this.invalidateDisplayList();
+        this.container.pivot.x = value;
     }
 
     public get pivotY() {
-        return this.$values[UIKeys.pivotY];
+        return this.container.pivot.y;
     }
     public set pivotY(value) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.pivotY] === value) {
-            return;
-        }
-        values[UIKeys.pivotY] = value;
-        this.invalidateDisplayList();
+        // this.invalidateDisplayList();
+        this.container.pivot.y = value;
     }
 
     public get rotation() {
-        return this.$values[UIKeys.rotation];
+        return this.container.angle;
     }
     public set rotation(value) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.rotation] === value) {
-            return;
-        }
-        values[UIKeys.rotation] = value;
-        this.invalidateDisplayList();
+        // this.invalidateDisplayList();
+        this.container.angle = value;
     }
 
     /**
      *  =不可用= 设置索引层级，每次父级变化时，会排序 （未实现）
      */
-    public get zIndex(){
-        return this.$values[UIKeys.zIndex];
+    public get zIndex() {
+        return this.container.zIndex;
     }
     public set zIndex(value) {
-        value = +value || 0;
-        const values = this.$values;
-        if (values[UIKeys.zIndex] === value) {
-            return;
+        // this.invalidateParentLayout();
+        if(this.parent && this.parent.isContainer && !this.parent.container.sortableChildren){
+            this.parent.container.sortableChildren = true;
         }
-        values[UIKeys.zIndex] = value;
-        this.invalidateParentLayout();
+        this.container.zIndex = value;
     }
 
 

@@ -206,13 +206,13 @@ export class Slider extends DisplayObject{
         const tracklightImg = this.tracklightImg;
         if (this.vertical) {
             //thumbImg.style.top =this._amt; 
-            thumbImg.x = this._width >> 1;
-            tracklightImg.width =this._width;
+            thumbImg.x = this.explicitWidth >> 1;
+            tracklightImg.width =this.explicitWidth;
             //tracklightImg.style.height = this._amt * this.height;
         }else {
-            thumbImg.y =this._height >> 1;
+            thumbImg.y =this.explicitHeight >> 1;
             //thumbImg.style.left = this._amt; 
-            tracklightImg.height =this._height;
+            tracklightImg.height =this.explicitHeight;
             //tracklightImg.style.width =  this._amt * this.width;
         }
     }
@@ -226,7 +226,7 @@ export class Slider extends DisplayObject{
         const tracklightImg = this.tracklightImg;
 
         if (this.vertical) {
-            val = this._height * this._amt;
+            val = this.explicitHeight * this._amt;
             if (soft) {
                 Tween.to({y:thumbImg.y,height:tracklightImg.height},{ y: val,height: val },300).easing(Easing.Linear.None)
                     .on(Tween.Event.update, (obj: any) => {
@@ -240,7 +240,7 @@ export class Slider extends DisplayObject{
             }
         }
         else {
-            val = this._width* this._amt;
+            val = this.explicitWidth* this._amt;
             if (soft) {
                 Tween.to({x:thumbImg.x,width:tracklightImg.width},{ x: val,width: val },300).easing(Easing.Linear.None)
                     .on(Tween.Event.update, (obj: any
@@ -269,7 +269,7 @@ export class Slider extends DisplayObject{
     protected onDragStart (event: InteractionEvent) {
         if(this._thumbDrag.id == event.data.identifier){
             this._startValue = this._amt;
-            this._maxPosition = this.vertical ? this._height : this._width;
+            this._maxPosition = this.vertical ? this.explicitHeight : this.explicitWidth;
         }
     }
 
@@ -296,7 +296,7 @@ export class Slider extends DisplayObject{
         this.trackImg.container.toLocal(mousePosition, undefined, this._localMousePosition, true);
 
         const newPos = this.vertical ? this._localMousePosition.y  : this._localMousePosition.x;
-        const maxPos = this.vertical ? this._height: this._width ;
+        const maxPos = this.vertical ? this.explicitHeight: this.explicitWidth ;
         this._amt = !maxPos ? 0 : Math.max(0, Math.min(1, newPos / maxPos));
         this.updatePosition(soft);
         this.triggerValueChanging();

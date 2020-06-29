@@ -45,8 +45,8 @@ export class Label extends DisplayObject {
     }
     public set text(value) {
         this.sprite.text = value;
+        this.setActualSize(this.sprite.width,this.sprite.height);
         this.invalidateSize();
-        this.invalidateDisplayList();
         this.emit(ComponentEvent.CHANGE,this);
     }
 
@@ -56,8 +56,8 @@ export class Label extends DisplayObject {
         }
         value.breakWords = true;
         this.sprite.style = value;
+        this.setActualSize(this.sprite.width,this.sprite.height);
         this.invalidateSize();
-        this.invalidateDisplayList();
     }
 
     protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void {

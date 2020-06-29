@@ -97,14 +97,6 @@ export class Image extends DisplayObject implements MaskSprite{
         }
     }
 
-    /**
-     * @private
-     * 测量组件尺寸
-     */
-    protected measure(): void {
-        //
-    }
-
     protected updateDisplayList(unscaledWidth: number, unscaledHeight: number) {
         if(unscaledWidth === 0 && unscaledHeight ===0){
             return;
@@ -119,6 +111,20 @@ export class Image extends DisplayObject implements MaskSprite{
 
     }
 
+    protected measure(): void {
+        
+        if(this._sprite){
+            const texture = this._sprite.texture;
+            if (texture) {
+                this.setMeasuredSize(texture.frame.width, texture.frame.height);
+            }
+            else {
+                this.setMeasuredSize(0, 0);
+            }
+        }
+
+    }
+
     protected srcSystem() {
  
         const { container, src } = this;
@@ -129,7 +135,9 @@ export class Image extends DisplayObject implements MaskSprite{
         if (this._texture) {
             this._texture.removeAllListeners();
         }
-
+        if(src === undefined && this._source === undefined) {
+            return;
+        }
         if (src !== this._source) {
             this._source = src;
             const texture = this._texture = getTexture(src);
@@ -137,15 +145,13 @@ export class Image extends DisplayObject implements MaskSprite{
                 return;
             }
             if (texture.frame.width > 1 && texture.frame.height > 1) {
-                this.setMeasuredSize(texture.frame.width, texture.frame.height);
+                this.invalidateSize();
             }
             let invalidateDisplayList = false;
             texture.once("update", () => {
                 invalidateDisplayList = true;
-                this.setMeasuredSize(texture.frame.width, texture.frame.height);
                 this.invalidateSize();
                 this.emit(ComponentEvent.COMPLETE, this);
-
             }, this);
 
             let sprite: vf.Sprite | vf.TilingSprite | vf.NineSlicePlane | undefined = this._sprite;

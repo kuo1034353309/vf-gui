@@ -305,7 +305,7 @@ export class UIBaseDrag implements Lifecycle {
                 
                 if(target.stage && target.stage.app){
                     const interaction = (target.stage.app.renderer as vf.Renderer).plugins.interaction;
-                    interaction.cursor = this.dragMoveCursor;
+                    (interaction as any).cursor = this.dragMoveCursor;
                 }
 
                 if (this.dragging && target.stage) {
@@ -471,12 +471,13 @@ export class UIBaseDrag implements Lifecycle {
             }
             if(target.stage && target.stage.app){
                 const interaction = (target.stage.app.renderer as vf.Renderer).plugins.interaction;
-                interaction.cursor = target.style.cursor;
+                (interaction as any).cursor = target.style.cursor;
             }
             this._dragState = 4;
             e.data.tiltX = dragPosition.x;
             e.data.tiltY = dragPosition.y;
             item.dragOption._actionData = {type:ComponentEvent.DRAG_TARGET,data: e.data,path:getDisplayPathById(parent)};
+            item.invalidateParentLayout();
             item.emit(ComponentEvent.DRAG_TARGET, item, e);
             
         }

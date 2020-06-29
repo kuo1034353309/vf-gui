@@ -1,7 +1,9 @@
+import * as UIKeys from "./DisplayLayoutKeys";
 import { GroupController } from "../interaction/Index";
 import { DisplayLayoutAbstract } from "./DisplayLayoutAbstract";
 import { CSSStyle } from "../layout/CSSStyle";
 import { updateDisplayLayout } from "../layout/CSSLayout";
+import { drawBackgroundColor } from "../layout/CSSSSystem";
 import { UIBaseDrag } from "./plugs/UIBaseDrag";
 import { deepCopy } from "../utils/Utils";
 import { UIClick } from "./plugs/UIClick";
@@ -21,11 +23,6 @@ export class DisplayObject extends DisplayLayoutAbstract implements Lifecycle {
         super();
         this.container.name = (this.constructor as any).name;
     }
-
-    /**
-     * 背景(内部使用)
-     */
-    public $background?: vf.Graphics;
     /**
      * 遮罩，设置遮罩后，组件内部的索引位置可能产生变化
      */
@@ -276,12 +273,21 @@ export class DisplayObject extends DisplayLayoutAbstract implements Lifecycle {
      */
     protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void {
 
-        if (this._style && this._style.display !== "none") {
+        if (!this.visible || this.alpha <=0 ) {  // 隐藏元素后，布局失效
+            return;
+        }
+        if (this._style) {
             //console.log("displayStyle",unscaledWidth,unscaledHeight,this.left,this.right,this.x,this.y);
             updateDisplayLayout(this, unscaledWidth, unscaledHeight);
         } else {
             //console.log("display",this.x + this.pivotX,this.y + this.pivotY,this.scaleX,this.scaleY,this.rotation*(Math.PI/180),this.skewX,this.skewY,this.pivotX,this.pivotY);
             this.updateTransform();
+        }
+                //
+        const values = this.$values;
+        if(values[UIKeys.backgroundColor] !== values[UIKeys.oldBackgroundColor]){
+            values[UIKeys.oldBackgroundColor] = values[UIKeys.backgroundColor];
+            drawBackgroundColor(this);
         }
     }
 
