@@ -111,6 +111,18 @@ export class Image extends DisplayObject implements MaskSprite{
 
     }
 
+    public setSpeiteSize(unscaledWidth?: number, unscaledHeight?: number){
+        const sprite = this._sprite;
+
+        if (sprite) {
+            if(unscaledWidth)
+                sprite.width = unscaledWidth;
+            if(unscaledHeight)
+                sprite.height = unscaledHeight;
+            this.setActualSize(sprite.width,sprite.height,false);
+        }
+    }
+
     protected measure(): void {
         
         if(this._sprite){

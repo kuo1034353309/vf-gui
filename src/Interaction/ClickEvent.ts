@@ -84,6 +84,7 @@ export class ClickEvent {
     private eventnameMouseup = TouchMouseEventEnum.mouseup;
     private eventnameMouseupoutside = TouchMouseEventEnum.mouseupoutside;
     private isStop = true;
+    private deviceType = vf.utils.getSystemInfo().device.type;
 
     public getTarget() {
         return this.obj;
@@ -92,13 +93,18 @@ export class ClickEvent {
     public startEvent() {
 
         if (this.isStop) {
-            this.obj.container.on(this.eventnameMousedown, this._onMouseDown, this);
-            if (!this.right)
-                this.obj.container.on(TouchMouseEventEnum.touchstart, this._onMouseDown, this);
-
-            if (this.hover) {
-                this.obj.container.on(TouchMouseEventEnum.mouseover, this._onMouseOver, this);
-                this.obj.container.on(TouchMouseEventEnum.mouseout, this._onMouseOut, this);
+            const container = this.obj.container;
+            container.on(this.eventnameMousedown, this._onMouseDown, this);
+            if (!this.right){
+                container.on(TouchMouseEventEnum.touchstart, this._onMouseDown, this);
+                if (this.hover) {
+                    container.on(TouchMouseEventEnum.mouseover, this._onMouseOver, this);
+                    container.on(TouchMouseEventEnum.mouseout, this._onMouseOut, this);
+                    if(this.deviceType !== 'pc'){
+                        container.on(TouchMouseEventEnum.touchstart, this._onMouseOver, this);
+                        container.on(TouchMouseEventEnum.touchendoutside, this._onMouseOut, this);
+                    }
+                }
             }
             this.isStop = false;
         }
@@ -106,25 +112,29 @@ export class ClickEvent {
 
     /** 清除拖动 */
     public stopEvent() {
+        const container = this.obj.container;
         if (this.bound) {
-            this.obj.container.off(this.eventnameMouseup, this._onMouseUp, this);
-            this.obj.container.off(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
+            container.off(this.eventnameMouseup, this._onMouseUp, this);
+            container.off(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
 
             if (!this.right) {
-                this.obj.container.off(TouchMouseEventEnum.touchend, this._onMouseUp, this);
-                this.obj.container.off(TouchMouseEventEnum.touchendoutside, this._onMouseUpOutside, this);
+                container.off(TouchMouseEventEnum.touchend, this._onMouseUp, this);
+                container.off(TouchMouseEventEnum.touchendoutside, this._onMouseUpOutside, this);
             }
             this.bound = false;
         }
-        this.obj.container.off(this.eventnameMousedown, this._onMouseDown, this);
+        container.off(this.eventnameMousedown, this._onMouseDown, this);
         if (!this.right)
-            this.obj.container.off(TouchMouseEventEnum.touchstart, this._onMouseDown, this);
+            container.off(TouchMouseEventEnum.touchstart, this._onMouseDown, this);
 
         if (this.hover) {
-            this.obj.container.off(TouchMouseEventEnum.mouseover, this._onMouseOver, this);
-            this.obj.container.off(TouchMouseEventEnum.mouseout, this._onMouseOut, this);
-            this.obj.container.off(TouchMouseEventEnum.mousemove, this._onMouseMove, this);
-            this.obj.container.off(TouchMouseEventEnum.touchmove, this._onMouseMove, this);
+            container.off(TouchMouseEventEnum.mouseover, this._onMouseOver, this);
+            container.off(TouchMouseEventEnum.mouseout, this._onMouseOut, this);
+            container.off(TouchMouseEventEnum.mousemove, this._onMouseMove, this);
+            container.off(TouchMouseEventEnum.touchmove, this._onMouseMove, this);
+
+            container.off(TouchMouseEventEnum.touchstart, this._onMouseOver, this);
+            container.off(TouchMouseEventEnum.touchendoutside, this._onMouseOut, this);
         }
         this.isStop = true;
     }
@@ -138,12 +148,13 @@ export class ClickEvent {
         if (this.obj.listenerCount(TouchMouseEvent.onDown) > 0) {
             this.emitTouchEvent(TouchMouseEvent.onDown, e, true);
         }
+        const container = this.obj.container;
         if (!this.bound) {
-            this.obj.container.on(this.eventnameMouseup, this._onMouseUp, this);
-            this.obj.container.on(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
+            container.on(this.eventnameMouseup, this._onMouseUp, this);
+            container.on(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
             if (!this.right) {
-                this.obj.container.on(TouchMouseEventEnum.touchend, this._onMouseUp, this);
-                this.obj.container.on(TouchMouseEventEnum.touchendoutside, this._onMouseUpOutside, this);
+                container.on(TouchMouseEventEnum.touchend, this._onMouseUp, this);
+                container.on(TouchMouseEventEnum.touchendoutside, this._onMouseUpOutside, this);
             }
             this.bound = true;
         }

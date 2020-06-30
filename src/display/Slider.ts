@@ -17,17 +17,6 @@ export class Slider extends DisplayObject{
 
     public constructor(){
         super();
-
-        this._thumbDrag.onDragPress = this.onPress.bind(this);
-        this._thumbDrag.onDragStart = this.onDragStart.bind(this);
-        this._thumbDrag.onDragMove = this.onDragMove.bind(this);
-        this._thumbDrag.onDragEnd = this.onDragEnd.bind(this);
-
-        this._trackDrag.onDragPress = this.onPress.bind(this);
-        // this._trackDrag.onDragStart = this.onDragStart;
-        // this._trackDrag.onDragMove = this.onDragMove;
-        // this._trackDrag.onDragEnd = this.onDragEnd;
-
         this.thumbImg.container.name = "thumbImg";
         this.thumbImg.fillMode = "scale";
         this.thumbImg.scale9Grid = [0,0,0,0];
@@ -49,6 +38,13 @@ export class Slider extends DisplayObject{
         this.addChild(this.trackImg);
         this.addChild(this.tracklightImg);
         this.addChild(this.thumbImg);
+
+        this._thumbDrag.onDragPress = this.onPress.bind(this);
+        this._thumbDrag.onDragStart = this.onDragStart.bind(this);
+        this._thumbDrag.onDragMove = this.onDragMove.bind(this);
+        this._thumbDrag.onDragEnd = this.onDragEnd.bind(this);
+
+        this._trackDrag.onDragPress = this.onPress.bind(this);
     }
     /** 
      * 当前值 
@@ -62,9 +58,9 @@ export class Slider extends DisplayObject{
 
     protected _startValue = 0;
     protected _maxPosition = 0;
-    protected _localMousePosition = new vf.Point();
     protected _lastChange = 0;
     protected _lastChanging = 0;
+    protected _localMousePosition = new vf.Point();
 
     /** 状态展示 */
     readonly trackImg = new VfuiImage();
@@ -74,16 +70,6 @@ export class Slider extends DisplayObject{
     protected _thumbDrag = new DragEvent(this.thumbImg);
     protected _trackDrag = new DragEvent(this.trackImg);
 
-
-
-    /**
-     * 设置拖拽图，9切方式
-     */
-    public set trackScale9Grid(value: number[]) {
-        this.thumbImg.scale9Grid = value;
-    }
-
-    protected _value = 0;
     /**
      * 当前值
      */
@@ -91,15 +77,12 @@ export class Slider extends DisplayObject{
         return Utils.Round(Utils.Lerp(this.minValue, this.maxValue, this._amt), this._decimals);
     }
     public set value(value: number) {
-        this._value = value;
-        this.valueSystem();
+        this.valueSystem(value);
     }
 
-    protected valueSystem(){
-        this._amt = (Math.max(this.minValue, Math.min(this.maxValue, this._value)) - this.minValue) / (this.maxValue - this.minValue);
-        this.updatePosition();
-        this.triggerValueChange();
-        this.triggerValueChanging();
+    protected valueSystem(value = 0){
+        this._amt = (Math.max(this.minValue, Math.min(this.maxValue, value)) - this.minValue) / (this.maxValue - this.minValue);
+        this.invalidateDisplayList();
     }
 
     /**
@@ -110,7 +93,11 @@ export class Slider extends DisplayObject{
         return this._minValue;
     }
     public set minValue(value) {
+        if(this._minValue === value){
+            return;
+        }
         this._minValue = value;
+        this.invalidateDisplayList();
     }
     /**
      * 最大值
@@ -120,7 +107,11 @@ export class Slider extends DisplayObject{
         return this._maxValue;
     }
     public set maxValue(value) {
+        if(this._maxValue === value){
+            return;
+        }
         this._maxValue = value;
+        this.invalidateDisplayList();
     }
     /**
      * 是否垂直,滑块方向
@@ -130,8 +121,10 @@ export class Slider extends DisplayObject{
         return this._vertical;
     }
     public set vertical(value) {
+        if(this._vertical === value){
+            return;
+        }
         this._vertical = value;
-        this.updateLayout();
         this.invalidateProperties();
     }
     /** 
@@ -174,53 +167,13 @@ export class Slider extends DisplayObject{
         }
     }
 
-    protected isExcValueSystem = false;
-    public setActualSize(w: number, h: number): void {
-        super.setActualSize(w,h);
-        if(this.trackImg.width!==w){
-            this.trackImg.width = w;
-        }
-        if(this.trackImg.height!==w){
-            this.trackImg.height = h;
-        }
-        if(!this.isExcValueSystem){
-            this.valueSystem();
-            this.isExcValueSystem = true;
-        }
-
-    }
-
-    public release(){
-        super.release();
-        this.trackImg.release();
-        this.thumbImg.release();
-        this.tracklightImg.release();
-    }
-    
     protected onImgload(){
-        this.updateLayout();
-    }
-
-    protected updateLayout(){
-        const thumbImg = this.thumbImg;
-        const tracklightImg = this.tracklightImg;
-        if (this.vertical) {
-            //thumbImg.style.top =this._amt; 
-            thumbImg.x = this.explicitWidth >> 1;
-            tracklightImg.width =this.explicitWidth;
-            //tracklightImg.style.height = this._amt * this.height;
-        }else {
-            thumbImg.y =this.explicitHeight >> 1;
-            //thumbImg.style.left = this._amt; 
-            tracklightImg.height =this.explicitHeight;
-            //tracklightImg.style.width =  this._amt * this.width;
-        }
+        this.invalidateProperties();
     }
 
 
     protected updatePosition(soft?: boolean){
 
-        this.updateLayout();
         let val = 0;
         const thumbImg = this.thumbImg;
         const tracklightImg = this.tracklightImg;
@@ -230,8 +183,10 @@ export class Slider extends DisplayObject{
             if (soft) {
                 Tween.to({y:thumbImg.y,height:tracklightImg.height},{ y: val,height: val },300).easing(Easing.Linear.None)
                     .on(Tween.Event.update, (obj: any) => {
+                       
                         thumbImg.y = obj.y;
-                        tracklightImg.height = obj.height;
+                        //tracklightImg.height = obj.height;
+                        tracklightImg.setSpeiteSize(undefined,obj.height);
                     }) .start();
             }
             else {
@@ -246,7 +201,8 @@ export class Slider extends DisplayObject{
                     .on(Tween.Event.update, (obj: any
                     ) => {
                         thumbImg.x = obj.x;
-                        tracklightImg.width = obj.width;
+                        //tracklightImg.width = obj.width;
+                        tracklightImg.setSpeiteSize(obj.width);
                     }) .start();
             }
             else {
@@ -316,6 +272,39 @@ export class Slider extends DisplayObject{
         if (this._lastChanging != value) {
             this._lastChanging = value;
         }
+    }
+
+    public updateLayout(){
+        this.invalidateProperties();
+    }
+    
+    protected commitProperties() {
+        const thumbImg = this.thumbImg;
+        const tracklightImg = this.tracklightImg;
+        if (this.vertical) {
+            thumbImg.y = this._amt;
+            thumbImg.x = this.explicitWidth >> 1;
+            tracklightImg.width =this.width;
+            tracklightImg.height = this._amt * this.height;
+        }else {
+            thumbImg.x = this._amt;
+            thumbImg.y =this.explicitHeight >> 1;
+            tracklightImg.height =this.height;
+            tracklightImg.width =  this._amt * this.width;
+        }
+    }
+
+    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number) { 
+        this.commitProperties();
+        this.updatePosition();
+        super.updateDisplayList(unscaledWidth,unscaledHeight);
+    }
+
+    public release(){
+        super.release();
+        this.trackImg.release();
+        this.thumbImg.release();
+        this.tracklightImg.release();
     }
     
 }

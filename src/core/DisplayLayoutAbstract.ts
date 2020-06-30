@@ -354,7 +354,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
      * 设置组件的宽高。此方法不同于直接设置width,height属性，
      * 不会影响显式标记尺寸属性
      */
-    public setActualSize(w: number, h: number): void {
+    public setActualSize(w: number, h: number, isInvalidate = true): void {
         let change = false;
         const values = this.$values;
 
@@ -367,7 +367,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
             change = true;
         }
 
-        if (change) {
+        if (change && isInvalidate) {
             this.invalidateDisplayList();
             this.emit(ComponentEvent.RESIZE, this);
         }
@@ -382,7 +382,7 @@ export class DisplayLayoutAbstract extends DisplayObjectAbstract {
     }
 
     public updateTransform() {
-        this.container.setTransform(this.x + this.pivotX, this.y + this.pivotY, this.scaleX, this.scaleY, this.rotation * (Math.PI / 180), this.skewX, this.skewY, this.pivotX, this.pivotY);
+        this.container.setTransform(this.x, this.y, this.scaleX, this.scaleY, this.rotation * (Math.PI / 180), this.skewX, this.skewY, this.pivotX, this.pivotY);
     }
     /**
      * 更新显示列表,子类重写，实现布局
