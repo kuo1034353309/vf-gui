@@ -49,6 +49,7 @@ export class SyncManager {
     private _throttleTimer: any = null; //节流时间函数
     private _evtDataList: any[] = []; //历史信令整理后的数组
     private _lastMoveEvent: any[] = []; //上一个move事件，用于稀疏，如果是连续的move操作，则使用相同的code，这样信令服务器会merge掉之前的move操作，在恢复时会拿到更少的数据量
+    private _readystate: number = 1;
     /**
      * 开始同步
      */
@@ -57,6 +58,7 @@ export class SyncManager {
     }
 
     public release(){
+        this._readystate = 0;
         const stage = this._stage;
         if(stage.syncInteractiveFlag){
             const systemEvent = stage.getSystemEvent();
@@ -297,18 +299,21 @@ export class SyncManager {
         if (this._evtDataList.length == 0) return;
         const start = performance.now();
         this.resetStage();
-        const resetTime = performance.now();
-        this.resumeStatusFlag = true;
-        this._stage.renderable = false;
-        for (let i = 0; i < this._evtDataList.length; ++i) {
-            //执行操作
-            this.parseEventData(this._evtDataList[i]);
-        }
-        this._stage.renderable = true;
-        this.resumeStatusFlag = false;
-        const now = performance.now();
-        if(debug){
-            console.log(`恢复总耗时：${now - start}, reset耗时: ${resetTime - start}, 执行操作耗时：${now - resetTime}}`);
-        }
+        setTimeout(() => {
+            if(this._readystate === 0) return;
+            const resetTime = performance.now();
+            this.resumeStatusFlag = true;
+            this._stage.renderable = false;
+            for (let i = 0; i < this._evtDataList.length; ++i) {
+                //执行操作
+                this.parseEventData(this._evtDataList[i]);
+            }
+            this._stage.renderable = true;
+            this.resumeStatusFlag = false;
+            const now = performance.now();
+            if(debug){
+                console.log(`恢复总耗时：${now - start}, reset耗时: ${resetTime - start}, 执行操作耗时：${now - resetTime}}`);
+            }
+        }, 120);
     }
 }
