@@ -221,6 +221,11 @@ import { getSound, now } from "../utils/Utils";
         }
     }
 
+    public release() {
+        super.release();
+        this.dispose();
+    }
+
     /**
     * 各种可取参数.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
