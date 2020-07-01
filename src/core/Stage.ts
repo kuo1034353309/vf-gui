@@ -129,11 +129,13 @@ export class Stage extends DisplayLayoutAbstract{
     }
 
     /**
-     * 虚接口，子类可以扩充
+     * 接收来自player的消息
+     * @param msg 
      */
-    public inputLog(msg: any){
-        //
-        //console.log(msg);
+    public receiveFromPlayer(msg: any){
+        if(msg.code == 'syncEvent'){
+            let data = msg.data; //{data: eventData, type: 'live/history'}
+            this.syncManager && this.syncManager.receiveEvent(data.data, data.type);
+        }
     }
-
 }
