@@ -34,6 +34,7 @@ export class Slider extends DisplayObject{
         this.tracklightImg.container.name = "tracklightImg";
         this.tracklightImg.fillMode = "scale";
         this.tracklightImg.scale9Grid = [2,2,2,2];
+        //this.tracklightImg.on(ComponentEvent.COMPLETE,this.onImgload, this);
 
         this.addChild(this.trackImg);
         this.addChild(this.tracklightImg);
@@ -288,7 +289,7 @@ export class Slider extends DisplayObject{
             tracklightImg.height = this._amt * this.height;
         }else {
             thumbImg.x = this._amt;
-            thumbImg.y =this.explicitHeight >> 1;
+            thumbImg.y = this.explicitHeight >> 1;
             tracklightImg.height =this.height;
             tracklightImg.width =  this._amt * this.width;
         }
