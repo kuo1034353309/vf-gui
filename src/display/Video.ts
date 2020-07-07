@@ -15,6 +15,13 @@ export class Video extends DisplayObject {
     protected _canvasBounds: { top: number; left: number; width: number; height: number } | undefined;
     protected _lastRenderer: vf.Renderer | undefined;
     protected _resolution = 1; 
+
+    private _canplayFun: any;
+    private _canplaythroughFun:any;
+    private _completeFun:any;
+    private _endedFun:any;
+    private _loadeddataFun:any;
+    private _durationchangeFun:any;
     public constructor() {
         super();
         
@@ -27,26 +34,47 @@ export class Video extends DisplayObject {
         // this.container.on("renderChange",this.updateSystem,this);
         this._video.style.position = "absolute";
         this._video.controls = true;
-        let func = (evtStr:string)=>{
-            video.addEventListener(evtStr, (e: any) => {
-                this.emit(evtStr, e);
-            });
-        }
-         /**
+
+        /**
         * 需要上报的事件
         */
-       //浏览器可以播放媒体文件了，但估计没有足够的数据来支撑播放到结束，不需要停止缓存更多的内容
-        func("canplay");
+        this._canplayFun = this.canplayFun.bind(this);
+        this._canplaythroughFun = this.canplaythroughFun.bind(this);
+        this._completeFun = this.completeFun.bind(this);
+        this._endedFun = this.endedFun.bind(this);
+        this._loadeddataFun = this.loadeddataFun.bind(this);
+        this._durationchangeFun = this.durationchangeFun.bind(this);
+        //浏览器可以播放媒体文件了，但估计没有足够的数据来支撑播放到结束，不需要停止缓存更多的内容
+        video.addEventListener('canplay', this._canplayFun);
         //浏览器估算可以播放到结束，不需要停止缓存更多的内容。
-        func("canplaythrough");
+        video.addEventListener('canplaythrough', this._canplaythroughFun);
         //渲染完成
-        func("complete");
+        video.addEventListener('complete', this._completeFun);
         //视频已经到达结束点
-        func("ended");
+        video.addEventListener('ended', this._endedFun);
         //首帧已经加载
-        func("loadeddata");
+        video.addEventListener('loadeddata', this._loadeddataFun);
         //duration 属性的值改变时触发
-        func("durationchange");
+        video.addEventListener('durationchange', this._durationchangeFun);
+    }
+
+    private canplayFun(e:any){
+        this.emit('canplay',e);
+    }
+    private canplaythroughFun(e:any){
+        this.emit('canplaythrough',e);
+    }
+    private completeFun(e:any){
+        this.emit('complete',e);
+    }
+    private endedFun(e:any){
+        this.emit('ended',e);
+    }
+    private loadeddataFun(e:any){
+        this.emit('loadeddata',e);
+    }
+    private durationchangeFun(e:any){
+        this.emit('durationchange',e);
     }
 
     protected updateDisplayList(unscaledWidth: number, unscaledHeight: number) {
@@ -297,27 +325,23 @@ export class Video extends DisplayObject {
             return;
         }
         const video = this._video;
-        let func = (evtStr:string)=>{
-            video.removeEventListener(evtStr, (e: any) => {
-                this.emit(evtStr, e);
-            });
-        }
-         /**
-        * 需要移除的事件
-        */
-       //浏览器可以播放媒体文件了，但估计没有足够的数据来支撑播放到结束，不需要停止缓存更多的内容
-        func("canplay");
+        video.removeEventListener('canplay', this._canplayFun);
         //浏览器估算可以播放到结束，不需要停止缓存更多的内容。
-        func("canplaythrough");
+        video.removeEventListener('canplaythrough', this._canplaythroughFun);
         //渲染完成
-        func("complete");
+        video.removeEventListener('complete', this._completeFun);
         //视频已经到达结束点
-        func("ended");
+        video.removeEventListener('ended', this._endedFun);
         //首帧已经加载
-        func("loadeddata");
+        video.removeEventListener('loadeddata', this._loadeddataFun);
         //duration 属性的值改变时触发
-        func("durationchange");
-
+        video.removeEventListener('durationchange', this._durationchangeFun);
+        this._canplayFun = null;
+        this._canplaythroughFun = null;
+        this._completeFun = null;
+        this._endedFun = null;
+        this._loadeddataFun = null;
+        this._durationchangeFun = null;
         document.body.removeChild(this._video);
         
     }
