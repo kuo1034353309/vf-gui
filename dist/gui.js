@@ -4048,18 +4048,11 @@ var Circle = /** @class */ (function (_super) {
     Circle.prototype.drawGraph = function () {
         var graphics = this.graphics;
         graphics.clear();
-        var diam = this._radius * 2;
-        // if (this._color !== undefined)
-        // graphics.beginFill(this._color);
-        var toX = this._anchorX ? this._anchorX * diam : 0;
-        var toY = this._anchorY ? diam * this._anchorY : 0;
         graphics.lineStyle(this._lineWidth, this._lineColor, this._lineAlpha);
-        graphics.moveTo(toX, toY);
-        // let startA = Math.floor(this._startAngle * Math.PI) / 180;
-        // let endA = Math.floor(this._endAngle * Math.PI) / 180;
-        var startA = (this._startAngle * Math.PI) / 180;
-        var endA = (this._endAngle * Math.PI) / 180;
-        graphics.arc(toX, toY, this._radius, startA, endA, this._anticlockwise);
+        if (this._color !== undefined)
+            graphics.beginFill(this._color);
+        var diam = this._radius * 2;
+        graphics.arc(this._anchorX ? this._anchorX * diam : 0, this._anchorY ? diam * this._anchorY : 0, this._radius, this._startAngle * Math.PI / 180, this._endAngle * Math.PI / 180, this._anticlockwise);
         graphics.endFill();
     };
     return Circle;
@@ -8114,9 +8107,12 @@ var Video = /** @class */ (function (_super) {
     __extends(Video, _super);
     function Video() {
         var _this = _super.call(this) || this;
+        _this._resolution = 1;
         var video = _this._video = document.createElement('video');
         _this._video.id = _this.uuid.toString();
         document.body.appendChild(_this._video);
+        // this.container.isEmitRender = true;
+        // this.container.on("renderChange",this.updateSystem,this);
         _this._video.style.position = "absolute";
         _this._video.controls = true;
         var func = function (evtStr) {
@@ -8143,15 +8139,58 @@ var Video = /** @class */ (function (_super) {
     }
     Video.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
         _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
-        //container 的全局左边的 x , y赋值给 this._video
-        var stageContainer = this.container;
-        if (this.stage) {
-            stageContainer = this.stage.container;
+        this.updateSystem();
+        this._canvasBounds = this._getCanvasBounds();
+        var cb = this._canvasBounds;
+        var transform = this._vfMatrixToCSS(this._getDOMRelativeWorldTransform());
+        if (cb) {
+            this.updatePostion(cb.top, cb.left, transform, this.container.worldAlpha);
         }
-        var pos = stageContainer.toGlobal(new vf.Point(0, 0));
-        var videoStyle = this._video.style;
-        videoStyle.left = pos.x + "px";
-        videoStyle.top = pos.y + "px";
+        //container 的全局左边的 x , y赋值给 this._video
+        // let stageContainer = this.container;
+        // if(this.stage){
+        //     stageContainer = this.stage.container;
+        // }
+        // let pos = stageContainer.toGlobal(new vf.Point(0,0));
+        // let videoStyle = this._video.style;
+        // videoStyle.left = pos.x + "px";
+        // videoStyle.top = pos.y + "px";
+    };
+    Video.prototype.updatePostion = function (top, left, transform, opacity) {
+        this._video.style.top = top + 'px';
+        this._video.style.left = left + 'px';
+        this._video.style.transform = transform;
+        if (opacity)
+            this._video.style.opacity = opacity.toString();
+    };
+    Video.prototype.updateSystem = function () {
+        if (this.stage) {
+            var renderer = this.stage.app.renderer;
+            this._resolution = renderer.resolution;
+            this._lastRenderer = renderer;
+        }
+    };
+    Video.prototype._getCanvasBounds = function () {
+        if (this._lastRenderer) {
+            var rect = this._lastRenderer.view.getBoundingClientRect();
+            var bounds = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+            bounds.left += window.scrollX;
+            bounds.top += window.scrollY;
+            return bounds;
+        }
+        return undefined;
+    };
+    Video.prototype._vfMatrixToCSS = function (m) {
+        return 'matrix(' + [m.a, m.b, m.c, m.d, m.tx, m.ty].join(',') + ')';
+    };
+    Video.prototype._getDOMRelativeWorldTransform = function () {
+        if (this._lastRenderer) {
+            var canvasBounds = this._lastRenderer.view.getBoundingClientRect();
+            var matrix = this.container.worldTransform.clone();
+            matrix.scale(this._resolution, this._resolution);
+            matrix.scale(canvasBounds.width / this._lastRenderer.width, canvasBounds.height / this._lastRenderer.height);
+            return matrix;
+        }
     };
     Object.defineProperty(Video.prototype, "src", {
         /**
@@ -8162,8 +8201,17 @@ var Video = /** @class */ (function (_super) {
             return this._src;
         },
         set: function (value) {
-            this._src = value;
-            this._video && (this._video.src = Utils_1.getSource(value));
+            if (!this._video) {
+                return;
+            }
+            if (typeof (value) === "number") {
+                var source = Utils_1.getSource(value);
+                this._src = source.url;
+            }
+            else {
+                this._src = value;
+            }
+            this._video && (this._video.src = this._src);
         },
         enumerable: true,
         configurable: true
@@ -8220,19 +8268,6 @@ var Video = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Video.prototype, "posterUrl", {
-        get: function () {
-            if (this._video) {
-                return this._video.poster;
-            }
-            throw new Error("Video is undefined!");
-        },
-        set: function (value) {
-            this._video && (this._video.poster = value);
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(Video.prototype, "muted", {
         //静音
         get: function () {
@@ -8255,6 +8290,8 @@ var Video = /** @class */ (function (_super) {
             return 0;
         },
         set: function (value) {
+            value = value > 1 ? 1 : value;
+            value = value < 0 ? 0 : value;
             this._video && (this._video.volume = value);
         },
         enumerable: true,
@@ -8262,13 +8299,21 @@ var Video = /** @class */ (function (_super) {
     });
     Object.defineProperty(Video.prototype, "poster", {
         get: function () {
-            if (this._video) {
-                return this._video.poster;
-            }
+            return this._poster;
             throw new Error("Video is undefined!");
         },
         set: function (value) {
-            this._video && (this._video.poster = value);
+            if (!this._video) {
+                return;
+            }
+            if (typeof (value) === "number") {
+                var source = Utils_1.getSource(value);
+                this.poster = source ? source.textureCacheIds[1] : "";
+            }
+            else {
+                this._poster = value;
+            }
+            this._video && (this._video.poster = this._poster);
         },
         enumerable: true,
         configurable: true
@@ -8344,6 +8389,40 @@ var Video = /** @class */ (function (_super) {
         else if (de.webkitExitFullScreen) {
             de.webkitExitFullScreen();
         }
+    };
+    Video.prototype.release = function () {
+        var _this = this;
+        _super.prototype.release.call(this);
+        this._src = null;
+        this._poster = null;
+        this._canvasBounds = undefined;
+        this._lastRenderer = undefined;
+        this._resolution = 1;
+        if (!this._video) {
+            return;
+        }
+        var video = this._video;
+        var func = function (evtStr) {
+            video.removeEventListener(evtStr, function (e) {
+                _this.emit(evtStr, e);
+            });
+        };
+        /**
+       * 需要移除的事件
+       */
+        //浏览器可以播放媒体文件了，但估计没有足够的数据来支撑播放到结束，不需要停止缓存更多的内容
+        func("canplay");
+        //浏览器估算可以播放到结束，不需要停止缓存更多的内容。
+        func("canplaythrough");
+        //渲染完成
+        func("complete");
+        //视频已经到达结束点
+        func("ended");
+        //首帧已经加载
+        func("loadeddata");
+        //duration 属性的值改变时触发
+        func("durationchange");
+        document.body.removeChild(this._video);
     };
     return Video;
 }(DisplayObject_1.DisplayObject));

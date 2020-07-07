@@ -3549,16 +3549,31 @@ declare module 'src/display/FollowLine' {
 
 }
 declare module 'src/display/Video' {
+	/// <reference types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/**
 	 * 播放器组件
 	 *
 	 */
 	export class Video extends DisplayObject {
-	    _video: HTMLVideoElement;
+	    private _video;
 	    private _src;
+	    private _poster;
+	    protected _canvasBounds: {
+	        top: number;
+	        left: number;
+	        width: number;
+	        height: number;
+	    } | undefined;
+	    protected _lastRenderer: vf.Renderer | undefined;
+	    protected _resolution: number;
 	    constructor();
 	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	    private updatePostion;
+	    private updateSystem;
+	    private _getCanvasBounds;
+	    private _vfMatrixToCSS;
+	    private _getDOMRelativeWorldTransform;
 	    /**
 	     * 支持的参数们~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	     */
@@ -3567,10 +3582,9 @@ declare module 'src/display/Video' {
 	    width: number;
 	    height: number;
 	    loop: boolean;
-	    posterUrl: string;
 	    muted: boolean;
 	    volume: number;
-	    poster: string;
+	    poster: number | string;
 	    currentTime: number;
 	    /**
 	     * 只读的属性们~~~~~~~~~~~~~~~~
@@ -3583,6 +3597,7 @@ declare module 'src/display/Video' {
 	    pause(): void;
 	    requestFullScreen(): void;
 	    exitFullscreen(): void;
+	    release(): void;
 	}
 
 }
@@ -4414,13 +4429,6 @@ declare module 'src/core/UIBase' {
 	}
 
 }
-declare module 'src/display/Video11' {
-	import { DisplayObject } from 'src/core/DisplayObject';
-	export class Video1 extends DisplayObject {
-	    constructor();
-	}
-
-}
 declare module 'src/enum/ComponentEvent' {
 	/**
 	 * 特定属性改变时,通常为了去系统事件区分，UI组件的事件名为大写
@@ -4856,7 +4864,6 @@ declare module 'test/index' {
 	export {};
 
 }
-
 declare namespace vf.gui{
 	export * from "src/UI";
 }
