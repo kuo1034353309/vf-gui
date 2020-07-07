@@ -114,7 +114,10 @@ export class SyncManager {
                 this._resetTimeFlag = true;
                 //判断是否需要穿越到过去,忽略500ms的网络延时
                 if (eventData.time < this.currentTime() - 500) {
-                    this.resetStage();
+                    //将本条信令插入历史信令数组后面，重新跑一次状态恢复
+                    this._evtDataList.push(eventData);
+                    this.resumeStatus();
+                    return;
                 }
             }
             this.parseEventData(eventData);
@@ -277,8 +280,8 @@ export class SyncManager {
      * @param eventData
      */
     private dealHistoryEvent(eventData: any) {
-        if (!eventData) return;
         this._evtDataList = [];
+        if (!eventData) return;
         for (const key in eventData) {
             if(key.indexOf('syncInteraction_') == 0 || key.indexOf('syncCustomEvent_') == 0){
                 this._evtDataList.push(eventData[key]);
