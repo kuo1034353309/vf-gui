@@ -1176,9 +1176,10 @@ declare module 'src/core/Stage' {
 	    releaseAll(): void;
 	    resize(): void;
 	    /**
-	     * 虚接口，子类可以扩充
+	     * 接收来自player的消息
+	     * @param msg
 	     */
-	    inputLog(msg: any): void;
+	    receiveFromPlayer(msg: any): void;
 	}
 
 }
@@ -1303,6 +1304,7 @@ declare module 'src/interaction/SyncManager' {
 	    private _throttleTimer;
 	    private _evtDataList;
 	    private _lastMoveEvent;
+	    private _readystate;
 	    /**
 	     * 开始同步
 	     */

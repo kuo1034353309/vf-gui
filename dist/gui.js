@@ -2882,11 +2882,14 @@ var Stage = /** @class */ (function (_super) {
         //this.updateChildren();
     };
     /**
-     * 虚接口，子类可以扩充
+     * 接收来自player的消息
+     * @param msg
      */
-    Stage.prototype.inputLog = function (msg) {
-        //
-        //console.log(msg);
+    Stage.prototype.receiveFromPlayer = function (msg) {
+        if (msg.code == 'syncEvent') {
+            var data = msg.data; //{data: eventData, type: 'live/history'}
+            this.syncManager && this.syncManager.receiveEvent(data.data, data.type);
+        }
     };
     return Stage;
 }(DisplayLayoutAbstract_1.DisplayLayoutAbstract));
@@ -3580,8 +3583,8 @@ var Audio = /** @class */ (function (_super) {
         this.audio.on("error", function (e) {
             _this.emit("error", e);
         }), this;
-        this.audio.on("timeupdate", function (e) {
-            _this.emit("timeupdate", e);
+        this.audio.on("timeupdate", function (e, f) {
+            _this.emit("timeupdate", e, f);
         });
         this.audio.on("ended", function (e) {
             _this.emit("ended", e);
@@ -10030,6 +10033,7 @@ var SyncManager = /** @class */ (function () {
         this._throttleTimer = null; //节流时间函数
         this._evtDataList = []; //历史信令整理后的数组
         this._lastMoveEvent = []; //上一个move事件，用于稀疏，如果是连续的move操作，则使用相同的code，这样信令服务器会merge掉之前的move操作，在恢复时会拿到更少的数据量
+        this._readystate = 1;
         this._interactionEvent = new InteractionEvent_1.InteractionEvent();
         if (!this._interactionEvent.data) {
             this._interactionEvent.data = new vf.interaction.InteractionData();
@@ -10059,6 +10063,7 @@ var SyncManager = /** @class */ (function () {
         this._initTime = performance.now();
     };
     SyncManager.prototype.release = function () {
+        this._readystate = 0;
         var stage = this._stage;
         if (stage.syncInteractiveFlag) {
             var systemEvent = stage.getSystemEvent();
@@ -10114,7 +10119,10 @@ var SyncManager = /** @class */ (function () {
                 this._resetTimeFlag = true;
                 //判断是否需要穿越到过去,忽略500ms的网络延时
                 if (eventData.time < this.currentTime() - 500) {
-                    this.resetStage();
+                    //将本条信令插入历史信令数组后面，重新跑一次状态恢复
+                    this._evtDataList.push(eventData);
+                    this.resumeStatus();
+                    return;
                 }
             }
             this.parseEventData(eventData);
@@ -10272,9 +10280,9 @@ var SyncManager = /** @class */ (function () {
      * @param eventData
      */
     SyncManager.prototype.dealHistoryEvent = function (eventData) {
+        this._evtDataList = [];
         if (!eventData)
             return;
-        this._evtDataList = [];
         for (var key in eventData) {
             if (key.indexOf('syncInteraction_') == 0 || key.indexOf('syncCustomEvent_') == 0) {
                 this._evtDataList.push(eventData[key]);
@@ -10289,24 +10297,29 @@ var SyncManager = /** @class */ (function () {
      * 恢复状态
      */
     SyncManager.prototype.resumeStatus = function () {
+        var _this = this;
         //恢复过程只需要计算状态，不需要渲染
         if (this._evtDataList.length == 0)
             return;
         var start = performance.now();
         this.resetStage();
-        var resetTime = performance.now();
-        this.resumeStatusFlag = true;
-        this._stage.renderable = false;
-        for (var i = 0; i < this._evtDataList.length; ++i) {
-            //执行操作
-            this.parseEventData(this._evtDataList[i]);
-        }
-        this._stage.renderable = true;
-        this.resumeStatusFlag = false;
-        var now = performance.now();
-        if (Utils_1.debug) {
-            console.log("\u6062\u590D\u603B\u8017\u65F6\uFF1A" + (now - start) + ", reset\u8017\u65F6: " + (resetTime - start) + ", \u6267\u884C\u64CD\u4F5C\u8017\u65F6\uFF1A" + (now - resetTime) + "}");
-        }
+        setTimeout(function () {
+            if (_this._readystate === 0)
+                return;
+            var resetTime = performance.now();
+            _this.resumeStatusFlag = true;
+            _this._stage.renderable = false;
+            for (var i = 0; i < _this._evtDataList.length; ++i) {
+                //执行操作
+                _this.parseEventData(_this._evtDataList[i]);
+            }
+            _this._stage.renderable = true;
+            _this.resumeStatusFlag = false;
+            var now = performance.now();
+            if (Utils_1.debug) {
+                console.log("\u6062\u590D\u603B\u8017\u65F6\uFF1A" + (now - start) + ", reset\u8017\u65F6: " + (resetTime - start) + ", \u6267\u884C\u64CD\u4F5C\u8017\u65F6\uFF1A" + (now - resetTime) + "}");
+            }
+        }, 120);
     };
     return SyncManager;
 }());
@@ -14275,13 +14288,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.5.100.1.5.100.1.5.100) ==1.5.100.1.5.100.1.5.100;
+//     return this.lastIndexOf(word, pos1.5.105.1.5.105.1.5.105) ==1.5.105.1.5.105.1.5.105;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.5.100";
+window.vf.gui.version = "1.5.105";
 
 
 /***/ })
