@@ -261,6 +261,8 @@ exports.Graphics = Graphics_1.Graphics;
  */
 var FollowLine_1 = __webpack_require__(/*! ./display/FollowLine */ "./src/display/FollowLine.ts");
 exports.FollowLine = FollowLine_1.FollowLine;
+var Video_1 = __webpack_require__(/*! ./display/Video */ "./src/display/Video.ts");
+exports.Video = Video_1.Video;
 /**
  * 连线组件
  *
@@ -8072,6 +8074,363 @@ exports.Tracing = Tracing;
 
 /***/ }),
 
+/***/ "./src/display/Video.ts":
+/*!******************************!*\
+  !*** ./src/display/Video.ts ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var DisplayObject_1 = __webpack_require__(/*! ../core/DisplayObject */ "./src/core/DisplayObject.ts");
+var Utils_1 = __webpack_require__(/*! ../utils/Utils */ "./src/utils/Utils.ts");
+/**
+ * 播放器组件
+ *
+ */
+var Video = /** @class */ (function (_super) {
+    __extends(Video, _super);
+    function Video() {
+        var _this = _super.call(this) || this;
+        _this._resolution = 1;
+        var video = _this._video = document.createElement('video');
+        _this._video.id = _this.uuid.toString();
+        document.body.appendChild(_this._video);
+        // this.container.isEmitRender = true;
+        // this.container.on("renderChange",this.updateSystem,this);
+        _this._video.style.position = "absolute";
+        _this._video.controls = true;
+        var func = function (evtStr) {
+            video.addEventListener(evtStr, function (e) {
+                _this.emit(evtStr, e);
+            });
+        };
+        /**
+       * 需要上报的事件
+       */
+        //浏览器可以播放媒体文件了，但估计没有足够的数据来支撑播放到结束，不需要停止缓存更多的内容
+        func("canplay");
+        //浏览器估算可以播放到结束，不需要停止缓存更多的内容。
+        func("canplaythrough");
+        //渲染完成
+        func("complete");
+        //视频已经到达结束点
+        func("ended");
+        //首帧已经加载
+        func("loadeddata");
+        //duration 属性的值改变时触发
+        func("durationchange");
+        return _this;
+    }
+    Video.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
+        _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
+        this.updateSystem();
+        this._canvasBounds = this._getCanvasBounds();
+        var cb = this._canvasBounds;
+        var transform = this._vfMatrixToCSS(this._getDOMRelativeWorldTransform());
+        if (cb) {
+            this.updatePostion(cb.top, cb.left, transform, this.container.worldAlpha);
+        }
+        //container 的全局左边的 x , y赋值给 this._video
+        // let stageContainer = this.container;
+        // if(this.stage){
+        //     stageContainer = this.stage.container;
+        // }
+        // let pos = stageContainer.toGlobal(new vf.Point(0,0));
+        // let videoStyle = this._video.style;
+        // videoStyle.left = pos.x + "px";
+        // videoStyle.top = pos.y + "px";
+    };
+    Video.prototype.updatePostion = function (top, left, transform, opacity) {
+        this._video.style.top = top + 'px';
+        this._video.style.left = left + 'px';
+        this._video.style.transform = transform;
+        if (opacity)
+            this._video.style.opacity = opacity.toString();
+    };
+    Video.prototype.updateSystem = function () {
+        if (this.stage) {
+            var renderer = this.stage.app.renderer;
+            this._resolution = renderer.resolution;
+            this._lastRenderer = renderer;
+        }
+    };
+    Video.prototype._getCanvasBounds = function () {
+        if (this._lastRenderer) {
+            var rect = this._lastRenderer.view.getBoundingClientRect();
+            var bounds = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+            bounds.left += window.scrollX;
+            bounds.top += window.scrollY;
+            return bounds;
+        }
+        return undefined;
+    };
+    Video.prototype._vfMatrixToCSS = function (m) {
+        return 'matrix(' + [m.a, m.b, m.c, m.d, m.tx, m.ty].join(',') + ')';
+    };
+    Video.prototype._getDOMRelativeWorldTransform = function () {
+        if (this._lastRenderer) {
+            var canvasBounds = this._lastRenderer.view.getBoundingClientRect();
+            var matrix = this.container.worldTransform.clone();
+            matrix.scale(this._resolution, this._resolution);
+            matrix.scale(canvasBounds.width / this._lastRenderer.width, canvasBounds.height / this._lastRenderer.height);
+            return matrix;
+        }
+    };
+    Object.defineProperty(Video.prototype, "src", {
+        /**
+         * 支持的参数们~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         */
+        //设置src
+        get: function () {
+            return this._src;
+        },
+        set: function (value) {
+            if (!this._video) {
+                return;
+            }
+            if (typeof (value) === "number") {
+                var source = Utils_1.getSource(value);
+                this._src = source.url;
+            }
+            else {
+                this._src = value;
+            }
+            this._video && (this._video.src = this._src);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "controls", {
+        get: function () {
+            if (this._video) {
+                return this._video.controls;
+            }
+            throw new Error("Video is undefined!");
+        },
+        set: function (boo) {
+            this._video && (this._video.controls = boo);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "width", {
+        get: function () {
+            if (this._video) {
+                return this._video.width;
+            }
+            return 0;
+        },
+        set: function (value) {
+            this._video && (this._video.width = value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "height", {
+        get: function () {
+            if (this._video) {
+                return this._video.height;
+            }
+            return 0;
+        },
+        set: function (value) {
+            this._video && (this._video.height = value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "loop", {
+        get: function () {
+            if (this._video) {
+                return this._video.loop;
+            }
+            return false;
+        },
+        set: function (value) {
+            this._video && (this._video.loop = value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "muted", {
+        //静音
+        get: function () {
+            if (this._video) {
+                return this._video.muted;
+            }
+            throw new Error("Video is undefined!");
+        },
+        set: function (boo) {
+            this._video && (this._video.muted = boo);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "volume", {
+        get: function () {
+            if (this._video) {
+                return this._video.volume;
+            }
+            return 0;
+        },
+        set: function (value) {
+            value = value > 1 ? 1 : value;
+            value = value < 0 ? 0 : value;
+            this._video && (this._video.volume = value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "poster", {
+        get: function () {
+            return this._poster;
+            throw new Error("Video is undefined!");
+        },
+        set: function (value) {
+            if (!this._video) {
+                return;
+            }
+            if (typeof (value) === "number") {
+                var source = Utils_1.getSource(value);
+                this.poster = source ? source.textureCacheIds[1] : "";
+            }
+            else {
+                this._poster = value;
+            }
+            this._video && (this._video.poster = this._poster);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "currentTime", {
+        //播放位置
+        get: function () {
+            if (this._video) {
+                return this._video.currentTime;
+            }
+            return 0;
+        },
+        set: function (value) {
+            this._video && (this._video.currentTime = value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Video.prototype, "duration", {
+        /**
+         * 只读的属性们~~~~~~~~~~~~~~~~
+         * */
+        get: function () {
+            if (this._video) {
+                return this._video.duration;
+            }
+            return 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+    * 支持的方法们~~~··~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    **/
+    Video.prototype.play = function () {
+        if (this._video) {
+            this._video.play();
+            return;
+        }
+        throw new Error("Video is undefined!");
+    };
+    Video.prototype.pause = function () {
+        this._video && this._video.pause();
+    };
+    //进入全屏
+    Video.prototype.requestFullScreen = function () {
+        var de = this._video;
+        if (de.requestFullscreen) {
+            de.requestFullscreen();
+        }
+        else if (de.mozRequestFullScreen) {
+            de.mozRequestFullScreen();
+        }
+        else if (de.webkitRequestFullScreen) {
+            de.webkitRequestFullScreen();
+        }
+        else if (de.webkitEnterFullScreen) {
+            de.webkitEnterFullScreen();
+        }
+    };
+    //退出全屏
+    Video.prototype.exitFullscreen = function () {
+        var de = this._video;
+        if (de.exitFullscreen) {
+            de.exitFullscreen();
+        }
+        else if (de.mozCancelFullScreen) {
+            de.mozCancelFullScreen();
+        }
+        else if (de.webkitCancelFullScreen) {
+            de.webkitCancelFullScreen();
+        }
+        else if (de.webkitExitFullScreen) {
+            de.webkitExitFullScreen();
+        }
+    };
+    Video.prototype.release = function () {
+        var _this = this;
+        _super.prototype.release.call(this);
+        this._src = null;
+        this._poster = null;
+        this._canvasBounds = undefined;
+        this._lastRenderer = undefined;
+        this._resolution = 1;
+        if (!this._video) {
+            return;
+        }
+        var video = this._video;
+        var func = function (evtStr) {
+            video.removeEventListener(evtStr, function (e) {
+                _this.emit(evtStr, e);
+            });
+        };
+        /**
+       * 需要移除的事件
+       */
+        //浏览器可以播放媒体文件了，但估计没有足够的数据来支撑播放到结束，不需要停止缓存更多的内容
+        func("canplay");
+        //浏览器估算可以播放到结束，不需要停止缓存更多的内容。
+        func("canplaythrough");
+        //渲染完成
+        func("complete");
+        //视频已经到达结束点
+        func("ended");
+        //首帧已经加载
+        func("loadeddata");
+        //duration 属性的值改变时触发
+        func("durationchange");
+        document.body.removeChild(this._video);
+    };
+    return Video;
+}(DisplayObject_1.DisplayObject));
+exports.Video = Video;
+
+
+/***/ }),
+
 /***/ "./src/display/private/GraphBase.ts":
 /*!******************************************!*\
   !*** ./src/display/private/GraphBase.ts ***!
@@ -13485,6 +13844,13 @@ function setDisplayObjectPath(params) {
     exports.$getUIDisplayObjectPath = params;
 }
 exports.setDisplayObjectPath = setDisplayObjectPath;
+function getSource(src) {
+    if (exports.$getSourcePath) {
+        src = exports.$getSourcePath(src);
+    }
+    return src;
+}
+exports.getSource = getSource;
 function getTexture(src) {
     if (exports.$getSourcePath) {
         src = exports.$getSourcePath(src);

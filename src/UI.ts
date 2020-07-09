@@ -136,6 +136,8 @@ import { Graphics } from "./display/Graphics";
  * @link https://vipkid-edu.github.io/vf-gui/play/#example/TestTimeLine
  */
 import { FollowLine } from "./display/FollowLine";
+
+import { Video } from "./display/Video";
 /**
  * 连线组件
  * 
@@ -225,6 +227,6 @@ export declare type Application = vf.Application;
 /** 请不要在编写UI组件内部使用本类 */
 export {
     Audio,Filter, Utils, Stage, Container, ScrollingContainer, Slider,
-    Label, TextInput, Button, CheckBox, Rect, Circle, Graphics, FollowLine, Tracing, ConnectLine, ScrollBar, Interaction,
+    Label, TextInput, Button,Video, CheckBox, Rect, Circle, Graphics, FollowLine, Tracing, ConnectLine, ScrollBar, Interaction,
     DisplayObject, TickerShared, Tween, Timeline, Easing, Image, SpriteAnimated, Event, Enum, Scheduler
 };
