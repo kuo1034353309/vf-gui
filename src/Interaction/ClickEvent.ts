@@ -132,7 +132,12 @@ export class ClickEvent {
         this.isStop = true;
     }
 
+    private lastMouseDownTime = 0;
     private _onMouseDown(e: InteractionEvent) {
+        if(this.lastMouseDownTime > performance.now() && !e.signalling){
+            return;
+        }
+        this.lastMouseDownTime = performance.now() + 600;
         if (
             this.obj.stage && this.obj.stage.syncInteractiveFlag &&
             (this.onClick ||
