@@ -31,6 +31,12 @@ export function setDisplayObjectPath(params: (cls?: any, target?: DisplayObject)
     $getUIDisplayObjectPath = params;
 }
 
+export function getSource(src: any) {
+    if ($getSourcePath) {
+        src = $getSourcePath(src);
+    }
+    return src;
+}
 
 export function getTexture(src: any) {
     if ($getSourcePath) {
