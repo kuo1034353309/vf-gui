@@ -202,6 +202,7 @@ export class ScrollBar extends Slider {
             if(val>maxheight){
                 val = maxheight;
             }
+            thumbImg.x = this.width / 2;
             thumbImg.y = val;
         }
         else {
@@ -214,6 +215,7 @@ export class ScrollBar extends Slider {
             if(val>maxwidth){
                 val = maxwidth;
             }
+            thumbImg.y = this.height / 2;
             thumbImg.x = val;
         }
     }
