@@ -3,10 +3,11 @@ import { TouchMouseEventEnum } from "./TouchMouseEventEnum";
 import { InteractionEvent } from "../event/InteractionEvent";
 import { TouchMouseEvent } from "../event/TouchMouseEvent";
 import { debug } from "../utils/Utils";
+import { SyncManager } from "./SyncManager";
 
 /**
  * 点击触摸相关的事件处理订阅类,UI组件内部可以创建此类实现点击相关操作
- * 
+ *
  *  可侦听事件:
  * ```
  *  {InteractionEvent}.TouchEvent.onHover
@@ -18,16 +19,15 @@ import { debug } from "../utils/Utils";
  * ```
  *  onHover: ((e: InteractionEvent,thisOBj:DisplayObject,over: boolean) => void) | undefined
  *  onPress: ((e: InteractionEvent,thisOBj:DisplayObject, isPressed: boolean) => void) | undefined;
- *  onClick: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined 
+ *  onClick: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined
  *  onMove: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined
  * ```
- * 
+ *
  * @example 可查看 `TestSliceSprite` 示例
- * 
+ *
  * @since 1.0.0
  */
 export class ClickEvent {
-
     /**
      * ClickEvent 构造函数
      * @param obj 调用的显示对象
@@ -36,7 +36,13 @@ export class ClickEvent {
      * @param rightMouseButton 是否开启鼠标右键点击，默认false
      * @param doubleClick 是否开启鼠标双击,默认false
      */
-    public constructor(obj: DisplayObject, isOpenEmitEvent?: boolean, includeHover?: boolean, rightMouseButton?: boolean, doubleClick?: boolean) {
+    public constructor(
+        obj: DisplayObject,
+        isOpenEmitEvent?: boolean,
+        includeHover?: boolean,
+        rightMouseButton?: boolean,
+        doubleClick?: boolean
+    ) {
         this.obj = obj;
 
         if (isOpenEmitEvent !== undefined) {
@@ -91,7 +97,6 @@ export class ClickEvent {
     }
 
     public startEvent() {
-
         if (this.isStop) {
             const container = this.obj.container;
             container.on(this.eventnameMousedown, this._onMouseDown, this);
@@ -100,7 +105,7 @@ export class ClickEvent {
                 if (this.hover) {
                     container.on(TouchMouseEventEnum.mouseover, this._onMouseOver, this);
                     container.on(TouchMouseEventEnum.mouseout, this._onMouseOut, this);
-                    if(this.deviceType !== 'pc'){
+                    if(this.deviceType !== 'pc'){ // 用于解决移动端滑动触发问题，后期可以单独处理移动相关的
                         container.on(TouchMouseEventEnum.touchstart, this._onMouseOver, this);
                         container.on(TouchMouseEventEnum.touchendoutside, this._onMouseOut, this);
                     }
@@ -139,7 +144,22 @@ export class ClickEvent {
         this.isStop = true;
     }
 
+    private lastMouseDownTime = 0;
     private _onMouseDown(e: InteractionEvent) {
+        if(this.lastMouseDownTime > performance.now() && !e.signalling){
+            return;
+        }
+        this.lastMouseDownTime = performance.now() + 300;
+        if (
+            this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onClick ||
+            this.onPress ||
+            this.obj.listenerCount(TouchMouseEvent.onPress) > 0 ||
+            this.obj.listenerCount(TouchMouseEvent.onDown) > 0 ||
+            this.obj.listenerCount(TouchMouseEvent.onClick) > 0)
+        ) {
+            (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
+        }
         this.setLocalPoint(e);
         this.mouse.copyFrom(e.data.global);
         this.id = e.data.identifier;
@@ -164,43 +184,41 @@ export class ClickEvent {
             if (now - this.time < 210) {
                 this.onClick && this.onClick.call(this.obj, e, this.obj);
                 this.emitTouchEvent(TouchMouseEvent.onClick, e);
-            }
-            else {
+            } else {
                 this.time = now;
             }
         }
-        if(this.obj.stage && this.obj.stage.originalEventPreventDefault){
+        if (this.obj.stage && this.obj.stage.originalEventPreventDefault && e.data.originalEvent) {
             e.data.originalEvent.preventDefault();
         }
     }
 
     private emitTouchEvent(event: string | symbol, e: InteractionEvent, args?: boolean) {
+        if (this.obj.listenerCount(event) <= 0) {
+            return;
+        }
         if (debug) {
             const stage = this.obj.stage;
             if (stage && event !== TouchMouseEvent.onMove) {
-                stage.inputLog({
+                stage.sendToPlayer({
                     code: event,
-                    level: 'info',
+                    level: "info",
                     target: this.obj,
                     data: [args],
-                    action: e.type
+                    action: e.type,
                 });
             }
-
         }
         if (this.isOpenEmitEvent) {
             e.type = event.toString();
             this.obj.emit(e.type, e, this.obj, args);
         }
-
     }
 
     private _mouseUpAll(e: InteractionEvent) {
-        if (e.data.identifier !== this.id)
-            return;
+        if (e.data.identifier !== this.id) return;
         this.offset.set(e.data.global.x - this.mouse.x, e.data.global.y - this.mouse.y);
         if (this.bound) {
-
             this.obj.container.off(this.eventnameMouseup, this._onMouseUp, this);
             this.obj.container.off(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
             if (!this.right) {
@@ -210,23 +228,30 @@ export class ClickEvent {
             this.bound = false;
         }
         this.onPress && this.onPress.call(this.obj, e, this.obj, false);
-        if (this.obj.listenerCount(TouchMouseEvent.onUp) > 0) {
-            this.emitTouchEvent(TouchMouseEvent.onUp, e, false);
-        }
+        this.emitTouchEvent(TouchMouseEvent.onUp, e, false);
         this.emitTouchEvent(TouchMouseEvent.onPress, e, false);
     }
     private _onMouseUp(e: InteractionEvent) {
+        if (e.data.identifier !== this.id) return;
 
-        if (e.data.identifier !== this.id)
-            return;
+        if (
+            this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onPress ||
+            this.onClick ||
+            this.obj.listenerCount(TouchMouseEvent.onUp) > 0 ||
+            this.obj.listenerCount(TouchMouseEvent.onPress) > 0 ||
+            this.obj.listenerCount(TouchMouseEvent.onClick) > 0)
+        ) {
+            (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
+        }
+
         this._mouseUpAll(e);
 
         //prevent clicks with scrolling/dragging objects
         if (this.obj.dragThreshold) {
             this.movementX = Math.abs(this.offset.x);
             this.movementY = Math.abs(this.offset.y);
-            if (Math.max(this.movementX, this.movementY) > this.obj.dragThreshold)
-                return;
+            if (Math.max(this.movementX, this.movementY) > this.obj.dragThreshold) return;
         }
 
         if (!this.double) {
@@ -236,13 +261,25 @@ export class ClickEvent {
     }
 
     private _onMouseUpOutside(e: InteractionEvent) {
-        if (e.data.identifier !== this.id)
-            return;
+        if (e.data.identifier !== this.id) return;
+        if (
+            this.obj.stage && this.obj.stage.syncInteractiveFlag &&
+            (this.onPress ||
+            this.obj.listenerCount(TouchMouseEvent.onUp) > 0 ||
+            this.obj.listenerCount(TouchMouseEvent.onPress) > 0)
+        ) {
+            (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
+        }
+
         this._mouseUpAll(e);
     }
 
     private _onMouseOver(e: InteractionEvent) {
         if (!this.ishover) {
+            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onHover || this.obj.listenerCount(TouchMouseEvent.onHover) > 0)) {
+                (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
+            }
+
             this.ishover = true;
             this.obj.container.on(TouchMouseEventEnum.mousemove, this._onMouseMove, this);
             this.obj.container.on(TouchMouseEventEnum.touchmove, this._onMouseMove, this);
@@ -253,6 +290,10 @@ export class ClickEvent {
 
     private _onMouseOut(e: InteractionEvent) {
         if (this.ishover) {
+            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onHover || this.obj.listenerCount(TouchMouseEvent.onHover) > 0)) {
+                (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
+            }
+
             this.ishover = false;
             this.obj.container.off(TouchMouseEventEnum.mousemove, this._onMouseMove, this);
             this.obj.container.off(TouchMouseEventEnum.touchmove, this._onMouseMove, this);
@@ -262,6 +303,9 @@ export class ClickEvent {
     }
 
     private _onMouseMove(e: InteractionEvent) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onMove || this.obj.listenerCount(TouchMouseEvent.onMove) > 0)) {
+            (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
+        }
         this.setLocalPoint(e);
         this.onMove && this.onMove.call(this.obj, e, this.obj);
         this.emitTouchEvent(TouchMouseEvent.onMove, e);
@@ -282,8 +326,8 @@ export class ClickEvent {
         this.onMove = undefined;
         this.obj.container.interactive = false;
     }
-    public onHover: ((e: InteractionEvent, thisOBj: DisplayObject, over: boolean) => void) | undefined
+    public onHover: ((e: InteractionEvent, thisOBj: DisplayObject, over: boolean) => void) | undefined;
     public onPress: ((e: InteractionEvent, thisOBj: DisplayObject, isPressed: boolean) => void) | undefined;
-    public onClick: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined
-    public onMove: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined
+    public onClick: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined;
+    public onMove: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined;
 }
