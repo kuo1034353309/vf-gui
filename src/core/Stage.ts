@@ -3,6 +3,7 @@ import { TickerShared } from "./Ticker";
 import { DisplayLayoutAbstract } from "./DisplayLayoutAbstract";
 import { DisplayObject } from "./DisplayObject";
 import validatorShared from "./DisplayLayoutValidator";
+import { SyncManager } from "../interaction/SyncManager";
 
 /**
  * UI的舞台对象，展示所有UI组件
@@ -39,6 +40,8 @@ export class Stage extends DisplayLayoutAbstract{
     }
 
     public app: vf.Application;
+    public syncManager: SyncManager | undefined; 
+
     /**
      * 是否组织原始数据继续传递
      */
@@ -72,14 +75,40 @@ export class Stage extends DisplayLayoutAbstract{
         this.container.scale.copyFrom(value);
     }
 
+        /**
+     * 是否同步交互事件
+     */
+    private _syncInteractiveFlag = false; //TODO:默认false
+    public set syncInteractiveFlag(value: boolean){
+        this._syncInteractiveFlag = value;
+        if(!this.syncManager){
+            this.syncManager = new SyncManager(this);
+        }
+    }
+
+    public get syncInteractiveFlag(){
+        return this._syncInteractiveFlag;
+    }
+
+    public getSystemEvent(): vf.utils.EventEmitter {
+        //
+        return this;
+    }
+
+    public sendToPlayer(e: any): void{
+        //
+    }
+
     public release(){
         super.release();
         TickerShared.remove(tween.update,this);
+        this.syncManager && this.syncManager.release();
     }
 
     public releaseAll(){
         TickerShared.remove(tween.update,this);
-        
+        this.syncManager && this.syncManager.release();
+
         for(let i=0;i<this.uiChildren.length;i++){
             const ui = this.uiChildren[i] as DisplayObject;
             ui.releaseAll();
@@ -93,18 +122,20 @@ export class Stage extends DisplayLayoutAbstract{
         this.app = undefined as any;
     }
 
- 
+    
     public resize(): void {
         this.container.hitArea = new vf.Rectangle(0, 0, this.width, this.height);
         //this.updateChildren();
     }
 
     /**
-     * 虚接口，子类可以扩充
+     * 接收来自player的消息
+     * @param msg 
      */
-    public inputLog(msg: any){
-        //
-        //console.log(msg);
+    public receiveFromPlayer(msg: any){
+        if(msg.code == 'syncEvent'){
+            let data = msg.data; //{data: eventData, type: 'live/history'}
+            this.syncManager && this.syncManager.receiveEvent(data.data, data.type);
+        }
     }
-
 }

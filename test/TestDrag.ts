@@ -2,14 +2,14 @@
 /// <reference path="../dist/gui.d.ts" />
 
 export default class TestDrag {
-
+    private id = 0;
     public constructor(app: vf.Application, uiStage: vf.gui.Stage) {
         this.onLoad(app, uiStage)
     }
 
     private onLoad(app: vf.Application, uiStage: vf.gui.Stage) {
-
-
+        
+        // uiStage.id = 'stage';
         const c1 = this.getNewContainer("自由拖动");
         c1.rect.name = "c1";
         c1.container.x = 15;
@@ -51,6 +51,7 @@ export default class TestDrag {
         c7.container.x = 150;
         c7.container.y = 360;
         c7.container.name = "c7";
+        c7.container.id = JSON.stringify(this.id++);
         c7.container.style.display = "grid";
         c7.container.style.gridTemplateColumns = ["repeat", 3, 30];
         c7.container.style.gridTemplateRows = ["repeat", 3, 30];
@@ -80,6 +81,7 @@ export default class TestDrag {
             rect.width = 30;
             rect.height = 30;
             rect.color = 0xffcc66;
+            rect.id = JSON.stringify(this.id++);
             rect.x = 0;
             rect.y = 0;
             rect.dragOption.dragBounces = true;
@@ -144,6 +146,7 @@ export default class TestDrag {
         new vf.gui.Interaction.ClickEvent(childContainer, true);
         childContainer.width = 100;
         childContainer.height = 100;
+        childContainer.id = JSON.stringify(this.id++);
         childContainer.style.backgroundColor = color;
 
         const label = new vf.gui.Label();
@@ -162,6 +165,7 @@ export default class TestDrag {
         rect.color = 0xffcc66;
         rect.x = 0;
         rect.y = 0;
+        rect.id = JSON.stringify(this.id++);
         if (rectVisible)
             childContainer.addChild(rect);
 
