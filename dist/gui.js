@@ -756,7 +756,8 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
      * 设置组件的宽高。此方法不同于直接设置width,height属性，
      * 不会影响显式标记尺寸属性
      */
-    DisplayLayoutAbstract.prototype.setActualSize = function (w, h) {
+    DisplayLayoutAbstract.prototype.setActualSize = function (w, h, isInvalidate) {
+        if (isInvalidate === void 0) { isInvalidate = true; }
         var change = false;
         var values = this.$values;
         if (values[UIKeys.width] !== w) {
@@ -767,7 +768,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
             values[UIKeys.height] = h;
             change = true;
         }
-        if (change) {
+        if (change && isInvalidate) {
             this.invalidateDisplayList();
             this.emit(Index_1.ComponentEvent.RESIZE, this);
         }
@@ -780,7 +781,7 @@ var DisplayLayoutAbstract = /** @class */ (function (_super) {
         this.setActualSize(this.getPreferredUWidth(), this.getPreferredUHeight());
     };
     DisplayLayoutAbstract.prototype.updateTransform = function () {
-        this.container.setTransform(this.x + this.pivotX, this.y + this.pivotY, this.scaleX, this.scaleY, this.rotation * (Math.PI / 180), this.skewX, this.skewY, this.pivotX, this.pivotY);
+        this.container.setTransform(this.x, this.y, this.scaleX, this.scaleY, this.rotation * (Math.PI / 180), this.skewX, this.skewY, this.pivotX, this.pivotY);
     };
     /**
      * 更新显示列表,子类重写，实现布局
@@ -3749,6 +3750,10 @@ var Audio = /** @class */ (function (_super) {
             this.audio = undefined;
         }
     };
+    Audio.prototype.release = function () {
+        _super.prototype.release.call(this);
+        this.dispose();
+    };
     Object.defineProperty(Audio.prototype, "isPlaying", {
         /**
         * 各种可取参数.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -5180,6 +5185,16 @@ var Image = /** @class */ (function (_super) {
             this.anchorSystem();
         }
     };
+    Image.prototype.setSpeiteSize = function (unscaledWidth, unscaledHeight) {
+        var sprite = this._sprite;
+        if (sprite) {
+            if (unscaledWidth)
+                sprite.width = unscaledWidth;
+            if (unscaledHeight)
+                sprite.height = unscaledHeight;
+            this.setActualSize(sprite.width, sprite.height, false);
+        }
+    };
     Image.prototype.measure = function () {
         if (this._sprite) {
             var texture = this._sprite.texture;
@@ -5701,6 +5716,7 @@ var ScrollBar = /** @class */ (function (_super) {
             if (val > maxheight) {
                 val = maxheight;
             }
+            thumbImg.x = this.width / 2;
             thumbImg.y = val;
         }
         else {
@@ -5713,6 +5729,7 @@ var ScrollBar = /** @class */ (function (_super) {
             if (val > maxwidth) {
                 val = maxwidth;
             }
+            thumbImg.y = this.height / 2;
             thumbImg.x = val;
         }
     };
@@ -6154,16 +6171,15 @@ var Slider = /** @class */ (function (_super) {
         _this._decimals = 0;
         _this._startValue = 0;
         _this._maxPosition = 0;
-        _this._localMousePosition = new vf.Point();
         _this._lastChange = 0;
         _this._lastChanging = 0;
+        _this._localMousePosition = new vf.Point();
         /** 状态展示 */
         _this.trackImg = new Image_1.Image();
         _this.thumbImg = new Image_1.Image();
         _this.tracklightImg = new Image_1.Image();
         _this._thumbDrag = new Index_1.DragEvent(_this.thumbImg);
         _this._trackDrag = new Index_1.DragEvent(_this.trackImg);
-        _this._value = 0;
         /**
          * 最小值
          */
@@ -6176,15 +6192,6 @@ var Slider = /** @class */ (function (_super) {
          * 是否垂直,滑块方向
          */
         _this._vertical = false;
-        _this.isExcValueSystem = false;
-        _this._thumbDrag.onDragPress = _this.onPress.bind(_this);
-        _this._thumbDrag.onDragStart = _this.onDragStart.bind(_this);
-        _this._thumbDrag.onDragMove = _this.onDragMove.bind(_this);
-        _this._thumbDrag.onDragEnd = _this.onDragEnd.bind(_this);
-        _this._trackDrag.onDragPress = _this.onPress.bind(_this);
-        // this._trackDrag.onDragStart = this.onDragStart;
-        // this._trackDrag.onDragMove = this.onDragMove;
-        // this._trackDrag.onDragEnd = this.onDragEnd;
         _this.thumbImg.container.name = "thumbImg";
         _this.thumbImg.fillMode = "scale";
         _this.thumbImg.scale9Grid = [0, 0, 0, 0];
@@ -6200,21 +6207,17 @@ var Slider = /** @class */ (function (_super) {
         _this.tracklightImg.container.name = "tracklightImg";
         _this.tracklightImg.fillMode = "scale";
         _this.tracklightImg.scale9Grid = [2, 2, 2, 2];
+        //this.tracklightImg.on(ComponentEvent.COMPLETE,this.onImgload, this);
         _this.addChild(_this.trackImg);
         _this.addChild(_this.tracklightImg);
         _this.addChild(_this.thumbImg);
+        _this._thumbDrag.onDragPress = _this.onPress.bind(_this);
+        _this._thumbDrag.onDragStart = _this.onDragStart.bind(_this);
+        _this._thumbDrag.onDragMove = _this.onDragMove.bind(_this);
+        _this._thumbDrag.onDragEnd = _this.onDragEnd.bind(_this);
+        _this._trackDrag.onDragPress = _this.onPress.bind(_this);
         return _this;
     }
-    Object.defineProperty(Slider.prototype, "trackScale9Grid", {
-        /**
-         * 设置拖拽图，9切方式
-         */
-        set: function (value) {
-            this.thumbImg.scale9Grid = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(Slider.prototype, "value", {
         /**
          * 当前值
@@ -6223,24 +6226,26 @@ var Slider = /** @class */ (function (_super) {
             return Utils.Round(Utils.Lerp(this.minValue, this.maxValue, this._amt), this._decimals);
         },
         set: function (value) {
-            this._value = value;
-            this.valueSystem();
+            this.valueSystem(value);
         },
         enumerable: true,
         configurable: true
     });
-    Slider.prototype.valueSystem = function () {
-        this._amt = (Math.max(this.minValue, Math.min(this.maxValue, this._value)) - this.minValue) / (this.maxValue - this.minValue);
-        this.updatePosition();
-        this.triggerValueChange();
-        this.triggerValueChanging();
+    Slider.prototype.valueSystem = function (value) {
+        if (value === void 0) { value = 0; }
+        this._amt = (Math.max(this.minValue, Math.min(this.maxValue, value)) - this.minValue) / (this.maxValue - this.minValue);
+        this.invalidateDisplayList();
     };
     Object.defineProperty(Slider.prototype, "minValue", {
         get: function () {
             return this._minValue;
         },
         set: function (value) {
+            if (this._minValue === value) {
+                return;
+            }
             this._minValue = value;
+            this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -6250,7 +6255,11 @@ var Slider = /** @class */ (function (_super) {
             return this._maxValue;
         },
         set: function (value) {
+            if (this._maxValue === value) {
+                return;
+            }
             this._maxValue = value;
+            this.invalidateDisplayList();
         },
         enumerable: true,
         configurable: true
@@ -6260,8 +6269,10 @@ var Slider = /** @class */ (function (_super) {
             return this._vertical;
         },
         set: function (value) {
+            if (this._vertical === value) {
+                return;
+            }
             this._vertical = value;
-            this.updateLayout();
             this.invalidateProperties();
         },
         enumerable: true,
@@ -6306,46 +6317,10 @@ var Slider = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Slider.prototype.setActualSize = function (w, h) {
-        _super.prototype.setActualSize.call(this, w, h);
-        if (this.trackImg.width !== w) {
-            this.trackImg.width = w;
-        }
-        if (this.trackImg.height !== w) {
-            this.trackImg.height = h;
-        }
-        if (!this.isExcValueSystem) {
-            this.valueSystem();
-            this.isExcValueSystem = true;
-        }
-    };
-    Slider.prototype.release = function () {
-        _super.prototype.release.call(this);
-        this.trackImg.release();
-        this.thumbImg.release();
-        this.tracklightImg.release();
-    };
     Slider.prototype.onImgload = function () {
-        this.updateLayout();
-    };
-    Slider.prototype.updateLayout = function () {
-        var thumbImg = this.thumbImg;
-        var tracklightImg = this.tracklightImg;
-        if (this.vertical) {
-            //thumbImg.style.top =this._amt; 
-            thumbImg.x = this.explicitWidth >> 1;
-            tracklightImg.width = this.explicitWidth;
-            //tracklightImg.style.height = this._amt * this.height;
-        }
-        else {
-            thumbImg.y = this.explicitHeight >> 1;
-            //thumbImg.style.left = this._amt; 
-            tracklightImg.height = this.explicitHeight;
-            //tracklightImg.style.width =  this._amt * this.width;
-        }
+        this.invalidateProperties();
     };
     Slider.prototype.updatePosition = function (soft) {
-        this.updateLayout();
         var val = 0;
         var thumbImg = this.thumbImg;
         var tracklightImg = this.tracklightImg;
@@ -6355,7 +6330,8 @@ var Slider = /** @class */ (function (_super) {
                 Tween_1.Tween.to({ y: thumbImg.y, height: tracklightImg.height }, { y: val, height: val }, 300).easing(Easing_1.Easing.Linear.None)
                     .on(Tween_1.Tween.Event.update, function (obj) {
                     thumbImg.y = obj.y;
-                    tracklightImg.height = obj.height;
+                    //tracklightImg.height = obj.height;
+                    tracklightImg.setSpeiteSize(undefined, obj.height);
                 }).start();
             }
             else {
@@ -6369,7 +6345,8 @@ var Slider = /** @class */ (function (_super) {
                 Tween_1.Tween.to({ x: thumbImg.x, width: tracklightImg.width }, { x: val, width: val }, 300).easing(Easing_1.Easing.Linear.None)
                     .on(Tween_1.Tween.Event.update, function (obj) {
                     thumbImg.x = obj.x;
-                    tracklightImg.width = obj.width;
+                    //tracklightImg.width = obj.width;
+                    tracklightImg.setSpeiteSize(obj.width);
                 }).start();
             }
             else {
@@ -6432,6 +6409,36 @@ var Slider = /** @class */ (function (_super) {
         if (this._lastChanging != value) {
             this._lastChanging = value;
         }
+    };
+    Slider.prototype.updateLayout = function () {
+        this.invalidateProperties();
+    };
+    Slider.prototype.commitProperties = function () {
+        var thumbImg = this.thumbImg;
+        var tracklightImg = this.tracklightImg;
+        if (this.vertical) {
+            thumbImg.y = this._amt;
+            thumbImg.x = this.explicitWidth >> 1;
+            tracklightImg.width = this.width;
+            tracklightImg.height = this._amt * this.height;
+        }
+        else {
+            thumbImg.x = this._amt;
+            thumbImg.y = this.explicitHeight >> 1;
+            tracklightImg.height = this.height;
+            tracklightImg.width = this._amt * this.width;
+        }
+    };
+    Slider.prototype.updateDisplayList = function (unscaledWidth, unscaledHeight) {
+        this.commitProperties();
+        this.updatePosition();
+        _super.prototype.updateDisplayList.call(this, unscaledWidth, unscaledHeight);
+    };
+    Slider.prototype.release = function () {
+        _super.prototype.release.call(this);
+        this.trackImg.release();
+        this.thumbImg.release();
+        this.tracklightImg.release();
     };
     return Slider;
 }(DisplayObject_1.DisplayObject));
@@ -7319,6 +7326,7 @@ var Tracing = /** @class */ (function (_super) {
          * 检测精度
          */
         _this._precision = 20;
+        _this._posLength = 2;
         _this._lines = new Map();
         _this.clickEvent = new Index_1.ClickEvent(_this, true);
         _this.clickEvent.isOpenLocalPoint = true;
@@ -7636,6 +7644,10 @@ var Tracing = /** @class */ (function (_super) {
             .once(Tween_1.Tween.Event.complete, function (obj) {
             _this._tween.removeAllListeners();
             _this._tween.release();
+            var length = _this._posCache.length;
+            if (length > _this._posLength) {
+                _this._posCache = _this._posCache.slice(length - _this._posLength, length - 1); //容错处理   没有全部清掉 因为最后节点可能没有画完
+            }
             _this.auto();
         })
             .start();
@@ -9497,6 +9509,7 @@ var ClickEvent = /** @class */ (function () {
         this.eventnameMouseup = "mouseup" /* mouseup */;
         this.eventnameMouseupoutside = "mouseupoutside" /* mouseupoutside */;
         this.isStop = true;
+        this.deviceType = vf.utils.getSystemInfo().device.type;
         this.lastMouseDownTime = 0;
         this.obj = obj;
         if (isOpenEmitEvent !== undefined) {
@@ -9524,35 +9537,44 @@ var ClickEvent = /** @class */ (function () {
     };
     ClickEvent.prototype.startEvent = function () {
         if (this.isStop) {
-            this.obj.container.on(this.eventnameMousedown, this._onMouseDown, this);
-            if (!this.right)
-                this.obj.container.on("touchstart" /* touchstart */, this._onMouseDown, this);
-            if (this.hover) {
-                this.obj.container.on("mouseover" /* mouseover */, this._onMouseOver, this);
-                this.obj.container.on("mouseout" /* mouseout */, this._onMouseOut, this);
+            var container = this.obj.container;
+            container.on(this.eventnameMousedown, this._onMouseDown, this);
+            if (!this.right) {
+                container.on("touchstart" /* touchstart */, this._onMouseDown, this);
+                if (this.hover) {
+                    container.on("mouseover" /* mouseover */, this._onMouseOver, this);
+                    container.on("mouseout" /* mouseout */, this._onMouseOut, this);
+                    if (this.deviceType !== 'pc') { // 用于解决移动端滑动触发问题，后期可以单独处理移动相关的
+                        container.on("touchstart" /* touchstart */, this._onMouseOver, this);
+                        container.on("touchendoutside" /* touchendoutside */, this._onMouseOut, this);
+                    }
+                }
             }
             this.isStop = false;
         }
     };
     /** 清除拖动 */
     ClickEvent.prototype.stopEvent = function () {
+        var container = this.obj.container;
         if (this.bound) {
-            this.obj.container.off(this.eventnameMouseup, this._onMouseUp, this);
-            this.obj.container.off(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
+            container.off(this.eventnameMouseup, this._onMouseUp, this);
+            container.off(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
             if (!this.right) {
-                this.obj.container.off("touchend" /* touchend */, this._onMouseUp, this);
-                this.obj.container.off("touchendoutside" /* touchendoutside */, this._onMouseUpOutside, this);
+                container.off("touchend" /* touchend */, this._onMouseUp, this);
+                container.off("touchendoutside" /* touchendoutside */, this._onMouseUpOutside, this);
             }
             this.bound = false;
         }
-        this.obj.container.off(this.eventnameMousedown, this._onMouseDown, this);
+        container.off(this.eventnameMousedown, this._onMouseDown, this);
         if (!this.right)
-            this.obj.container.off("touchstart" /* touchstart */, this._onMouseDown, this);
+            container.off("touchstart" /* touchstart */, this._onMouseDown, this);
         if (this.hover) {
-            this.obj.container.off("mouseover" /* mouseover */, this._onMouseOver, this);
-            this.obj.container.off("mouseout" /* mouseout */, this._onMouseOut, this);
-            this.obj.container.off("mousemove" /* mousemove */, this._onMouseMove, this);
-            this.obj.container.off("touchmove" /* touchmove */, this._onMouseMove, this);
+            container.off("mouseover" /* mouseover */, this._onMouseOver, this);
+            container.off("mouseout" /* mouseout */, this._onMouseOut, this);
+            container.off("mousemove" /* mousemove */, this._onMouseMove, this);
+            container.off("touchmove" /* touchmove */, this._onMouseMove, this);
+            container.off("touchstart" /* touchstart */, this._onMouseOver, this);
+            container.off("touchendoutside" /* touchendoutside */, this._onMouseOut, this);
         }
         this.isStop = true;
     };
@@ -9560,7 +9582,7 @@ var ClickEvent = /** @class */ (function () {
         if (this.lastMouseDownTime > performance.now() && !e.signalling) {
             return;
         }
-        this.lastMouseDownTime = performance.now() + 600;
+        this.lastMouseDownTime = performance.now() + 300;
         if (this.obj.stage && this.obj.stage.syncInteractiveFlag &&
             (this.onClick ||
                 this.onPress ||
@@ -9574,13 +9596,16 @@ var ClickEvent = /** @class */ (function () {
         this.id = e.data.identifier;
         this.onPress && this.onPress.call(this.obj, e, this.obj, true), this.obj;
         this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onPress, e, true);
-        this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onDown, e, true);
+        if (this.obj.listenerCount(TouchMouseEvent_1.TouchMouseEvent.onDown) > 0) {
+            this.emitTouchEvent(TouchMouseEvent_1.TouchMouseEvent.onDown, e, true);
+        }
+        var container = this.obj.container;
         if (!this.bound) {
-            this.obj.container.on(this.eventnameMouseup, this._onMouseUp, this);
-            this.obj.container.on(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
+            container.on(this.eventnameMouseup, this._onMouseUp, this);
+            container.on(this.eventnameMouseupoutside, this._onMouseUpOutside, this);
             if (!this.right) {
-                this.obj.container.on("touchend" /* touchend */, this._onMouseUp, this);
-                this.obj.container.on("touchendoutside" /* touchendoutside */, this._onMouseUpOutside, this);
+                container.on("touchend" /* touchend */, this._onMouseUp, this);
+                container.on("touchendoutside" /* touchendoutside */, this._onMouseUpOutside, this);
             }
             this.bound = true;
         }
@@ -14674,13 +14699,13 @@ exports.gui = gui;
 //     }
 // }
 // String.prototype.startsWith || (String.prototype.startsWith = function(word,pos?: number) {
-//     return this.lastIndexOf(word, pos1.5.105.1.5.105.1.5.105) ==1.5.105.1.5.105.1.5.105;
+//     return this.lastIndexOf(word, pos1.7.1.1.7.1.1.7.1) ==1.7.1.1.7.1.1.7.1;
 // });
 if (window.vf === undefined) {
     window.vf = {};
 }
 window.vf.gui = gui;
-window.vf.gui.version = "1.5.105";
+window.vf.gui.version = "1.7.1";
 
 
 /***/ })

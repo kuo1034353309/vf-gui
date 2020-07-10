@@ -56,7 +56,7 @@ declare module 'src/interaction/TouchMouseEventEnum' {
 
 }
 declare module 'src/event/InteractionEvent' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	/**
 	 * 事件的基础类
 	 *
@@ -115,7 +115,7 @@ declare module 'src/event/TouchMouseEvent' {
 
 }
 declare module 'src/core/ContainerBase' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	/** 容器扩展类，后续便于做延时渲染 */
 	export class ContainerBase extends vf.Container {
 	    constructor();
@@ -289,7 +289,7 @@ declare module 'src/event/TweenEvent' {
 
 }
 declare module 'src/tween/Tween' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { add, get, getAll, remove, removeAll, removeDisplay, update } from 'src/tween/private/core';
 	/**
 	 * 缓动动画
@@ -719,7 +719,7 @@ declare module 'src/tween/private/index' {
 
 }
 declare module 'src/core/DisplayLayoutValidator' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract'; class UIValidator extends vf.utils.EventEmitter {
 	    /**
 	     * @private
@@ -823,7 +823,7 @@ declare module 'src/core/DisplayLayoutValidator' {
 
 }
 declare module 'src/layout/CSSBasicLayout' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	export const $tempRectangle: vf.Rectangle;
 	/**
@@ -838,7 +838,7 @@ declare module 'src/layout/CSSBasicLayout' {
 
 }
 declare module 'src/layout/CSSGridLayout' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/**
 	 *  更新网格布局
@@ -869,7 +869,7 @@ declare module 'src/layout/CSSGridLayout' {
 
 }
 declare module 'src/layout/CSSLayout' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract';
 	export const $TempyAlignRectangle: vf.Rectangle;
@@ -887,7 +887,7 @@ declare module 'src/layout/CSSLayout' {
 
 }
 declare module 'src/core/DisplayLayoutAbstract' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObjectAbstract } from 'src/core/DisplayObjectAbstract';
 	export const $tempLocalBounds: vf.Rectangle;
 	/**
@@ -1002,7 +1002,7 @@ declare module 'src/core/DisplayLayoutAbstract' {
 	     * 设置组件的宽高。此方法不同于直接设置width,height属性，
 	     * 不会影响显式标记尺寸属性
 	     */
-	    setActualSize(w: number, h: number): void;
+	    setActualSize(w: number, h: number, isInvalidate?: boolean): void;
 	    /**
 	     * @private
 	     * 更新最终的组件宽高
@@ -1142,7 +1142,7 @@ declare module 'src/core/DisplayLayoutAbstract' {
 
 }
 declare module 'src/core/Stage' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract';
 	import { SyncManager } from 'src/interaction/SyncManager';
 	/**
@@ -1184,7 +1184,7 @@ declare module 'src/core/Stage' {
 
 }
 declare module 'src/core/DisplayObjectAbstract' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { ContainerBase } from 'src/core/ContainerBase';
 	import { Stage } from 'src/core/Stage';
 	import { DisplayObject } from 'src/core/DisplayObject';
@@ -1422,6 +1422,7 @@ declare module 'src/interaction/ClickEvent' {
 	    private eventnameMouseup;
 	    private eventnameMouseupoutside;
 	    private isStop;
+	    private deviceType;
 	    getTarget(): DisplayObject;
 	    startEvent(): void;
 	    /** 清除拖动 */
@@ -1475,7 +1476,7 @@ declare module 'src/interaction/DragDropController' {
 
 }
 declare module 'src/interaction/DragEvent' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { InteractionEvent } from 'src/event/InteractionEvent';
 	/**
@@ -1533,7 +1534,7 @@ declare module 'src/interaction/DragEvent' {
 
 }
 declare module 'src/display/Label' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/**
 	 * 文本
@@ -1567,7 +1568,7 @@ declare module 'src/display/Label' {
 
 }
 declare module 'src/core/MaskSprite' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	export interface MaskSprite extends DisplayObject {
 	    maskSprite(): vf.Sprite | vf.Graphics;
@@ -1575,7 +1576,7 @@ declare module 'src/core/MaskSprite' {
 
 }
 declare module 'src/display/Image' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { MaskSprite } from 'src/core/MaskSprite';
 	/**
@@ -1625,6 +1626,7 @@ declare module 'src/display/Image' {
 	    anchorY: number | undefined;
 	    release(): void;
 	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	    setSpeiteSize(unscaledWidth?: number, unscaledHeight?: number): void;
 	    protected measure(): void;
 	    protected srcSystem(): void;
 	    protected scale9GridSystem(): void;
@@ -1633,7 +1635,7 @@ declare module 'src/display/Image' {
 
 }
 declare module 'src/display/private/InputBase' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { ClickEvent, InteractionEvent } from 'src/interaction/Index';
 	/**
@@ -1845,7 +1847,7 @@ declare module 'src/interaction/InputController' {
 
 }
 declare module 'src/interaction/MouseScrollEvent' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/**
 	 * 鼠标滑轮事件
@@ -2040,7 +2042,7 @@ declare module 'src/layout/CSSSSystem' {
 
 }
 declare module 'src/layout/CSSStyle' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/**
 	 * 	定位方式
@@ -2303,7 +2305,7 @@ declare module 'src/layout/CSSStyle' {
 	    fontVariant: "normal" | "small-caps";
 	    /** 字体粗细 */
 	    private _fontWeight;
-	    fontWeight: 500 | 100 | 600 | "normal" | "bold" | "bolder" | "lighter" | 200 | 300 | 400 | 700 | 800 | 900;
+	    fontWeight: 500 | 100 | 300 | "normal" | "bold" | "bolder" | "lighter" | 200 | 400 | 600 | 700 | 800 | 900;
 	    /** 内部填充,只支持文字 */
 	    private _padding?;
 	    padding: number | undefined;
@@ -2481,7 +2483,7 @@ declare module 'src/core/plugs/UIClick' {
 
 }
 declare module 'src/core/DisplayObject' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayLayoutAbstract } from 'src/core/DisplayLayoutAbstract';
 	import { CSSStyle } from 'src/layout/CSSStyle';
 	import { UIBaseDrag } from 'src/core/plugs/UIBaseDrag';
@@ -2586,7 +2588,7 @@ declare module 'src/core/DisplayObject' {
 
 }
 declare module 'src/utils/Utils' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { Stage } from 'src/core/Stage';
 	import { DisplayObjectAbstract } from 'src/core/DisplayObjectAbstract';
@@ -2781,7 +2783,7 @@ declare module 'src/utils/Utils' {
 
 }
 declare module 'src/core/Filter' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	export class Filter extends vf.Filter {
 	    static isFilter: boolean;
 	    static defaultFilterVertex: string;
@@ -2817,7 +2819,7 @@ declare module 'src/display/Container' {
 
 }
 declare module 'src/display/Slider' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { Image as VfuiImage } from 'src/display/Image';
 	import { DragEvent, InteractionEvent } from 'src/interaction/Index';
@@ -2842,9 +2844,9 @@ declare module 'src/display/Slider' {
 	    protected _decimals: number;
 	    protected _startValue: number;
 	    protected _maxPosition: number;
-	    protected _localMousePosition: vf.Point;
 	    protected _lastChange: number;
 	    protected _lastChanging: number;
+	    protected _localMousePosition: vf.Point;
 	    /** 状态展示 */
 	    readonly trackImg: VfuiImage;
 	    readonly thumbImg: VfuiImage;
@@ -2852,15 +2854,10 @@ declare module 'src/display/Slider' {
 	    protected _thumbDrag: DragEvent;
 	    protected _trackDrag: DragEvent;
 	    /**
-	     * 设置拖拽图，9切方式
-	     */
-	    trackScale9Grid: number[];
-	    protected _value: number;
-	    /**
 	     * 当前值
 	     */
 	    value: number;
-	    protected valueSystem(): void;
+	    protected valueSystem(value?: number): void;
 	    /**
 	     * 最小值
 	     */
@@ -2891,11 +2888,7 @@ declare module 'src/display/Slider' {
 	     */
 	    protected _tracklight?: string | number | vf.Texture | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement;
 	    tracklight: string | number | HTMLCanvasElement | vf.Texture | HTMLImageElement | HTMLVideoElement | undefined;
-	    protected isExcValueSystem: boolean;
-	    setActualSize(w: number, h: number): void;
-	    release(): void;
 	    protected onImgload(): void;
-	    protected updateLayout(): void;
 	    protected updatePosition(soft?: boolean): void;
 	    protected onPress(event: InteractionEvent, isPressed: boolean, dragEvent?: DragEvent): void;
 	    protected onDragStart(event: InteractionEvent): void;
@@ -2904,11 +2897,15 @@ declare module 'src/display/Slider' {
 	    protected updatePositionToMouse(mousePosition: vf.Point, soft: boolean): void;
 	    protected triggerValueChange(): void;
 	    protected triggerValueChanging(): void;
+	    updateLayout(): void;
+	    protected commitProperties(): void;
+	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
+	    release(): void;
 	}
 
 }
 declare module 'src/display/ScrollBar' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { Slider } from 'src/display/Slider';
 	import { ScrollingContainer } from 'src/display/ScrollingContainer';
 	import { Image } from 'src/display/Image';
@@ -2940,7 +2937,7 @@ declare module 'src/display/ScrollBar' {
 
 }
 declare module 'src/display/ScrollingContainer' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { Container } from 'src/display/Container';
 	import { ContainerBase } from 'src/core/ContainerBase';
 	import { DisplayObjectAbstract } from 'src/core/DisplayObjectAbstract';
@@ -3048,7 +3045,7 @@ declare module 'src/display/ScrollingContainer' {
 
 }
 declare module 'src/display/SpriteAnimated' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/**
 	 * 序列图动画
@@ -3249,7 +3246,7 @@ declare module 'src/event/KeyEvent' {
 
 }
 declare module 'src/display/private/HtmlInput' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	/**
 	 * 私有的，由于VFJS不支持文本输入，这里以HTML方式实现
 	 */
@@ -3294,7 +3291,7 @@ declare module 'src/display/private/HtmlInput' {
 
 }
 declare module 'src/display/TextInput' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import HtmlInput from 'src/display/private/HtmlInput';
 	import { InputBase } from 'src/display/private/InputBase';
 	import { Image } from 'src/display/Image';
@@ -3400,7 +3397,7 @@ declare module 'src/display/TextInput' {
 
 }
 declare module 'src/display/private/GraphBase' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { MaskSprite } from 'src/core/MaskSprite';
 	/**
@@ -3508,7 +3505,7 @@ declare module 'src/display/Circle' {
 
 }
 declare module 'src/display/Graphics' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/**
 	 * 矢量绘制
@@ -3657,7 +3654,7 @@ declare module 'src/display/FollowLine' {
 
 }
 declare module 'src/display/Video' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	/**
 	 * 播放器组件
@@ -3802,7 +3799,7 @@ declare module 'src/display/ConnectLine' {
 
 }
 declare module 'src/display/Tracing' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	import { DisplayObject } from 'src/core/DisplayObject';
 	import { ClickEvent } from 'src/interaction/Index';
 	import { TracingEnum } from 'src/enum/Index';
@@ -3908,6 +3905,7 @@ declare module 'src/display/Tracing' {
 	     * 自动绘制
 	     */
 	    private auto;
+	    private _posLength;
 	    private drawWithAnimation;
 	    private autoNextPoint;
 	    /**
@@ -4051,6 +4049,7 @@ declare module 'src/display/Audio' {
 	    * 释放
 	    */
 	    dispose(): void;
+	    release(): void;
 	    /**
 	    * 各种可取参数.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	    */
@@ -4173,7 +4172,7 @@ declare module 'src/event/EventLevel' {
 
 }
 declare module 'src/core/Scheduler' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	/**
 	 * Schedule anything
 	 *
@@ -4201,7 +4200,7 @@ declare module 'src/core/Scheduler' {
 
 }
 declare module 'src/UI' {
-	/// <reference types="@vf.js/vf" />
+	///   types="@vf.js/vf" />
 	/** 工具类 */
 	import * as Utils from 'src/utils/Utils';
 	/** UI舞台，最顶级的层 展示所有UI组件 */
@@ -4662,8 +4661,8 @@ declare module 'src/tween/private/PlaybackPosition' {
 
 }
 declare module 'test/TestAlign' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestAlign {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4671,16 +4670,16 @@ declare module 'test/TestAlign' {
 
 }
 declare module 'test/TestApplication' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestApplication {
 	    constructor(thisObj: any, callback: (app: vf.Application, uiStage: vf.gui.Stage) => void);
 	}
 
 }
 declare module 'test/TestAudio' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestAudio {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4688,8 +4687,8 @@ declare module 'test/TestAudio' {
 
 }
 declare module 'test/TestButton' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestButton {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4700,8 +4699,8 @@ declare module 'test/TestButton' {
 
 }
 declare module 'test/TestCheckBox' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestCheckBox {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4712,8 +4711,8 @@ declare module 'test/TestCheckBox' {
 
 }
 declare module 'test/TestCircle' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestCircle {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4722,8 +4721,8 @@ declare module 'test/TestCircle' {
 
 }
 declare module 'test/TestConnectLine' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestConnectLine {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4733,8 +4732,8 @@ declare module 'test/TestConnectLine' {
 
 }
 declare module 'test/TestContainer' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestContainer {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4742,8 +4741,8 @@ declare module 'test/TestContainer' {
 
 }
 declare module 'test/TestDrag' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestDrag {
 	    private id;
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
@@ -4753,8 +4752,8 @@ declare module 'test/TestDrag' {
 
 }
 declare module 'test/TestFollowLine' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestFollowLine {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4762,8 +4761,8 @@ declare module 'test/TestFollowLine' {
 
 }
 declare module 'test/TestGridLayout' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestGridLayout {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4772,8 +4771,8 @@ declare module 'test/TestGridLayout' {
 
 }
 declare module 'test/TestImage' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestImage {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4781,8 +4780,8 @@ declare module 'test/TestImage' {
 
 }
 declare module 'test/TestLabel' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestLabel {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4791,8 +4790,8 @@ declare module 'test/TestLabel' {
 
 }
 declare module 'test/TestMouseCursor' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestMouseCursor {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4801,8 +4800,8 @@ declare module 'test/TestMouseCursor' {
 
 }
 declare module 'test/TestRect' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestRect {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4811,8 +4810,8 @@ declare module 'test/TestRect' {
 
 }
 declare module 'test/TestScrollBar' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestScrollBar {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4821,8 +4820,8 @@ declare module 'test/TestScrollBar' {
 
 }
 declare module 'test/TestScrollingContainer' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestScrollingContainer {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4831,8 +4830,8 @@ declare module 'test/TestScrollingContainer' {
 
 }
 declare module 'test/TestSlider' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestSlider {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4840,8 +4839,8 @@ declare module 'test/TestSlider' {
 
 }
 declare module 'test/TestSpriteAnimated' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestSpriteAnimated {
 	    private onLoad;
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
@@ -4896,8 +4895,8 @@ declare module 'test/TestSpriteAnimated' {
 
 }
 declare module 'test/TestSyncInteraction' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestSyncInteraction {
 	    private id;
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
@@ -4906,8 +4905,8 @@ declare module 'test/TestSyncInteraction' {
 
 }
 declare module 'test/TestTextInput' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestTextInput {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4915,8 +4914,8 @@ declare module 'test/TestTextInput' {
 
 }
 declare module 'test/TestTicker' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestTicker {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4925,8 +4924,8 @@ declare module 'test/TestTicker' {
 
 }
 declare module 'test/TestTimeLine' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestTimeLine {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4934,8 +4933,8 @@ declare module 'test/TestTimeLine' {
 
 }
 declare module 'test/TestTracing' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestTracing {
 	    private tracing;
 	    private tracing2;
@@ -4947,8 +4946,8 @@ declare module 'test/TestTracing' {
 
 }
 declare module 'test/TestTween' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestTween {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4965,8 +4964,8 @@ declare module 'test/TestTween' {
 
 }
 declare module 'test/TestTween2' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestTween2 {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4974,8 +4973,8 @@ declare module 'test/TestTween2' {
 
 }
 declare module 'test/TestVideo' {
-	/// <reference path="../gui.d.ts" />
-	/// <reference types="@vf.js/vf" />
+	///   path="../gui.d.ts" />
+	///   types="@vf.js/vf" />
 	export default class TestVideo {
 	    constructor(app: vf.Application, uiStage: vf.gui.Stage);
 	    private onLoad;
@@ -4984,7 +4983,12 @@ declare module 'test/TestVideo' {
 
 }
 declare module 'test/index' {
-	/// <reference path="../gui.d.ts" />
+	///   path="../gui.d.ts" />
 	export {};
 
 }
+
+    declare namespace vf.gui{
+        export * from "src/UI";
+    }
+    
