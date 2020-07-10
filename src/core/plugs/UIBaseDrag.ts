@@ -4,7 +4,8 @@ import { TouchMouseEventEnum } from "../../interaction/TouchMouseEventEnum";
 import { DisplayObjectAbstract } from "../DisplayObjectAbstract";
 import { Stage } from "../Stage";
 import { getDisplayObject, debug, getDisplayPathById } from "../../utils/Utils";
-
+import { SyncManager } from "../../interaction/SyncManager";
+import { TickerShared } from "../Ticker";
 
 /**
  *  组件的拖拽操作
@@ -281,7 +282,7 @@ export class UIBaseDrag implements Lifecycle {
                     if (debug) { //debug 模式下，日志信息
                         const stage = target.stage;
                         if (stage) {
-                            stage.inputLog({
+                            stage.sendToPlayer({
                                 code: ComponentEvent.DRAG_START,
                                 level: 'info', target: target,
                                 data: [target.parent, containerStart.x - stageOffset.x, containerStart.y - stageOffset.y],
@@ -328,7 +329,7 @@ export class UIBaseDrag implements Lifecycle {
                     if (debug) {//debug 模式下，日志信息
                         const stage = target.stage;
                         if (stage) {
-                            stage.inputLog({
+                            stage.sendToPlayer({
                                 code: ComponentEvent.DRAG_MOVE,
                                 level: 'info',
                                 target: target,
@@ -351,7 +352,7 @@ export class UIBaseDrag implements Lifecycle {
                 if (this.dragging) {
                     this.dragging = false;
                     //如果没有可被放置掉落的容器，0秒后返回原容器
-                    setTimeout(() => {
+                    TickerShared.addOnce(() => {
                         if (this.target == undefined) {
                             return;
                         }
@@ -378,7 +379,7 @@ export class UIBaseDrag implements Lifecycle {
                         if (debug) {//debug 模式下，日志信息
                             const stage = target.stage;
                             if (stage) {
-                                stage.inputLog({
+                                stage.sendToPlayer({
                                     code: ComponentEvent.DRAG_END,
                                     level: 'info',
                                     target: target,
@@ -397,7 +398,7 @@ export class UIBaseDrag implements Lifecycle {
                         e.data.tiltY = dragPosition.y;
                         this._actionData = {type:ComponentEvent.DRAG_END,data: e.data};
                         target.emit(ComponentEvent.DRAG_END, target, e);
-                    }, 0);
+                    }, this)
                 }
                 
 
@@ -438,6 +439,10 @@ export class UIBaseDrag implements Lifecycle {
         if (this.target == undefined) {
             return;
         }
+        if(this.target.stage && this.target.stage.syncInteractiveFlag){
+            (SyncManager.getInstance(this.target.stage) as SyncManager).collectEvent(e, this.target);
+        }
+        
         const target = this.target;
         const item = DragDropController.getEventItem(e, this.dropGroup);
         if (item && item.dragOption.dragging) {
@@ -458,7 +463,7 @@ export class UIBaseDrag implements Lifecycle {
             if (debug) {//debug 模式下，日志信息
                 const stage = target.stage;
                 if (stage) {
-                    stage.inputLog({
+                    stage.sendToPlayer({
                         code: ComponentEvent.DRAG_TARGET,
                         level: 'info',
                         target: item,

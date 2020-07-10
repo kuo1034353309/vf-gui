@@ -414,12 +414,13 @@ export class Tracing extends DisplayObject {
         }
         this._curLocalPos.set(point.x, point.y);
         if (this._autoComplete) {
+            
             this.emit(ComponentEvent.COMPLETE, this, { mode: this.mode, value: TracingEnum.Result.Complete });
             return;
         }
         this.drawWithAnimation();
     }
-
+    private _posLength = 2;
     private drawWithAnimation() {
         const distance = pointDistance(this._lastLocalPos, this._curLocalPos);
         const startPos = this._lastLocalPos.clone();
@@ -435,6 +436,7 @@ export class Tracing extends DisplayObject {
                 const x = (dt * (endPos.x - startPos.x)) / distance + startPos.x;
                 const y = (dt * (endPos.y - startPos.y)) / distance + startPos.y;
                 curPos.set(x, y);
+
                 this._posCache.push(curPos.clone());
                 const graphics = this.getGraphics(this._lineId.toString(), this._lineStyle);
                 this.localDraw(graphics);
@@ -442,6 +444,11 @@ export class Tracing extends DisplayObject {
             .once(Tween.Event.complete, (obj: any) => {
                 (this._tween as Tween).removeAllListeners();
                 (this._tween as Tween).release();
+
+                const length = this._posCache.length;
+                if(length > this._posLength){
+                    this._posCache = this._posCache.slice(length-this._posLength , length-1);  //容错处理   没有全部清掉 因为最后节点可能没有画完
+                }
                 this.auto();
             })
             .start();
@@ -699,6 +706,7 @@ export class Tracing extends DisplayObject {
      */
     private localDraw(graphics: vf.Graphics) {
         this._posCache.forEach((item, index) => {
+            
             if (index == 0) {
                 graphics.moveTo(item.x, item.y);
             } else {
