@@ -62,12 +62,19 @@ export class Circle extends GraphBase {
 
 
         const diam = this._radius * 2;
-        graphics.arc(this._anchorX ? this._anchorX * diam : 0
-            , this._anchorY ? diam * this._anchorY : 0
-            , this._radius
-            , this._startAngle * Math.PI / 180
-            , this._endAngle * Math.PI / 180
-            , this._anticlockwise);
+        if ((this._startAngle === 0 && this._endAngle === 360) || (this._startAngle === 360 && this._endAngle === 0)) {
+            graphics.drawCircle(this._anchorX ? this._anchorX * diam : 0
+                , this._anchorY ? diam * this._anchorY : 0
+                , this._radius);
+        }else {
+            graphics.arc(this._anchorX ? this._anchorX * diam : 0
+                , this._anchorY ? diam * this._anchorY : 0
+                , this._radius
+                , this._startAngle * Math.PI / 180
+                , this._endAngle * Math.PI / 180
+                , this._anticlockwise);
+        }
+
         graphics.endFill();
     }
 
