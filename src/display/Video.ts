@@ -26,8 +26,14 @@ export class Video extends DisplayObject {
         super();
 
         const video = this._video = document.createElement('video');
-        this._video.id = this.uuid.toString();
+        video.id = this.uuid.toString();
         document.body.appendChild(this._video);
+
+        //支持苹果可以非全屏播放
+        video.setAttribute("x5-playsinline" , "");
+        video.setAttribute("playsinline" , "");
+        video.setAttribute("webkit-playsinline" , "");
+        video.setAttribute("x-webkit-airplay" , "allow");
 
 
         // this.container.isEmitRender = true;
