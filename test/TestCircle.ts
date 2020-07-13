@@ -28,7 +28,7 @@ export default class TestCircle {
         circle1.style.top = 350;
         //circle1.color = undefined;
         circle1.lineColor = 0xff00cc;
-        circle1.lineWidth = 1;
+        circle1.lineWidth = 10;
         circle1.radius = 50;
         uiStage.addChild(circle1);
 

@@ -4431,6 +4431,41 @@ declare module 'src/vf-gui' {
 	export { gui };
 
 }
+declare module 'src/Interaction/KeyboardEvent' {
+	import { DisplayObject } from 'src/core/DisplayObject'; class KeyboardSelectEvent {
+	    /**
+	     * document的键盘事件
+	    */
+	    constructor();
+	    private obj;
+	    private ctrlDown;
+	    private shiftDown;
+	    private shiftKey;
+	    private ctrlKey;
+	    private cmdKey;
+	    private isAddEvent;
+	    private keyDownEventBind;
+	    private keyUpEventBind;
+	    private pasteEventBind;
+	    private copyEventBind;
+	    private cutEventBind;
+	    private addEvent;
+	    private removeEvent;
+	    protected keyDownEvent(e: KeyboardEvent): void;
+	    protected keyUpEvent(e: KeyboardEvent): void;
+	    protected copyEvent(e: ClipboardEvent): void;
+	    protected cutEvent(e: ClipboardEvent): void;
+	    protected pasteEvent(e: ClipboardEvent): void;
+	    focus(obj: DisplayObject): void;
+	    blur(): void;
+	}
+	/**
+	 * KeyboardSelectEvent 的实例
+	 */
+	export const keyboardShared: KeyboardSelectEvent;
+	export {};
+
+}
 declare interface ObjectConstructor {
     assign(...objects: Record<string, any>[]): Record<string, any>;
 }
@@ -4607,41 +4642,6 @@ declare module 'src/enum/ComponentEvent' {
 	 * 播放音效 {name,mode}
 	 */
 	export const PLAY_AUDIO = "PLAY_AUDIO";
-
-}
-declare module 'src/interaction/KeyboardEvent' {
-	import { DisplayObject } from 'src/core/DisplayObject'; class KeyboardSelectEvent {
-	    /**
-	     * document的键盘事件
-	    */
-	    constructor();
-	    private obj;
-	    private ctrlDown;
-	    private shiftDown;
-	    private shiftKey;
-	    private ctrlKey;
-	    private cmdKey;
-	    private isAddEvent;
-	    private keyDownEventBind;
-	    private keyUpEventBind;
-	    private pasteEventBind;
-	    private copyEventBind;
-	    private cutEventBind;
-	    private addEvent;
-	    private removeEvent;
-	    protected keyDownEvent(e: KeyboardEvent): void;
-	    protected keyUpEvent(e: KeyboardEvent): void;
-	    protected copyEvent(e: ClipboardEvent): void;
-	    protected cutEvent(e: ClipboardEvent): void;
-	    protected pasteEvent(e: ClipboardEvent): void;
-	    focus(obj: DisplayObject): void;
-	    blur(): void;
-	}
-	/**
-	 * KeyboardSelectEvent 的实例
-	 */
-	export const keyboardShared: KeyboardSelectEvent;
-	export {};
 
 }
 declare module 'src/tween/private/PlaybackPosition' {
