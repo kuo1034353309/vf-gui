@@ -1368,7 +1368,6 @@ declare module 'src/interaction/SyncManager' {
 }
 declare module 'src/interaction/ClickEvent' {
 	import { DisplayObject } from 'src/core/DisplayObject';
-	import { InteractionEvent } from 'src/event/InteractionEvent';
 	/**
 	 * 点击触摸相关的事件处理订阅类,UI组件内部可以创建此类实现点击相关操作
 	 *
@@ -1379,13 +1378,6 @@ declare module 'src/interaction/ClickEvent' {
 	 *  {InteractionEvent}.TouchEvent.onClick
 	 *  {InteractionEvent}.TouchEvent.onMove
 	 * ```
-	 *  可赋值方法:
-	 * ```
-	 *  onHover: ((e: InteractionEvent,thisOBj:DisplayObject,over: boolean) => void) | undefined
-	 *  onPress: ((e: InteractionEvent,thisOBj:DisplayObject, isPressed: boolean) => void) | undefined;
-	 *  onClick: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined
-	 *  onMove: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined
-	 * ```
 	 *
 	 * @example 可查看 `TestSliceSprite` 示例
 	 *
@@ -1395,16 +1387,13 @@ declare module 'src/interaction/ClickEvent' {
 	    /**
 	     * ClickEvent 构造函数
 	     * @param obj 调用的显示对象
-	     * @param isOpenEmitEvent 是否开启事件派发，默认false，开启后，父类可以监听InteractionEvent下的TouchEvent
 	     * @param includeHover 是否监听鼠标移上与移出，默认true
 	     * @param rightMouseButton 是否开启鼠标右键点击，默认false
 	     * @param doubleClick 是否开启鼠标双击,默认false
 	     */
-	    constructor(obj: DisplayObject, isOpenEmitEvent?: boolean, includeHover?: boolean, rightMouseButton?: boolean, doubleClick?: boolean);
+	    constructor(obj: DisplayObject, includeHover?: boolean, rightMouseButton?: boolean, doubleClick?: boolean);
 	    private obj;
 	    id: number;
-	    /** 是否基于事件派发，开启后，可以侦听相关的事件 InteractionEvent.TouchEvent | vf.gui.Interaction.TouchEvent */
-	    isOpenEmitEvent: boolean;
 	    /** 是否开启本地坐标转换，开启后，事件InteractionEvent中的localX localY为本地坐标，false情况下为0 */
 	    isOpenLocalPoint: boolean;
 	    private localOffset;
@@ -1435,13 +1424,10 @@ declare module 'src/interaction/ClickEvent' {
 	    private _onMouseUpOutside;
 	    private _onMouseOver;
 	    private _onMouseOut;
+	    private _tempMovePoint;
 	    private _onMouseMove;
 	    private setLocalPoint;
 	    remove(): void;
-	    onHover: ((e: InteractionEvent, thisOBj: DisplayObject, over: boolean) => void) | undefined;
-	    onPress: ((e: InteractionEvent, thisOBj: DisplayObject, isPressed: boolean) => void) | undefined;
-	    onClick: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined;
-	    onMove: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined;
 	}
 
 }

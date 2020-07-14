@@ -12,6 +12,7 @@ export default class TestCircle {
 
         /** 绘制 */
         const circle = new vf.gui.Circle();
+        circle.interactabled = true;
         // circle.style.left = 150;
         // circle.style.top = 120;
         circle.anchorX = 0.1;
@@ -56,13 +57,13 @@ export default class TestCircle {
             }
         })
 
-        const click = new vf.gui.Interaction.ClickEvent(circle, true);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onUp, this.onClick, this);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onDown, this.onClick, this);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onPress, this.onClick, this);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onMove, this.onClick, this);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onHover, this.onClick, this);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onClick, this.onClick, this);
+
     }
 
     private onClick(e: vf.gui.Interaction.InteractionEvent) {

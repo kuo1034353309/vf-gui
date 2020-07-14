@@ -15,13 +15,6 @@ import { SyncManager } from "./SyncManager";
  *  {InteractionEvent}.TouchEvent.onClick
  *  {InteractionEvent}.TouchEvent.onMove
  * ```
- *  可赋值方法:
- * ```
- *  onHover: ((e: InteractionEvent,thisOBj:DisplayObject,over: boolean) => void) | undefined
- *  onPress: ((e: InteractionEvent,thisOBj:DisplayObject, isPressed: boolean) => void) | undefined;
- *  onClick: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined
- *  onMove: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined
- * ```
  *
  * @example 可查看 `TestSliceSprite` 示例
  *
@@ -31,28 +24,23 @@ export class ClickEvent {
     /**
      * ClickEvent 构造函数
      * @param obj 调用的显示对象
-     * @param isOpenEmitEvent 是否开启事件派发，默认false，开启后，父类可以监听InteractionEvent下的TouchEvent
      * @param includeHover 是否监听鼠标移上与移出，默认true
      * @param rightMouseButton 是否开启鼠标右键点击，默认false
      * @param doubleClick 是否开启鼠标双击,默认false
      */
     public constructor(
         obj: DisplayObject,
-        isOpenEmitEvent?: boolean,
         includeHover?: boolean,
         rightMouseButton?: boolean,
         doubleClick?: boolean
     ) {
         this.obj = obj;
 
-        if (isOpenEmitEvent !== undefined) {
-            this.isOpenEmitEvent = isOpenEmitEvent;
-        }
         if (includeHover !== undefined) {
-            this.right = includeHover;
+            this.hover = includeHover;
         }
         if (rightMouseButton !== undefined) {
-            this.hover = rightMouseButton;
+            this.right = rightMouseButton;
         }
         if (doubleClick !== undefined) {
             this.double = doubleClick;
@@ -71,8 +59,6 @@ export class ClickEvent {
 
     private obj: DisplayObject;
     public id = 0;
-    /** 是否基于事件派发，开启后，可以侦听相关的事件 InteractionEvent.TouchEvent | vf.gui.Interaction.TouchEvent */
-    public isOpenEmitEvent = false;
     /** 是否开启本地坐标转换，开启后，事件InteractionEvent中的localX localY为本地坐标，false情况下为0 */
     public isOpenLocalPoint = false;
     private localOffset = new vf.Point();
@@ -103,11 +89,12 @@ export class ClickEvent {
             if (!this.right){
                 container.on(TouchMouseEventEnum.touchstart, this._onMouseDown, this);
                 if (this.hover) {
-                    container.on(TouchMouseEventEnum.mouseover, this._onMouseOver, this);
-                    container.on(TouchMouseEventEnum.mouseout, this._onMouseOut, this);
-                    if(this.deviceType !== 'pc'){ // 用于解决移动端滑动触发问题，后期可以单独处理移动相关的
+                    if(this.deviceType === 'pc'){ // 用于解决移动端滑动触发问题，后期可以单独处理移动相关的
+                        container.on(TouchMouseEventEnum.mouseover, this._onMouseOver, this);
+                        container.on(TouchMouseEventEnum.mouseout, this._onMouseOut, this);
+                    }else{
                         container.on(TouchMouseEventEnum.touchstart, this._onMouseOver, this);
-                        container.on(TouchMouseEventEnum.touchendoutside, this._onMouseOut, this);
+                        container.on(TouchMouseEventEnum.touchend, this._onMouseOut, this);
                     }
                 }
             }
@@ -152,9 +139,7 @@ export class ClickEvent {
         this.lastMouseDownTime = performance.now() + 300;
         if (
             this.obj.stage && this.obj.stage.syncInteractiveFlag &&
-            (this.onClick ||
-            this.onPress ||
-            this.obj.listenerCount(TouchMouseEvent.onPress) > 0 ||
+            (this.obj.listenerCount(TouchMouseEvent.onPress) > 0 ||
             this.obj.listenerCount(TouchMouseEvent.onDown) > 0 ||
             this.obj.listenerCount(TouchMouseEvent.onClick) > 0)
         ) {
@@ -163,7 +148,6 @@ export class ClickEvent {
         this.setLocalPoint(e);
         this.mouse.copyFrom(e.data.global);
         this.id = e.data.identifier;
-        this.onPress && this.onPress.call(this.obj, e, this.obj, true), this.obj;
         this.emitTouchEvent(TouchMouseEvent.onPress, e, true);
         if (this.obj.listenerCount(TouchMouseEvent.onDown) > 0) {
             this.emitTouchEvent(TouchMouseEvent.onDown, e, true);
@@ -182,7 +166,6 @@ export class ClickEvent {
         if (this.double) {
             const now = performance.now();
             if (now - this.time < 210) {
-                this.onClick && this.onClick.call(this.obj, e, this.obj);
                 this.emitTouchEvent(TouchMouseEvent.onClick, e);
             } else {
                 this.time = now;
@@ -209,10 +192,8 @@ export class ClickEvent {
                 });
             }
         }
-        if (this.isOpenEmitEvent) {
-            e.type = event.toString();
-            this.obj.emit(e.type, e, this.obj, args);
-        }
+        e.type = event.toString();
+        this.obj.emit(e.type, e, this.obj, args);
     }
 
     private _mouseUpAll(e: InteractionEvent) {
@@ -227,7 +208,6 @@ export class ClickEvent {
             }
             this.bound = false;
         }
-        this.onPress && this.onPress.call(this.obj, e, this.obj, false);
         this.emitTouchEvent(TouchMouseEvent.onUp, e, false);
         this.emitTouchEvent(TouchMouseEvent.onPress, e, false);
     }
@@ -236,9 +216,7 @@ export class ClickEvent {
 
         if (
             this.obj.stage && this.obj.stage.syncInteractiveFlag &&
-            (this.onPress ||
-            this.onClick ||
-            this.obj.listenerCount(TouchMouseEvent.onUp) > 0 ||
+            (this.obj.listenerCount(TouchMouseEvent.onUp) > 0 ||
             this.obj.listenerCount(TouchMouseEvent.onPress) > 0 ||
             this.obj.listenerCount(TouchMouseEvent.onClick) > 0)
         ) {
@@ -255,7 +233,6 @@ export class ClickEvent {
         }
 
         if (!this.double) {
-            this.onClick && this.onClick.call(this.obj, e, this.obj);
             this.emitTouchEvent(TouchMouseEvent.onClick, e, false);
         }
     }
@@ -264,8 +241,7 @@ export class ClickEvent {
         if (e.data.identifier !== this.id) return;
         if (
             this.obj.stage && this.obj.stage.syncInteractiveFlag &&
-            (this.onPress ||
-            this.obj.listenerCount(TouchMouseEvent.onUp) > 0 ||
+            (this.obj.listenerCount(TouchMouseEvent.onUp) > 0 ||
             this.obj.listenerCount(TouchMouseEvent.onPress) > 0)
         ) {
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
@@ -276,39 +252,42 @@ export class ClickEvent {
 
     private _onMouseOver(e: InteractionEvent) {
         if (!this.ishover) {
-            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onHover || this.obj.listenerCount(TouchMouseEvent.onHover) > 0)) {
+            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.obj.listenerCount(TouchMouseEvent.onHover) > 0)) {
                 (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
             }
 
             this.ishover = true;
             this.obj.container.on(TouchMouseEventEnum.mousemove, this._onMouseMove, this);
             this.obj.container.on(TouchMouseEventEnum.touchmove, this._onMouseMove, this);
-            this.onHover && this.onHover.call(this.obj, e, this.obj, true);
             this.emitTouchEvent(TouchMouseEvent.onHover, e, true);
         }
     }
 
     private _onMouseOut(e: InteractionEvent) {
         if (this.ishover) {
-            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onHover || this.obj.listenerCount(TouchMouseEvent.onHover) > 0)) {
+            if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.obj.listenerCount(TouchMouseEvent.onHover) > 0)) {
                 (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
             }
 
             this.ishover = false;
             this.obj.container.off(TouchMouseEventEnum.mousemove, this._onMouseMove, this);
             this.obj.container.off(TouchMouseEventEnum.touchmove, this._onMouseMove, this);
-            this.onHover && this.onHover.call(this.obj, e, this.obj, false);
             this.emitTouchEvent(TouchMouseEvent.onHover, e, false);
         }
     }
 
+    private _tempMovePoint = new vf.Point();
     private _onMouseMove(e: InteractionEvent) {
-        if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.onMove || this.obj.listenerCount(TouchMouseEvent.onMove) > 0)) {
+        if (this.obj.stage && this.obj.stage.syncInteractiveFlag && (this.obj.listenerCount(TouchMouseEvent.onMove) > 0)) {
             (SyncManager.getInstance(this.obj.stage) as SyncManager).collectEvent(e, this.obj);
         }
-        this.setLocalPoint(e);
-        this.onMove && this.onMove.call(this.obj, e, this.obj);
-        this.emitTouchEvent(TouchMouseEvent.onMove, e);
+        const container = this.obj.container;
+        container.toLocal(e.data.global, undefined, this._tempMovePoint);
+        if(container.hitArea && container.hitArea.contains(this._tempMovePoint.x,this._tempMovePoint.y)){
+            this.setLocalPoint(e);
+            this.emitTouchEvent(TouchMouseEvent.onMove, e);
+        }
+
     }
 
     private setLocalPoint(e: InteractionEvent) {
@@ -320,14 +299,6 @@ export class ClickEvent {
 
     public remove() {
         this.stopEvent();
-        this.onPress = undefined;
-        this.onHover = undefined;
-        this.onClick = undefined;
-        this.onMove = undefined;
         this.obj.container.interactive = false;
     }
-    public onHover: ((e: InteractionEvent, thisOBj: DisplayObject, over: boolean) => void) | undefined;
-    public onPress: ((e: InteractionEvent, thisOBj: DisplayObject, isPressed: boolean) => void) | undefined;
-    public onClick: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined;
-    public onMove: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined;
 }

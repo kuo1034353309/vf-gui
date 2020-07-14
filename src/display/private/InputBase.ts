@@ -17,7 +17,7 @@ export class InputBase extends DisplayObject{
 
     }
 
-    protected clickEvent = new ClickEvent(this,true);;
+    protected clickEvent = new ClickEvent(this,true);
     private _currentState: "up" | "move" | "down" | "disabled" = "up";
     protected get currentState(): "up" | "move" | "down" | "disabled" {
         return this._currentState;
