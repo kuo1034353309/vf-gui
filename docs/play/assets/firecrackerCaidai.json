@@ -1,0 +1,62 @@
+{
+	"dataType": "cocos",
+	"alpha": {
+		"start": 1,
+		"end": 1
+	},
+	"scale": {
+		"start": 1.2,
+		"end": 1.2,
+		"startVar": 0.7,
+		"endVar": 0,
+		"minimumScaleMultiplier": 1
+	},
+	"color": {
+		"start": "#ffffff",
+		"end": "#ffffff",
+		"startVar": "#ffffff",
+		"endVar": "#ffffff"
+	},
+	"speed": {
+		"start": 800,
+		"end": 100,
+		"minimumSpeedMultiplier": 1.3
+	},
+	"acceleration": {
+		"x": 0,
+		"y": 1060
+	},
+	"maxSpeed": 0,
+	"startRotation": {
+		"min": -120,
+		"max": -60,
+		"startVar": 0,
+		"endVar": 0
+	},
+	"noRotation": false,
+	"rotationSpeed": {
+		"min": 100,
+		"max": 700
+	},
+	"lifetime": {
+		"min": 0,
+		"max": 4.48
+	},
+	"blendMode": "normal",
+	"frequency": 0.01,
+	"emitterLifetime": 0.72,
+	"maxParticles": 500,
+	"angleStart": 0,
+	"pos": {
+		"x": 0,
+		"y": 0
+	},
+	"addAtBack": false,
+	"spawnType": "rect",
+	"spawnRect": {
+		"x": 0,
+		"y": 0,
+		"w": 325,
+		"h": 270
+	}
+}
