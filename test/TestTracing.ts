@@ -231,6 +231,18 @@ export default class TestTracing {
         basicText.style.color = 0xffffff;
         basicText.text = '自动书写';
         uiStage.addChild(basicText);
+
+        const radio4 = this.getNewRadio(uiStage);
+        radio4.value = "3";
+        radio4.style.left = 750;
+        radio4.checkGroup = "radio";
+
+        basicText = new vf.gui.Label();
+        basicText.style.left = 780;
+        basicText.style.top = 30;
+        basicText.style.color = 0xffffff;
+        basicText.text = '严格模式';
+        uiStage.addChild(basicText);
     }
 
     private getNewRadio(uiStage: vf.gui.Stage) {

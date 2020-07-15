@@ -1368,7 +1368,6 @@ declare module 'src/interaction/SyncManager' {
 }
 declare module 'src/interaction/ClickEvent' {
 	import { DisplayObject } from 'src/core/DisplayObject';
-	import { InteractionEvent } from 'src/event/InteractionEvent';
 	/**
 	 * 点击触摸相关的事件处理订阅类,UI组件内部可以创建此类实现点击相关操作
 	 *
@@ -1379,13 +1378,6 @@ declare module 'src/interaction/ClickEvent' {
 	 *  {InteractionEvent}.TouchEvent.onClick
 	 *  {InteractionEvent}.TouchEvent.onMove
 	 * ```
-	 *  可赋值方法:
-	 * ```
-	 *  onHover: ((e: InteractionEvent,thisOBj:DisplayObject,over: boolean) => void) | undefined
-	 *  onPress: ((e: InteractionEvent,thisOBj:DisplayObject, isPressed: boolean) => void) | undefined;
-	 *  onClick: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined
-	 *  onMove: ((e: InteractionEvent,thisOBj:DisplayObject) => void) | undefined
-	 * ```
 	 *
 	 * @example 可查看 `TestSliceSprite` 示例
 	 *
@@ -1395,16 +1387,13 @@ declare module 'src/interaction/ClickEvent' {
 	    /**
 	     * ClickEvent 构造函数
 	     * @param obj 调用的显示对象
-	     * @param isOpenEmitEvent 是否开启事件派发，默认false，开启后，父类可以监听InteractionEvent下的TouchEvent
 	     * @param includeHover 是否监听鼠标移上与移出，默认true
 	     * @param rightMouseButton 是否开启鼠标右键点击，默认false
 	     * @param doubleClick 是否开启鼠标双击,默认false
 	     */
-	    constructor(obj: DisplayObject, isOpenEmitEvent?: boolean, includeHover?: boolean, rightMouseButton?: boolean, doubleClick?: boolean);
+	    constructor(obj: DisplayObject, includeHover?: boolean, rightMouseButton?: boolean, doubleClick?: boolean);
 	    private obj;
 	    id: number;
-	    /** 是否基于事件派发，开启后，可以侦听相关的事件 InteractionEvent.TouchEvent | vf.gui.Interaction.TouchEvent */
-	    isOpenEmitEvent: boolean;
 	    /** 是否开启本地坐标转换，开启后，事件InteractionEvent中的localX localY为本地坐标，false情况下为0 */
 	    isOpenLocalPoint: boolean;
 	    private localOffset;
@@ -1435,13 +1424,10 @@ declare module 'src/interaction/ClickEvent' {
 	    private _onMouseUpOutside;
 	    private _onMouseOver;
 	    private _onMouseOut;
+	    private _tempMovePoint;
 	    private _onMouseMove;
 	    private setLocalPoint;
 	    remove(): void;
-	    onHover: ((e: InteractionEvent, thisOBj: DisplayObject, over: boolean) => void) | undefined;
-	    onPress: ((e: InteractionEvent, thisOBj: DisplayObject, isPressed: boolean) => void) | undefined;
-	    onClick: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined;
-	    onMove: ((e: InteractionEvent, thisOBj: DisplayObject) => void) | undefined;
 	}
 
 }
@@ -3538,12 +3524,14 @@ declare module 'src/enum/FollowLineEnum' {
 declare module 'src/enum/TracingEnum' {
 	export const enum Operate {
 	    Add = 0,
-	    Clear = 1
+	    Clear = 1,
+	    Remove = 2
 	}
 	export const enum Mode {
 	    Check = 0,
 	    Teach = 1,
-	    Auto = 2
+	    Auto = 2,
+	    Strict = 3
 	}
 	export const enum Result {
 	    Uncomplete = 0,
@@ -3678,6 +3666,8 @@ declare module 'src/display/Video' {
 	    private _endedFun;
 	    private _loadeddataFun;
 	    private _durationchangeFun;
+	    private _x;
+	    private _y;
 	    constructor();
 	    private canplayFun;
 	    private canplaythroughFun;
@@ -3685,6 +3675,8 @@ declare module 'src/display/Video' {
 	    private endedFun;
 	    private loadeddataFun;
 	    private durationchangeFun;
+	    private _wS;
+	    private _hS;
 	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
 	    private updatePostion;
 	    private updateSystem;
@@ -3828,6 +3820,7 @@ declare module 'src/display/Tracing' {
 	    private _messageCache;
 	    private _tween;
 	    private _guideTime;
+	    private _strictFlag;
 	    /**
 	     * debug
 	     */
@@ -3889,6 +3882,10 @@ declare module 'src/display/Tracing' {
 	     */
 	    private setRenderBgSprite;
 	    /**
+	     * 移出mask背景图
+	     */
+	    private removeRenderBgSprite;
+	    /**
 	     * 开始，适用于audo和teach模式
 	     */
 	    private start;
@@ -3927,6 +3924,8 @@ declare module 'src/display/Tracing' {
 	     * 检查group
 	     */
 	    private checkResult;
+	    private checkStrictFirstPoint;
+	    private checkStrict;
 	    /**
 	     * 教学模式检查
 	     */
@@ -3967,6 +3966,7 @@ declare module 'src/display/Tracing' {
 	     */
 	    private emitTracingMsg;
 	    private onMessage;
+	    removeLine(lineId: string): void;
 	    /**
 	     * clear
 	     */

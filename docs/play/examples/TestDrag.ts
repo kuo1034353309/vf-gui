@@ -74,7 +74,7 @@ export default class TestDrag {
         for (let i = 0; i < 5; i++) {
             rect = new vf.gui.Rect();
             rect.name = "rect" + i.toString();
-            new vf.gui.Interaction.ClickEvent(rect, true);
+            new vf.gui.Interaction.ClickEvent(rect);
             rect.width = 30;
             rect.height = 30;
             rect.color = 0xffcc66;
@@ -108,7 +108,7 @@ export default class TestDrag {
 
         /** 单背景色 */
         const childContainer = new vf.gui.Container();
-        new vf.gui.Interaction.ClickEvent(childContainer, true);
+        new vf.gui.Interaction.ClickEvent(childContainer);
         childContainer.width = 100;
         childContainer.height = 100;
         childContainer.style.backgroundColor = color;

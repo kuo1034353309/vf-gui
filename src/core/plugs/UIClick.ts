@@ -12,15 +12,15 @@ export class UIClick implements Lifecycle {
     public constructor(target: DisplayObject) {
         this._target = target;
         this._target.plugs.set(UIClick.key, this);
-        this._clickEvent = new ClickEvent(target,true);;
+        this._clickEvent = new ClickEvent(target,true);
     }
 
     public static key = "UIClick";
     private _target: DisplayObject | undefined;
-    private _clickEvent:ClickEvent;
+    private _clickEvent: ClickEvent;
 
     load() {
-
+        //
     }
 
     release() {

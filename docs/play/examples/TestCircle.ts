@@ -31,7 +31,7 @@ export default class TestCircle {
         uiStage.addChild(circle1);
 
 
-        const click = new vf.gui.Interaction.ClickEvent(circle, true);
+        const click = new vf.gui.Interaction.ClickEvent(circle);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onUp, this.onClick, this);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onDown, this.onClick, this);
         circle.on(vf.gui.Interaction.TouchMouseEvent.onPress, this.onClick, this);
