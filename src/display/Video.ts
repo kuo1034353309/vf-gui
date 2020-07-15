@@ -22,19 +22,25 @@ export class Video extends DisplayObject {
     private _endedFun: any;
     private _loadeddataFun: any;
     private _durationchangeFun: any;
+
+    private _x:number = 0;
+    private _y:number = 0;
+
     public constructor() {
         super();
 
         const video = this._video = document.createElement('video');
         video.id = this.uuid.toString();
-        document.body.appendChild(this._video);
 
+        // document.body.appendChild(this._video);
+        
         //支持苹果可以非全屏播放
         video.setAttribute("x5-playsinline" , "");
         video.setAttribute("playsinline" , "");
         video.setAttribute("webkit-playsinline" , "");
         video.setAttribute("x-webkit-airplay" , "allow");
-
+        video.setAttribute("x5-video-player-type" , "h5");
+        
 
         // this.container.isEmitRender = true;
         // this.container.on("renderChange",this.updateSystem,this);
@@ -82,17 +88,27 @@ export class Video extends DisplayObject {
     private durationchangeFun(e: any) {
         this.emit('durationchange', e);
     }
-
+    private _wS:number = 1;
+    private _hS:number = 1;
     protected updateDisplayList(unscaledWidth: number, unscaledHeight: number) {
 
         super.updateDisplayList(unscaledWidth, unscaledHeight);
 
+        if(!this._video.parentElement && this.stage && this.stage.app){
+            let canvas:HTMLCanvasElement = this.stage.app.view;
+            if(canvas && canvas.parentElement){
+                canvas.parentElement.appendChild(this._video);
+                this._wS = this.stage.scaleX;
+                this._hS = this.stage.scaleY;
+            }
+        }
+        
         this.updateSystem();
         this._canvasBounds = this._getCanvasBounds();
         const cb = this._canvasBounds;
         const transform = this._vfMatrixToCSS(this._getDOMRelativeWorldTransform());
         if (cb) {
-            this.updatePostion(cb.top, cb.left, transform, this.container.worldAlpha);
+            this.updatePostion(cb.top*this._hS, cb.left*this._wS, transform, this.container.worldAlpha);
         }
         //container 的全局左边的 x , y赋值给 this._video
         // let stageContainer = this.container;
@@ -111,6 +127,9 @@ export class Video extends DisplayObject {
         this._video.style.transform = transform;
         if (opacity)
             this._video.style.opacity = opacity.toString();
+
+
+        console.warn("ssssssssssss" , this);    
     }
 
     private updateSystem() {
@@ -134,7 +153,7 @@ export class Video extends DisplayObject {
     }
 
     private _vfMatrixToCSS(m: any) {
-        return 'matrix(' + [m.a, m.b, m.c, m.d, m.tx, m.ty].join(',') + ')';
+        return 'matrix(' + [m.a, m.b, m.c, m.d, m.tx*this._wS, m.ty*this._hS].join(',') + ')';
     }
 
     private _getDOMRelativeWorldTransform() {
@@ -142,10 +161,15 @@ export class Video extends DisplayObject {
             const canvasBounds = this._lastRenderer.view.getBoundingClientRect();
             const matrix = this.container.worldTransform.clone();
 
-            matrix.scale(this._resolution, this._resolution);
-            matrix.scale(canvasBounds.width / this._lastRenderer.width,
-                canvasBounds.height / this._lastRenderer.height)
+            // matrix.scale(this._resolution, this._resolution);
+            // matrix.scale(canvasBounds.width / this._lastRenderer.width,
+            //     canvasBounds.height / this._lastRenderer.height)
+            //     matrix.tx = matrix.tx * this._wS;
+            //     matrix.ty = matrix.ty * this._hS;
+            matrix.scale(this._wS ,  this._hS);
+                console.log("mamamamam" , matrix);
             return matrix;
+     
         }
 
     }
@@ -179,6 +203,7 @@ export class Video extends DisplayObject {
     }
     public set controls(boo: boolean) {
         this._video && (this._video.controls = boo);
+        console.log("controls is....." , this._video.controls);
     }
 
     public get width(): number {
@@ -263,6 +288,8 @@ export class Video extends DisplayObject {
     }
 
 
+
+
     /** 
      * 只读的属性们~~~~~~~~~~~~~~~~
      * */
@@ -280,7 +307,9 @@ export class Video extends DisplayObject {
     **/
     public play() {
         if (this._video) {
-            this._video.play();
+            this._video.play().catch((error) => {
+                console.log(error);
+              });;
             return;
         }
         throw new Error("Video is undefined!");
