@@ -3524,12 +3524,14 @@ declare module 'src/enum/FollowLineEnum' {
 declare module 'src/enum/TracingEnum' {
 	export const enum Operate {
 	    Add = 0,
-	    Clear = 1
+	    Clear = 1,
+	    Remove = 2
 	}
 	export const enum Mode {
 	    Check = 0,
 	    Teach = 1,
-	    Auto = 2
+	    Auto = 2,
+	    Strict = 3
 	}
 	export const enum Result {
 	    Uncomplete = 0,
@@ -3664,6 +3666,8 @@ declare module 'src/display/Video' {
 	    private _endedFun;
 	    private _loadeddataFun;
 	    private _durationchangeFun;
+	    private _x;
+	    private _y;
 	    constructor();
 	    private canplayFun;
 	    private canplaythroughFun;
@@ -3671,6 +3675,8 @@ declare module 'src/display/Video' {
 	    private endedFun;
 	    private loadeddataFun;
 	    private durationchangeFun;
+	    private _wS;
+	    private _hS;
 	    protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void;
 	    private updatePostion;
 	    private updateSystem;
@@ -3814,6 +3820,7 @@ declare module 'src/display/Tracing' {
 	    private _messageCache;
 	    private _tween;
 	    private _guideTime;
+	    private _strictFlag;
 	    /**
 	     * debug
 	     */
@@ -3875,6 +3882,10 @@ declare module 'src/display/Tracing' {
 	     */
 	    private setRenderBgSprite;
 	    /**
+	     * 移出mask背景图
+	     */
+	    private removeRenderBgSprite;
+	    /**
 	     * 开始，适用于audo和teach模式
 	     */
 	    private start;
@@ -3913,6 +3924,8 @@ declare module 'src/display/Tracing' {
 	     * 检查group
 	     */
 	    private checkResult;
+	    private checkStrictFirstPoint;
+	    private checkStrict;
 	    /**
 	     * 教学模式检查
 	     */
@@ -3953,6 +3966,7 @@ declare module 'src/display/Tracing' {
 	     */
 	    private emitTracingMsg;
 	    private onMessage;
+	    removeLine(lineId: string): void;
 	    /**
 	     * clear
 	     */
