@@ -13,10 +13,10 @@ export default class TestVideo {
 
         /** 绘制 */
         const _video = new vf.gui.Video();
-        _video.src = "./assets/video/friday.mp4";
-        _video.poster = "./assets/video/friday.png";
-        _video.width = 300;
-        _video.height = 400;
+        _video.src = "./docs/play/assets/video/friday.mp4";
+        _video.poster = "./docs/play/assets/video/friday.png";
+        _video.width = 800;
+        _video.height = 600;
         uiStage.addChild(_video);
 
         

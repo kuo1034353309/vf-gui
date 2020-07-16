@@ -1,7 +1,5 @@
 import { DisplayObject } from "../core/DisplayObject";
-import { componentToHex, getSource } from "../utils/Utils";
-import { Point, resources } from "vf.js";
-import { objectPoolShared } from "src/utils/ObjectPool";
+import {getSource } from "../utils/Utils";
 /**
  * 播放器组件
  * 
@@ -23,16 +21,13 @@ export class Video extends DisplayObject {
     private _loadeddataFun: any;
     private _durationchangeFun: any;
 
-    private _x:number = 0;
-    private _y:number = 0;
+    private _canPlayTypelist:string[];
 
     public constructor() {
         super();
 
         const video = this._video = document.createElement('video');
         video.id = this.uuid.toString();
-
-        // document.body.appendChild(this._video);
         
         //支持苹果可以非全屏播放
         video.setAttribute("x5-playsinline" , "");
@@ -41,9 +36,6 @@ export class Video extends DisplayObject {
         video.setAttribute("x-webkit-airplay" , "allow");
         video.setAttribute("x5-video-player-type" , "h5");
         
-
-        // this.container.isEmitRender = true;
-        // this.container.on("renderChange",this.updateSystem,this);
         this._video.style.position = "absolute";
         this._video.controls = true;
 
@@ -68,6 +60,25 @@ export class Video extends DisplayObject {
         video.addEventListener('loadeddata', this._loadeddataFun);
         //duration 属性的值改变时触发
         video.addEventListener('durationchange', this._durationchangeFun);
+
+        this._canPlayTypelist = [];
+        this.playTypeCheck();
+    }
+
+    private playTypeCheck():void{
+        const video = this._video;
+        if (video.canPlayType) {
+            if (video.canPlayType("video/ogg")) {
+                this._canPlayTypelist.push("ogg");
+                this._canPlayTypelist.push("ogv");
+            }
+            if (video.canPlayType("video/mp4")) {
+                this._canPlayTypelist.push("mp4");
+            }
+            if (video.canPlayType("video/webm")) {
+                this._canPlayTypelist.push("webm");
+            }
+        }
     }
 
     private canplayFun(e: any) {
@@ -110,15 +121,6 @@ export class Video extends DisplayObject {
         if (cb) {
             this.updatePostion(cb.top*this._hS, cb.left*this._wS, transform, this.container.worldAlpha);
         }
-        //container 的全局左边的 x , y赋值给 this._video
-        // let stageContainer = this.container;
-        // if(this.stage){
-        //     stageContainer = this.stage.container;
-        // }
-        // let pos = stageContainer.toGlobal(new vf.Point(0,0));
-        // let videoStyle = this._video.style;
-        // videoStyle.left = pos.x + "px";
-        // videoStyle.top = pos.y + "px";
     }
 
     private updatePostion(top: string | number, left: string | number, transform: string, opacity?: string | number) {
@@ -127,9 +129,6 @@ export class Video extends DisplayObject {
         this._video.style.transform = transform;
         if (opacity)
             this._video.style.opacity = opacity.toString();
-
-
-        console.warn("ssssssssssss" , this);    
     }
 
     private updateSystem() {
@@ -161,17 +160,23 @@ export class Video extends DisplayObject {
             const canvasBounds = this._lastRenderer.view.getBoundingClientRect();
             const matrix = this.container.worldTransform.clone();
 
-            // matrix.scale(this._resolution, this._resolution);
-            // matrix.scale(canvasBounds.width / this._lastRenderer.width,
-            //     canvasBounds.height / this._lastRenderer.height)
-            //     matrix.tx = matrix.tx * this._wS;
-            //     matrix.ty = matrix.ty * this._hS;
             matrix.scale(this._wS ,  this._hS);
-                console.log("mamamamam" , matrix);
             return matrix;
      
         }
 
+    }
+
+    private checkSrcLegal():void{
+        try{
+            let srcL = (this._src as string).split(".");
+            let srcSufix = srcL[srcL.length-1];
+            if(this._canPlayTypelist.indexOf(srcSufix) < 0){
+                console.log("当前设备不支持格式" , srcSufix);
+            }
+        }catch(e){
+            console.warn("src合法性检测错误", this._src);
+        }
     }
 
     /**
@@ -193,6 +198,8 @@ export class Video extends DisplayObject {
             this._src = value;
         }
         this._video && (this._video.src = this._src);
+
+        this.checkSrcLegal();
     }
 
     public get controls(): boolean {
@@ -203,7 +210,6 @@ export class Video extends DisplayObject {
     }
     public set controls(boo: boolean) {
         this._video && (this._video.controls = boo);
-        console.log("controls is....." , this._video.controls);
     }
 
     public get width(): number {
@@ -259,8 +265,10 @@ export class Video extends DisplayObject {
         this._video && (this._video.volume = value);
     }
 
-    public get poster() {
-        return this._poster;
+    public get poster() { 
+        if (this._video) {
+            return this._poster;
+        }
         throw new Error("Video is undefined!");
     }
     public set poster(value: number | string) {
@@ -377,8 +385,12 @@ export class Video extends DisplayObject {
         this._endedFun = null;
         this._loadeddataFun = null;
         this._durationchangeFun = null;
-        document.body.removeChild(this._video);
-
+        this._wS = 1;
+        this._hS = 1;
+        if(this._video.parentElement){
+            this._video.parentElement.removeChild(this._video);
+        }
+        this._canPlayTypelist = [];
     }
 }
 
