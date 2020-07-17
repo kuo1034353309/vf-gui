@@ -1,6 +1,7 @@
 import { DisplayObject } from "../core/DisplayObject";
 import { ComponentEvent } from "../interaction/Index";
 import * as UIKeys from "../core/DisplayLayoutKeys";
+import {Decoration} from "../enum/LabelEnum";
 
 /**
  * 文本
@@ -22,10 +23,13 @@ export class Label extends DisplayObject {
         super();
         this.sprite = new vf.Text(text,{breakWords : true,fill:"#ffffff"});
         this.container.addChild(this.sprite);
-
     }
 
     public readonly sprite: vf.Text;
+    private _textDecoration = Decoration.None;
+    private _lineGraphics:any;
+    private _textDecorationColor:number = 0x0ff000; //线条颜色
+    private _textDecorationWidth:number = 3; //线条宽度 
 
     /**
      * 设置分辨力比例
@@ -35,6 +39,95 @@ export class Label extends DisplayObject {
     }
     public set resolution(value) {
         this.sprite.resolution = value;
+    }
+
+    public get textDecoration(){
+        return this._textDecoration;
+    }
+
+    public set textDecoration(value){
+        this._textDecoration = value;
+
+        this.setLineStatus();
+    }
+
+    // public get textDecorationStyle(){
+    //     return this._textDecorationStyle;
+    // }
+    public get textDecorationColor():number{
+        return this._textDecorationColor;
+    }
+
+    public set textDecorationColor(value:number){
+        this._textDecorationColor = value;
+    }
+
+    private setLineStatus(){
+        const type = this._textDecoration;
+        if(type == Decoration.None){
+            this.clearLineGraphics();
+        }else{
+            if(this.sprite.text == ""){
+                return;
+            }
+            this.showUnderLine();
+        }
+    }
+
+    private showUnderLine():void{
+        this.clearLineGraphics();
+        if(!this._lineGraphics){
+            this._lineGraphics = new vf.Graphics();
+        }
+        if(!this._lineGraphics.parent){
+            this.container.addChild(this._lineGraphics);
+        }
+        //画线
+        this.autoDrawLine();   
+    }
+
+    private autoDrawLine(){
+        const lineOffsetY:number = 1;
+        this._textDecorationWidth = this.style.fontSize/10 +1;
+        let leftX:number = Number.MAX_VALUE;
+        let rightX:number = Number.MIN_VALUE;
+        let lineInfo = []; //线条的信息  
+        let sss = vf.TextMetrics.measureText(this.text, this.sprite.style, this.style.wordWrap);
+        for(let i:number = 0 ; i < sss.lines.length ; i++ ){
+            let x = this.getStartPos(sss.lineWidths[i]);
+            let liney = (i+1)*sss.lineHeight + lineOffsetY;
+            leftX = leftX < x ? leftX:x;
+            rightX = rightX > x ? rightX:x;
+            lineInfo.push({leftX:x,lineY:liney ,lineWidths: sss.lineWidths[i]});
+        }
+        for(let i:number = 0 ; i < lineInfo.length ; i++ ){
+            const infoItem = lineInfo[i];
+            this.drawLine(infoItem.leftX,infoItem.lineY,  infoItem.lineWidths);
+        } 
+    }
+
+    private getStartPos(width:number):number{
+        const textAlign = this.style.textAlign;
+        let startPosX:number = 0;
+        switch(textAlign){
+            case "left":
+                startPosX = 0;
+                break;
+            case "right":
+                startPosX = this.width - width;
+                break;
+            case "center":
+                startPosX = (this.width - width)*0.5;
+                break;
+        }
+        return startPosX;
+    }
+
+    private drawLine(startPosX:number ,startPosY:number, lineWidth:number){
+        const lineG = this._lineGraphics as vf.Graphics;
+        lineG.lineStyle(this._textDecorationWidth,this._textDecorationColor);
+        lineG.moveTo(startPosX,startPosY);
+        lineG.lineTo(startPosX + lineWidth,startPosY);
     }
 
     /**
@@ -93,6 +186,16 @@ export class Label extends DisplayObject {
         }
     }
 
+    private clearLineGraphics(){
+        const graphics = this._lineGraphics;
+        if(graphics){
+            if(graphics.parent){
+                graphics.parent.removeChild(this._lineGraphics);
+            }
+            graphics.clear();
+        }
+    }
+
     public release(){
         super.release();
         const sprite = this.sprite;
@@ -100,5 +203,6 @@ export class Label extends DisplayObject {
             sprite.parent.removeChild(sprite).destroy();
         }
         this.offAll(ComponentEvent.CHANGE);
+        this.clearLineGraphics();
     }
 }

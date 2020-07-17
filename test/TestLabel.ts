@@ -15,15 +15,28 @@ export default class TestLabel {
         basicText.style.top = 50;
         basicText.style.color = 0xffffff;
         basicText.text = "Basic text in vf-gui 33434"
+        // basicText.textDecoration = 3;
         uiStage.addChild(basicText);
 
         /** 手动换行文本展示 "\n" */
         const nText = new vf.gui.Label();
         nText.style.left = 15;
         nText.style.top = 100;
+        nText.style.width = 500;
         nText.style.color = [0xffffff, 0xffcc00];
-        nText.text = "你好，\n世界！"
+
+        // nText.fontCssStyle = this.getFontCssStyle();
+        // nText.style.backgroundColor = 0xfff;
+        nText.style.letterSpacing = 0;
+        nText.style.wordWrap = true;
+        nText.style.wordWrapWidth = 200;
+        nText.style.fontSize = 30;
+        nText.text = "22324242    q  　　3      3             \nasdasdads2342423423423423asaasdasdx\ndfgdfgdgdfgdg\ndfgdfgdgdgdfdhrtge\nergergegeg"
+        nText.style.textAlign = "right";
+        // nText.style.verticalAlign = "middle";
+        
         uiStage.addChild(nText);
+        nText.textDecoration = 3;
 
         /** 高级样式文本,换行的宽度为 fields.wordWrapWidth = 600; */
         const richText = new vf.gui.Label();
@@ -31,7 +44,7 @@ export default class TestLabel {
         richText.style.top = 180;
         richText.fontCssStyle = this.getFontCssStyle();
         richText.text = '包含了换行与多种自定义样式的组件,包含了换行与多种自定义样式的组件,包含了换行与多种自定义样式的组件';
-        uiStage.addChild(richText);
+        // uiStage.addChild(richText);
 
         /** 限定宽度 */
         const wText = new vf.gui.Label();
@@ -40,6 +53,7 @@ export default class TestLabel {
         wText.style.color = [0xffffff, 0xffcc00];
         wText.style.width = 300;
         wText.style.height = 100;
+        wText.style.wordWrapWidth
         wText.style.textAlign = "center";
         wText.style.verticalAlign = "middle";
         wText.text = "我限定了宽度与位置";
@@ -56,7 +70,7 @@ export default class TestLabel {
         fields.fontStyle = 'italic';
         fields.fontWeight = 'bold';
         fields.color = [0xffffff, 0x00ff99]; // gradient
-
+        fields.align = "center"
         fields.stroke = 0x4a1850;
         fields.strokeThickness = 5;
 
