@@ -134,11 +134,11 @@ export class Tracing extends DisplayObject {
     public set mode(value: TracingEnum.Mode) {
         if (this._mode !== value) {
             this._mode = value;
-            if(value == TracingEnum.Mode.Strict){
+            if (value == TracingEnum.Mode.Strict || value == TracingEnum.Mode.Teach) {
                 this._renderMode = 0;
                 this.removeRenderBgSprite();
             }
-            
+
             this.clear();
         }
     }
@@ -181,7 +181,7 @@ export class Tracing extends DisplayObject {
     }
     public set renderBgSprite(value) {
         this._renderBgSprite = value;
-        if(this.mode !== TracingEnum.Mode.Strict){
+        if (this.mode !== TracingEnum.Mode.Strict && this.mode !== TracingEnum.Mode.Teach) {
             this._renderMode = 1;
             this.setRenderBgSprite();
         }
@@ -323,7 +323,7 @@ export class Tracing extends DisplayObject {
      * 移出mask背景图
      */
     private removeRenderBgSprite() {
-        if(this._bgSprite){
+        if (this._bgSprite) {
             this.container.removeChild(this._bgSprite);
         }
     }
@@ -431,7 +431,6 @@ export class Tracing extends DisplayObject {
         }
         this._curLocalPos.set(point.x, point.y);
         if (this._autoComplete) {
-            
             this.emit(ComponentEvent.COMPLETE, this, { mode: this.mode, value: TracingEnum.Result.Complete });
             return;
         }
@@ -463,8 +462,8 @@ export class Tracing extends DisplayObject {
                 (this._tween as Tween).release();
 
                 const length = this._posCache.length;
-                if(length > this._posLength){
-                    this._posCache = this._posCache.slice(length-this._posLength , length-1);  //容错处理   没有全部清掉 因为最后节点可能没有画完
+                if (length > this._posLength) {
+                    this._posCache = this._posCache.slice(length - this._posLength, length - 1); //容错处理   没有全部清掉 因为最后节点可能没有画完
                 }
                 this.auto();
             })
@@ -630,10 +629,10 @@ export class Tracing extends DisplayObject {
         }
     }
 
-    private checkStrictFirstPoint(point: vf.IPoint){
+    private checkStrictFirstPoint(point: vf.IPoint) {
         //检测下笔处是否当前笔画的初始点位置
         let index = this._groupStatusArr[this._lineId].points[0];
-        if(pointDistance(point, this._tracePointObjArr[index].point) <= this.precision){
+        if (pointDistance(point, this._tracePointObjArr[index].point) <= this.precision) {
             return true;
         }
         return false;
@@ -661,17 +660,17 @@ export class Tracing extends DisplayObject {
             });
             //书写失败，清除当前线条
             this.removeLine(this._lineId.toString());
-            setTimeout(() => {
-                this.emitTracingMsg(
-                    TracingEnum.Operate.Remove,
-                    this._lineId.toString(),
-                    this.getDataStrByPosCache(),
-                    this._lineStyle,
-                    this._realTraceIndexArr,
-                    this._tempTraceIndexArr,
-                    this._result
-                );
-            }, 300);
+            // setTimeout(() => {
+            //     this.emitTracingMsg(
+            //         TracingEnum.Operate.Remove,
+            //         this._lineId.toString(),
+            //         this.getDataStrByPosCache(),
+            //         this._lineStyle,
+            //         this._realTraceIndexArr,
+            //         this._tempTraceIndexArr,
+            //         this._result
+            //     );
+            // }, 300);
         }
         if (this._lineId < this._groupStatusArr.length) {
             this._realTraceIndexArr = [];
@@ -709,6 +708,20 @@ export class Tracing extends DisplayObject {
             this._realTraceIndexArr.forEach((item) => {
                 this._tracePointObjArr[item].flag = false;
             });
+
+            //书写失败，清除当前线条
+            this.removeLine(this._lineId.toString());
+            // setTimeout(() => {
+            //     this.emitTracingMsg(
+            //         TracingEnum.Operate.Remove,
+            //         this._lineId.toString(),
+            //         this.getDataStrByPosCache(),
+            //         this._lineStyle,
+            //         this._realTraceIndexArr,
+            //         this._tempTraceIndexArr,
+            //         this._result
+            //     );
+            // }, 300);
         }
         if (this._lineId < this._groupStatusArr.length) {
             this._realTraceIndexArr = [];
@@ -732,7 +745,7 @@ export class Tracing extends DisplayObject {
      * @param lineStyle
      */
     private drawLine(lineId: string, data: string, from: number, to: number, lineStyle: any) {
-        console.log('drawLine----', lineId);
+        console.log("drawLine----", lineId);
         const graphics = this.getGraphics(lineId, lineStyle);
         const posList = getVecListFromStr(data, from, to);
         this.draw(graphics, posList);
@@ -782,17 +795,16 @@ export class Tracing extends DisplayObject {
         //修改：仅拿最后的3个点绘制
         let posCache = this._posCache;
         let length = posCache.length;
-        if(length > 2){
+        if (length > 2) {
             graphics.moveTo(posCache[length - 3].x, posCache[length - 3].y);
             graphics.lineTo(posCache[length - 2].x, posCache[length - 2].y);
             graphics.lineTo(posCache[length - 1].x, posCache[length - 1].y);
-        }
-        else{
+        } else {
             graphics.moveTo(posCache[length - 2].x, posCache[length - 2].y);
             graphics.lineTo(posCache[length - 1].x, posCache[length - 1].y);
         }
         // this._posCache.forEach((item, index) => {
-            
+
         //     if (index == 0) {
         //         graphics.moveTo(item.x, item.y);
         //     } else {
@@ -809,16 +821,15 @@ export class Tracing extends DisplayObject {
         }
         const curLocal = this.container.toLocal(e.local, thisObj.container);
         if (isPress) {
-            if(this.mode === TracingEnum.Mode.Strict){
+            if (this.mode === TracingEnum.Mode.Strict) {
                 let result = this.checkStrictFirstPoint(curLocal);
-                if(!result){
+                if (!result) {
                     this._strictFlag = false;
                     return;
                 }
 
                 this._strictFlag = true;
-            }
-            else if (this.mode === TracingEnum.Mode.Teach) {
+            } else if (this.mode === TracingEnum.Mode.Teach) {
                 this.clearGuide();
             }
             this._drawing = true;
@@ -826,7 +837,7 @@ export class Tracing extends DisplayObject {
             this._posCache = [this._lastLocalPos.clone()];
             this.checkTrace(this._lastLocalPos);
         } else {
-            if(this.mode === TracingEnum.Mode.Strict && !this._strictFlag){
+            if (this.mode === TracingEnum.Mode.Strict && !this._strictFlag) {
                 return;
             }
             if (this._posCache.length === 1) {
@@ -855,8 +866,7 @@ export class Tracing extends DisplayObject {
             ++this._lineId;
             if (this.mode === TracingEnum.Mode.Teach) {
                 this.checkTeach();
-            }
-            else if(this.mode === TracingEnum.Mode.Strict){
+            } else if (this.mode === TracingEnum.Mode.Strict) {
                 this.checkStrict();
             }
         }
@@ -1002,11 +1012,22 @@ export class Tracing extends DisplayObject {
                 );
                 this._realTraceIndexArr = realTraceIndexArr;
                 this._tempTraceIndexArr = tempTraceIndexArr;
+                this._lineId = parseInt(lineId);
                 this._result = result;
-                if (this._result != TracingEnum.Result.Uncomplete) {
+
+                ++this._lineId;
+                if (this.mode == TracingEnum.Mode.Teach){
+                    this.clearGuide();
+                    this.checkTeach();
+                }
+                else if(this.mode == TracingEnum.Mode.Strict){
+                    this.checkStrict();
+                }
+                else if (this._result != TracingEnum.Result.Uncomplete) {
                     //临摹完成，返回结果
                     this.emit(ComponentEvent.COMPLETE, this, { mode: this.mode, value: this._result });
                 }
+
                 switch (operate) {
                     case TracingEnum.Operate.Add:
                         this.drawLine(lineId, data, 0, data.length, lineStyle);
@@ -1022,10 +1043,10 @@ export class Tracing extends DisplayObject {
         }
     }
 
-    public removeLine(lineId: string){
-        console.log('removeLine----', lineId);
+    public removeLine(lineId: string) {
+        console.log("removeLine----", lineId);
         let graphics = this.getGraphics(lineId);
-        if(graphics.parent){
+        if (graphics.parent) {
             graphics.parent.removeChild(graphics);
             graphics.destroy();
             const key = "line_" + lineId;

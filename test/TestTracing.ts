@@ -163,6 +163,8 @@ export default class TestTracing {
                 label.text = "自动书写完成";
             } else if (curValue.mode == vf.gui.Enum.TracingEnum.Mode.Teach) {
                 label.text = "教学完成";
+            } else if(curValue.mode == vf.gui.Enum.TracingEnum.Mode.Strict){
+                label.text = "书写完成";
             }
         });
 
@@ -179,6 +181,8 @@ export default class TestTracing {
                 label2.text = "自动书写完成";
             } else if (curValue.mode == vf.gui.Enum.TracingEnum.Mode.Teach) {
                 label2.text = "教学完成";
+            } else if(curValue.mode == vf.gui.Enum.TracingEnum.Mode.Strict){
+                label2.text = "书写完成";
             }
         });
 
