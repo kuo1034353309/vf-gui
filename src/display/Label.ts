@@ -1,7 +1,7 @@
 import { DisplayObject } from "../core/DisplayObject";
 import { ComponentEvent } from "../interaction/Index";
 import * as UIKeys from "../core/DisplayLayoutKeys";
-import {Decoration} from "../enum/LabelEnum";
+import {Decoration , DecorationStyle} from "../enum/LabelEnum";
 
 /**
  * 文本
@@ -26,10 +26,11 @@ export class Label extends DisplayObject {
     }
 
     public readonly sprite: vf.Text;
-    private _textDecoration = Decoration.None;
+    private _textDecoration:"None"|"Overline"|"LineThrough"|"UnderLine" = "None";
     private _lineGraphics:any;
     private _textDecorationColor:number = 0x0ff000; //线条颜色
     private _textDecorationWidth:number = 3; //线条宽度 
+    private _textDecorationStyle:"Solid"|"Double" ="Solid"//线条样式
 
     /**
      * 设置分辨力比例
@@ -41,33 +42,39 @@ export class Label extends DisplayObject {
         this.sprite.resolution = value;
     }
 
-    public get textDecoration(){
+    public get textDecoration():"None"|"Overline"|"LineThrough"|"UnderLine"{
         return this._textDecoration;
     }
 
-    public set textDecoration(value){
+    public set textDecoration(value:"None"|"Overline"|"LineThrough"|"UnderLine"){
         this._textDecoration = value;
-
-        this.setLineStatus();
+        this.setLine();
     }
 
-    // public get textDecorationStyle(){
-    //     return this._textDecorationStyle;
-    // }
+    public get textDecorationStyle():"Solid"|"Double"{
+        return this._textDecorationStyle;
+    }
+
+    public set textDecorationStyle(value:"Solid"|"Double"){
+        this._textDecorationStyle = value;
+        this.setLine();
+    }
+
     public get textDecorationColor():number{
         return this._textDecorationColor;
     }
 
     public set textDecorationColor(value:number){
         this._textDecorationColor = value;
+        this.setLine();
     }
 
-    private setLineStatus(){
+    private setLine(){
         const type = this._textDecoration;
-        if(type == Decoration.None){
+        if(type == "None"){
             this.clearLineGraphics();
         }else{
-            if(this.sprite.text == ""){
+            if(!this.sprite || !this.sprite.text  || this.sprite.text == ""){
                 return;
             }
             this.showUnderLine();
@@ -87,18 +94,23 @@ export class Label extends DisplayObject {
     }
 
     private autoDrawLine(){
+        let vfMeasured = this.sprite.vfMeasured;
+        if(vfMeasured == null){
+            console.log("文本渲染参数未初始化");
+            return;
+        }
         const lineOffsetY:number = 1;
         this._textDecorationWidth = this.style.fontSize/10 +1;
         let leftX:number = Number.MAX_VALUE;
-        let rightX:number = Number.MIN_VALUE;
+        // let rightX:number = Number.MIN_VALUE;
         let lineInfo = []; //线条的信息  
-        let sss = vf.TextMetrics.measureText(this.text, this.sprite.style, this.style.wordWrap);
-        for(let i:number = 0 ; i < sss.lines.length ; i++ ){
-            let x = this.getStartPos(sss.lineWidths[i]);
-            let liney = (i+1)*sss.lineHeight + lineOffsetY;
+     
+        for(let i:number = 0 ; i < vfMeasured.lines.length ; i++ ){
+            let x = this.getStartPosX(vfMeasured.lineWidths[i]);
+            let liney = this.getStartPosY(vfMeasured.lineHeight,i);
             leftX = leftX < x ? leftX:x;
-            rightX = rightX > x ? rightX:x;
-            lineInfo.push({leftX:x,lineY:liney ,lineWidths: sss.lineWidths[i]});
+            // rightX = rightX > x ? rightX:x;
+            lineInfo.push({leftX:x,lineY:liney ,lineWidths: vfMeasured.lineWidths[i]});
         }
         for(let i:number = 0 ; i < lineInfo.length ; i++ ){
             const infoItem = lineInfo[i];
@@ -106,7 +118,7 @@ export class Label extends DisplayObject {
         } 
     }
 
-    private getStartPos(width:number):number{
+    private getStartPosX(width:number):number{
         const textAlign = this.style.textAlign;
         let startPosX:number = 0;
         switch(textAlign){
@@ -123,11 +135,46 @@ export class Label extends DisplayObject {
         return startPosX;
     }
 
+    private getStartPosY(height:number , lineIndex:number):number{
+        let startPosY:number = 0;
+        const type = this._textDecoration;
+        switch(type){
+            case "None":
+                break;
+            case "UnderLine":
+                const lineOffsetY:number = 1;
+                startPosY = (lineIndex + 1)*height + lineOffsetY;
+                break;
+            case "LineThrough":
+                startPosY = (lineIndex + 1)*height - height*0.5;
+                break;
+            case "Overline":
+                startPosY = lineIndex*height;
+                break;
+        }
+
+        return startPosY;
+    }
+
     private drawLine(startPosX:number ,startPosY:number, lineWidth:number){
         const lineG = this._lineGraphics as vf.Graphics;
-        lineG.lineStyle(this._textDecorationWidth,this._textDecorationColor);
-        lineG.moveTo(startPosX,startPosY);
-        lineG.lineTo(startPosX + lineWidth,startPosY);
+        const style = this._textDecorationStyle;
+        switch(style){
+            case "Solid":
+                lineG.lineStyle(this._textDecorationWidth,this._textDecorationColor);
+                lineG.moveTo(startPosX,startPosY);
+                lineG.lineTo(startPosX + lineWidth,startPosY);
+                break;
+            case "Double":
+                lineG.lineStyle(this._textDecorationWidth*0.5,this._textDecorationColor);
+                lineG.moveTo(startPosX,startPosY);
+                lineG.lineTo(startPosX + lineWidth,startPosY);  
+                lineG.moveTo(startPosX,startPosY+this._textDecorationWidth*1);
+                lineG.lineTo(startPosX + lineWidth,startPosY+this._textDecorationWidth*1);
+                break;
+        }
+        
+
     }
 
     /**
@@ -141,6 +188,7 @@ export class Label extends DisplayObject {
         this.setActualSize(this.sprite.width,this.sprite.height);
         this.invalidateSize();
         this.emit(ComponentEvent.CHANGE,this);
+        this.setLine();
     }
 
     public set fontCssStyle(value: any){
@@ -151,6 +199,7 @@ export class Label extends DisplayObject {
         this.sprite.style = value;
         this.setActualSize(this.sprite.width,this.sprite.height);
         this.invalidateSize();
+        this.setLine();
     }
 
     protected updateDisplayList(unscaledWidth: number, unscaledHeight: number): void {
@@ -204,5 +253,7 @@ export class Label extends DisplayObject {
         }
         this.offAll(ComponentEvent.CHANGE);
         this.clearLineGraphics();
+        this._textDecoration = "None";
+        this._textDecorationStyle = "Solid";
     }
 }

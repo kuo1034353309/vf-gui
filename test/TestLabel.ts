@@ -24,19 +24,21 @@ export default class TestLabel {
         nText.style.top = 100;
         nText.style.width = 500;
         nText.style.color = [0xffffff, 0xffcc00];
-
-        // nText.fontCssStyle = this.getFontCssStyle();
-        // nText.style.backgroundColor = 0xfff;
+ 
+        
         nText.style.letterSpacing = 0;
-        nText.style.wordWrap = true;
+        nText.style.wordWrap = false;
         nText.style.wordWrapWidth = 200;
         nText.style.fontSize = 30;
-        nText.text = "22324242    q  　　3      3             \nasdasdads2342423423423423asaasdasdx\ndfgdfgdgdfgdg\ndfgdfgdgdgdfdhrtge\nergergegeg"
-        nText.style.textAlign = "right";
+        nText.text = "22324242    q  　　3      3             \nasda3423asaasdasdx\ndfgdfgdgdfgdg\ndfgdfgdgdgdfdhrtge\nergergegeg\ndfsdfdsfsdfsd"
+        nText.style.textAlign = "center";
         // nText.style.verticalAlign = "middle";
         
+        nText.textDecoration = "LineThrough";
+        nText.textDecorationColor = 0x9e0;
+     
         uiStage.addChild(nText);
-        nText.textDecoration = 3;
+     
 
         /** 高级样式文本,换行的宽度为 fields.wordWrapWidth = 600; */
         const richText = new vf.gui.Label();
